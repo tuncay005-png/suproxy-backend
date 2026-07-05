@@ -29,8 +29,8 @@ type StatsConfig struct{}
 
 // PolicyConfig represents Xray policy configuration
 type PolicyConfig struct {
-	Levels  map[string]Level `json:"levels,omitempty"`
-	System  *SystemPolicy    `json:"system,omitempty"`
+	Levels map[string]Level `json:"levels,omitempty"`
+	System *SystemPolicy    `json:"system,omitempty"`
 }
 
 // Level represents user level policy
@@ -53,32 +53,32 @@ type SystemPolicy struct {
 
 // InboundConfig represents an inbound configuration
 type InboundConfig struct {
-	Tag           string                 `json:"tag"`
-	Port          int                    `json:"port"`
-	Protocol      string                 `json:"protocol"`
-	Settings      map[string]interface{} `json:"settings"`
-	StreamSettings *StreamSettings       `json:"streamSettings,omitempty"`
-	Sniffing      *SniffingConfig        `json:"sniffing,omitempty"`
+	Tag            string                 `json:"tag"`
+	Port           int                    `json:"port"`
+	Protocol       string                 `json:"protocol"`
+	Settings       map[string]interface{} `json:"settings"`
+	StreamSettings *StreamSettings        `json:"streamSettings,omitempty"`
+	Sniffing       *SniffingConfig        `json:"sniffing,omitempty"`
 }
 
 // OutboundConfig represents an outbound configuration
 type OutboundConfig struct {
-	Tag           string                 `json:"tag"`
-	Protocol      string                 `json:"protocol"`
-	Settings      map[string]interface{} `json:"settings,omitempty"`
-	StreamSettings *StreamSettings       `json:"streamSettings,omitempty"`
+	Tag            string                 `json:"tag"`
+	Protocol       string                 `json:"protocol"`
+	Settings       map[string]interface{} `json:"settings,omitempty"`
+	StreamSettings *StreamSettings        `json:"streamSettings,omitempty"`
 }
 
 // StreamSettings represents stream configuration (transport and security)
 type StreamSettings struct {
-	Network      string           `json:"network"`
-	Security     string           `json:"security"`
-	TCPSettings  *TCPSettings     `json:"tcpSettings,omitempty"`
-	WSSettings   *WSSettings      `json:"wsSettings,omitempty"`
-	HTTPSettings *HTTPSettings    `json:"httpSettings,omitempty"`
-	GRPCSettings *GRPCSettings    `json:"grpcSettings,omitempty"`
-	QUICSettings *QUICSettings    `json:"quicSettings,omitempty"`
-	TLSSettings  *TLSSettings     `json:"tlsSettings,omitempty"`
+	Network         string           `json:"network"`
+	Security        string           `json:"security"`
+	TCPSettings     *TCPSettings     `json:"tcpSettings,omitempty"`
+	WSSettings      *WSSettings      `json:"wsSettings,omitempty"`
+	HTTPSettings    *HTTPSettings    `json:"httpSettings,omitempty"`
+	GRPCSettings    *GRPCSettings    `json:"grpcSettings,omitempty"`
+	QUICSettings    *QUICSettings    `json:"quicSettings,omitempty"`
+	TLSSettings     *TLSSettings     `json:"tlsSettings,omitempty"`
 	RealitySettings *RealitySettings `json:"realitySettings,omitempty"`
 }
 
@@ -107,40 +107,40 @@ type GRPCSettings struct {
 
 // QUICSettings represents QUIC transport settings
 type QUICSettings struct {
-	Security string            `json:"security,omitempty"`
-	Key      string            `json:"key,omitempty"`
+	Security string                 `json:"security,omitempty"`
+	Key      string                 `json:"key,omitempty"`
 	Header   map[string]interface{} `json:"header,omitempty"`
 }
 
 // TLSSettings represents TLS security settings
 type TLSSettings struct {
-	ServerName string   `json:"serverName,omitempty"`
-	Alpn       []string `json:"alpn,omitempty"`
+	ServerName   string        `json:"serverName,omitempty"`
+	Alpn         []string      `json:"alpn,omitempty"`
 	Certificates []Certificate `json:"certificates,omitempty"`
 }
 
 // RealitySettings represents REALITY protocol settings
 type RealitySettings struct {
-	Show        bool     `json:"show,omitempty"`
-	Dest        string   `json:"dest,omitempty"`
-	Xver        int      `json:"xver,omitempty"`
-	ServerNames []string `json:"serverNames,omitempty"`
-	PrivateKey  string   `json:"privateKey"`
-	MinClientVer string  `json:"minClientVer,omitempty"`
-	MaxClientVer string  `json:"maxClientVer,omitempty"`
-	MaxTimeDiff int      `json:"maxTimeDiff,omitempty"`
-	ShortIds    []string `json:"shortIds,omitempty"`
-	Fingerprint string   `json:"fingerprint,omitempty"`
-	ServerName  string   `json:"serverName,omitempty"`
-	PublicKey   string   `json:"publicKey,omitempty"`
-	ShortId     string   `json:"shortId,omitempty"`
-	SpiderX     string   `json:"spiderX,omitempty"`
+	Show         bool     `json:"show,omitempty"`
+	Dest         string   `json:"dest,omitempty"`
+	Xver         int      `json:"xver,omitempty"`
+	ServerNames  []string `json:"serverNames,omitempty"`
+	PrivateKey   string   `json:"privateKey"`
+	MinClientVer string   `json:"minClientVer,omitempty"`
+	MaxClientVer string   `json:"maxClientVer,omitempty"`
+	MaxTimeDiff  int      `json:"maxTimeDiff,omitempty"`
+	ShortIds     []string `json:"shortIds,omitempty"`
+	Fingerprint  string   `json:"fingerprint,omitempty"`
+	ServerName   string   `json:"serverName,omitempty"`
+	PublicKey    string   `json:"publicKey,omitempty"`
+	ShortId      string   `json:"shortId,omitempty"`
+	SpiderX      string   `json:"spiderX,omitempty"`
 }
 
 // Certificate represents TLS certificate
 type Certificate struct {
-	CertificateFile string `json:"certificateFile,omitempty"`
-	KeyFile         string `json:"keyFile,omitempty"`
+	CertificateFile string   `json:"certificateFile,omitempty"`
+	KeyFile         string   `json:"keyFile,omitempty"`
 	Certificate     []string `json:"certificate,omitempty"`
 	Key             []string `json:"key,omitempty"`
 }

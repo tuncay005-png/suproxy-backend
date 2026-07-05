@@ -10,12 +10,13 @@ import (
 )
 
 type Application struct {
-	Config         *config.Config
-	Logger         *logger.Logger
-	Database       *database.Database
-	JWTManager     *jwt.Manager
-	TxManager      *database.TransactionManager
-	Router         interface{ Setup() }
+	Config     *config.Config
+	Logger     *logger.Logger
+	Database   *database.Database
+	JWTManager *jwt.Manager
+	TxManager  *database.TransactionManager
+	Container  *Container
+	Router     interface{ Setup() }
 }
 
 func Initialize() (*Application, error) {
@@ -58,14 +59,21 @@ func Initialize() (*Application, error) {
 	// Initialize transaction manager
 	txManager := database.NewTransactionManager(db.DB)
 
+	// Build dependency container
+	container, err := BuildContainer(cfg, db.DB, log)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build dependency container: %w", err)
+	}
+
 	log.Info("Application bootstrap completed successfully")
 
 	return &Application{
-		Config:         cfg,
-		Logger:         log,
-		Database:       db,
-		JWTManager:     jwtManager,
-		TxManager:      txManager,
+		Config:     cfg,
+		Logger:     log,
+		Database:   db,
+		JWTManager: jwtManager,
+		TxManager:  txManager,
+		Container:  container,
 	}, nil
 }
 

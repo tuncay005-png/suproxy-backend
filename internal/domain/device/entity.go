@@ -7,16 +7,16 @@ import (
 )
 
 type Device struct {
-	ID           uuid.UUID
-	UserID       uuid.UUID
-	Name         string
-	DeviceType   DeviceType
-	Identifier   DeviceIdentifier
-	Status       Status
-	LastSeenAt   *time.Time
+	ID            uuid.UUID
+	UserID        uuid.UUID
+	Name          string
+	DeviceType    DeviceType
+	Identifier    DeviceIdentifier
+	Status        Status
+	LastSeenAt    *time.Time
 	LastIPAddress string
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
 }
 
 func NewDevice(userID uuid.UUID, name string, deviceType DeviceType, identifier DeviceIdentifier) (*Device, error) {

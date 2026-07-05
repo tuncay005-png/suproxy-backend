@@ -8,22 +8,22 @@ import (
 )
 
 type UserModel struct {
-	ID               uuid.UUID  `gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
-	Email            string     `gorm:"type:varchar(255);uniqueIndex;not null"`
-	Password         string     `gorm:"type:varchar(255);not null"`
-	FirstName        string     `gorm:"type:varchar(100)"`
-	LastName         string     `gorm:"type:varchar(100)"`
-	Phone            string     `gorm:"type:varchar(20)"`
-	Avatar           string     `gorm:"type:varchar(500)"`
-	Status           string     `gorm:"type:varchar(20);not null;default:'active'"`
-	Role             string     `gorm:"type:varchar(20);not null;default:'user'"`
-	LastLoginAt      *time.Time `gorm:"type:timestamp"`
-	LastLoginIP      string     `gorm:"type:varchar(45)"`
-	FailedLoginCount int        `gorm:"not null;default:0"`
-	LockedUntil      *time.Time `gorm:"type:timestamp"`
+	ID                uuid.UUID  `gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
+	Email             string     `gorm:"type:varchar(255);uniqueIndex;not null"`
+	Password          string     `gorm:"type:varchar(255);not null"`
+	FirstName         string     `gorm:"type:varchar(100)"`
+	LastName          string     `gorm:"type:varchar(100)"`
+	Phone             string     `gorm:"type:varchar(20)"`
+	Avatar            string     `gorm:"type:varchar(500)"`
+	Status            string     `gorm:"type:varchar(20);not null;default:'active'"`
+	Role              string     `gorm:"type:varchar(20);not null;default:'user'"`
+	LastLoginAt       *time.Time `gorm:"type:timestamp"`
+	LastLoginIP       string     `gorm:"type:varchar(45)"`
+	FailedLoginCount  int        `gorm:"not null;default:0"`
+	LockedUntil       *time.Time `gorm:"type:timestamp"`
 	PasswordChangedAt *time.Time `gorm:"type:timestamp"`
-	CreatedAt        time.Time  `gorm:"not null;default:CURRENT_TIMESTAMP"`
-	UpdatedAt        time.Time  `gorm:"not null;default:CURRENT_TIMESTAMP"`
+	CreatedAt         time.Time  `gorm:"not null;default:CURRENT_TIMESTAMP"`
+	UpdatedAt         time.Time  `gorm:"not null;default:CURRENT_TIMESTAMP"`
 }
 
 func (UserModel) TableName() string {
@@ -32,22 +32,22 @@ func (UserModel) TableName() string {
 
 func toUserModel(u *user.User) *UserModel {
 	return &UserModel{
-		ID:               u.ID,
-		Email:            u.Email.String(),
-		Password:         u.Password.Hash(),
-		FirstName:        u.Profile.FirstName,
-		LastName:         u.Profile.LastName,
-		Phone:            u.Profile.Phone,
-		Avatar:           u.Profile.Avatar,
-		Status:           string(u.Status),
-		Role:             string(u.Role),
-		LastLoginAt:      u.LastLoginAt,
-		LastLoginIP:      u.LastLoginIP,
-		FailedLoginCount: u.FailedLoginCount,
-		LockedUntil:      u.LockedUntil,
+		ID:                u.ID,
+		Email:             u.Email.String(),
+		Password:          u.Password.Hash(),
+		FirstName:         u.Profile.FirstName,
+		LastName:          u.Profile.LastName,
+		Phone:             u.Profile.Phone,
+		Avatar:            u.Profile.Avatar,
+		Status:            string(u.Status),
+		Role:              string(u.Role),
+		LastLoginAt:       u.LastLoginAt,
+		LastLoginIP:       u.LastLoginIP,
+		FailedLoginCount:  u.FailedLoginCount,
+		LockedUntil:       u.LockedUntil,
 		PasswordChangedAt: u.PasswordChangedAt,
-		CreatedAt:        u.CreatedAt,
-		UpdatedAt:        u.UpdatedAt,
+		CreatedAt:         u.CreatedAt,
+		UpdatedAt:         u.UpdatedAt,
 	}
 }
 
@@ -65,18 +65,18 @@ func toDomainUser(m *UserModel) (*user.User, error) {
 	profile := user.NewProfile(m.FirstName, m.LastName, m.Phone, m.Avatar)
 
 	return &user.User{
-		ID:               m.ID,
-		Email:            email,
-		Password:         password,
-		Profile:          profile,
-		Status:           user.Status(m.Status),
-		Role:             user.Role(m.Role),
-		LastLoginAt:      m.LastLoginAt,
-		LastLoginIP:      m.LastLoginIP,
-		FailedLoginCount: m.FailedLoginCount,
-		LockedUntil:      m.LockedUntil,
+		ID:                m.ID,
+		Email:             email,
+		Password:          password,
+		Profile:           profile,
+		Status:            user.Status(m.Status),
+		Role:              user.Role(m.Role),
+		LastLoginAt:       m.LastLoginAt,
+		LastLoginIP:       m.LastLoginIP,
+		FailedLoginCount:  m.FailedLoginCount,
+		LockedUntil:       m.LockedUntil,
 		PasswordChangedAt: m.PasswordChangedAt,
-		CreatedAt:        m.CreatedAt,
-		UpdatedAt:        m.UpdatedAt,
+		CreatedAt:         m.CreatedAt,
+		UpdatedAt:         m.UpdatedAt,
 	}, nil
 }

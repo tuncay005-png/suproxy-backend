@@ -9,7 +9,6 @@ import (
 )
 
 var (
-	ErrInvalidConfig      = errors.New("invalid configuration")
 	ErrInvalidPort        = errors.New("invalid port number")
 	ErrInvalidUUID        = errors.New("invalid UUID format")
 	ErrInvalidProtocol    = errors.New("invalid protocol")
@@ -151,13 +150,13 @@ func (v *validator) ValidateUUID(uuid string) error {
 
 func (v *validator) validateProtocol(protocol string) error {
 	validProtocols := map[string]bool{
-		"vmess":       true,
-		"vless":       true,
-		"trojan":      true,
-		"shadowsocks": true,
+		"vmess":         true,
+		"vless":         true,
+		"trojan":        true,
+		"shadowsocks":   true,
 		"dokodemo-door": true,
-		"http":        true,
-		"socks":       true,
+		"http":          true,
+		"socks":         true,
 	}
 
 	if !validProtocols[protocol] {
@@ -340,7 +339,7 @@ func (v *validator) validateRealitySettings(reality *RealitySettings) error {
 
 func (v *validator) validateFlow(flow string) error {
 	validFlows := map[string]bool{
-		"xtls-rprx-vision":     true,
+		"xtls-rprx-vision":        true,
 		"xtls-rprx-vision-udp443": true,
 	}
 

@@ -30,7 +30,7 @@ func (PlanModel) TableName() string {
 
 func toPlanModel(p *subscription.Plan) *PlanModel {
 	money, _ := subscription.NewMoney(p.Price.Amount, p.Price.Currency)
-	
+
 	return &PlanModel{
 		ID:             p.ID,
 		Name:           p.Name,

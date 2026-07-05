@@ -40,8 +40,8 @@ type UserResponse struct {
 }
 
 type UserListResponse struct {
-	Users      []*UserResponse `json:"users"`
-	Total      int64           `json:"total"`
-	Offset     int             `json:"offset"`
-	Limit      int             `json:"limit"`
+	Users  []*UserResponse `json:"users"`
+	Total  int64           `json:"total"`
+	Offset int             `json:"offset"`
+	Limit  int             `json:"limit"`
 }

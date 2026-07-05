@@ -2,9 +2,9 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/suproxy/backend/internal/infrastructure/jwt"
 	"github.com/suproxy/backend/internal/interfaces/http/handler"
 	"github.com/suproxy/backend/internal/interfaces/http/middleware"
-	"github.com/suproxy/backend/internal/infrastructure/jwt"
 )
 
 type Router struct {
@@ -32,7 +32,7 @@ func (r *Router) Setup() {
 			auth.POST("/login", r.authHandler.Login)
 			auth.POST("/refresh", r.authHandler.RefreshToken)
 			auth.POST("/logout", r.authHandler.Logout)
-			
+
 			// Protected routes
 			authenticated := auth.Group("")
 			authenticated.Use(middleware.AuthMiddleware(r.jwtManager))

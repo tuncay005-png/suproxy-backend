@@ -35,22 +35,22 @@ func (c *UpdatePlanCommand) Execute(ctx context.Context, planID uuid.UUID, req *
 		if description == "" {
 			description = plan.Description
 		}
-		
+
 		trafficLimit := req.TrafficLimitGB
 		if trafficLimit < 0 {
 			trafficLimit = plan.TrafficLimitGB
 		}
-		
+
 		deviceLimit := req.DeviceLimit
 		if deviceLimit == 0 {
 			deviceLimit = plan.DeviceLimit
 		}
-		
+
 		maxSessions := req.MaxSessions
 		if maxSessions == 0 {
 			maxSessions = plan.MaxSessions
 		}
-		
+
 		if err := plan.UpdateDetails(description, trafficLimit, deviceLimit, maxSessions); err != nil {
 			return nil, err
 		}

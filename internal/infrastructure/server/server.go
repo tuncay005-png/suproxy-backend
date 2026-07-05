@@ -56,7 +56,7 @@ func (s *Server) setupRoutes() {
 	{
 		v1.GET("/ping", s.pingHandler)
 	}
-	
+
 	// Setup additional routes via router
 	if s.app.Router != nil {
 		s.app.Router.Setup()

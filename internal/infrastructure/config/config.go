@@ -13,6 +13,7 @@ type Config struct {
 	Database    DatabaseConfig `mapstructure:"database"`
 	Log         LogConfig      `mapstructure:"log"`
 	JWT         JWTConfig      `mapstructure:"jwt"`
+	Xray        XrayConfig     `mapstructure:"xray"`
 }
 
 type ServerConfig struct {
@@ -45,6 +46,15 @@ type JWTConfig struct {
 	AccessTokenExpiry  int    `mapstructure:"access_token_expiry"`
 	RefreshTokenExpiry int    `mapstructure:"refresh_token_expiry"`
 	Issuer             string `mapstructure:"issuer"`
+}
+
+type XrayConfig struct {
+	UseMock     bool   `mapstructure:"use_mock"`
+	BinaryPath  string `mapstructure:"binary_path"`
+	ConfigDir   string `mapstructure:"config_dir"`
+	LogDir      string `mapstructure:"log_dir"`
+	BackupDir   string `mapstructure:"backup_dir"`
+	InstallDir  string `mapstructure:"install_dir"`
 }
 
 func Load() (*Config, error) {
@@ -97,4 +107,10 @@ func setDefaults() {
 	viper.SetDefault("jwt.access_token_expiry", 15)
 	viper.SetDefault("jwt.refresh_token_expiry", 168)
 	viper.SetDefault("jwt.issuer", "suproxy-backend")
+	viper.SetDefault("xray.use_mock", true)
+	viper.SetDefault("xray.binary_path", "/usr/local/bin/xray")
+	viper.SetDefault("xray.config_dir", "/etc/xray")
+	viper.SetDefault("xray.log_dir", "/var/log/xray")
+	viper.SetDefault("xray.backup_dir", "/var/backups/xray")
+	viper.SetDefault("xray.install_dir", "/opt/xray")
 }

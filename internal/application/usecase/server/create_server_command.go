@@ -52,7 +52,7 @@ func (c *CreateServerCommand) Execute(ctx context.Context, req *dto.CreateServer
 	if req.IPv6 != "" {
 		srv.UpdateIPv6(req.IPv6)
 	}
-	
+
 	if !req.IsPublic {
 		srv.MakePrivate()
 	}

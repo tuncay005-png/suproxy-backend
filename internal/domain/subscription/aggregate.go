@@ -8,17 +8,17 @@ import (
 
 // Subscription is an aggregate root
 type Subscription struct {
-	ID               uuid.UUID
-	UserID           uuid.UUID
-	PlanID           uuid.UUID
-	Status           Status
-	StartedAt        time.Time
-	ExpiresAt        time.Time
-	TrafficUsedBytes int64
+	ID                uuid.UUID
+	UserID            uuid.UUID
+	PlanID            uuid.UUID
+	Status            Status
+	StartedAt         time.Time
+	ExpiresAt         time.Time
+	TrafficUsedBytes  int64
 	TrafficLimitBytes int64
-	AutoRenew        bool
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
+	AutoRenew         bool
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
 }
 
 func NewSubscription(userID, planID uuid.UUID, plan *Plan, autoRenew bool) (*Subscription, error) {
@@ -83,12 +83,12 @@ func (s *Subscription) Extend(days int) error {
 		return ErrInvalidPlanDuration
 	}
 	s.ExpiresAt = s.ExpiresAt.AddDate(0, 0, days)
-	
+
 	// If subscription was expired, activate it
 	if s.Status == StatusExpired {
 		s.Status = StatusActive
 	}
-	
+
 	s.UpdatedAt = time.Now().UTC()
 	return nil
 }
@@ -153,12 +153,12 @@ func (s *Subscription) CanConnect() bool {
 	if !s.IsActive() {
 		return false
 	}
-	
+
 	// Check traffic limit (0 = unlimited)
 	if s.TrafficLimitBytes > 0 && s.TrafficUsedBytes >= s.TrafficLimitBytes {
 		return false
 	}
-	
+
 	return true
 }
 
@@ -167,7 +167,7 @@ func (s *Subscription) RemainingTraffic() int64 {
 	if s.TrafficLimitBytes == 0 {
 		return 0
 	}
-	
+
 	remaining := s.TrafficLimitBytes - s.TrafficUsedBytes
 	if remaining < 0 {
 		return 0

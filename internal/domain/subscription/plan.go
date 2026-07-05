@@ -12,19 +12,19 @@ const (
 )
 
 type Plan struct {
-	ID              uuid.UUID
-	Name            string
-	Description     string
-	DurationDays    int
-	TrafficLimitGB  int64  // 0 = unlimited
-	DeviceLimit     int
-	MaxSessions     int
-	Price           Money
-	Currency        string
-	IsActive        bool
-	Features        []string
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+	ID             uuid.UUID
+	Name           string
+	Description    string
+	DurationDays   int
+	TrafficLimitGB int64 // 0 = unlimited
+	DeviceLimit    int
+	MaxSessions    int
+	Price          Money
+	Currency       string
+	IsActive       bool
+	Features       []string
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
 }
 
 func NewPlan(name, description string, durationDays int, trafficLimitGB int64, deviceLimit, maxSessions int, price Money, currency string) (*Plan, error) {

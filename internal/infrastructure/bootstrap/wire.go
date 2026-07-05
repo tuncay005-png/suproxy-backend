@@ -3,9 +3,9 @@ package bootstrap
 import (
 	"github.com/gin-gonic/gin"
 	authUseCase "github.com/suproxy/backend/internal/application/usecase/auth"
+	"github.com/suproxy/backend/internal/infrastructure/repository"
 	"github.com/suproxy/backend/internal/interfaces/http/handler"
 	"github.com/suproxy/backend/internal/interfaces/http/router"
-	"github.com/suproxy/backend/internal/infrastructure/repository"
 )
 
 func InitializeAuthSystem(app *Application, engine *gin.Engine) {

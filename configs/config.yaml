@@ -27,3 +27,11 @@ jwt:
   access_token_expiry: 15
   refresh_token_expiry: 168
   issuer: suproxy-backend
+
+xray:
+  use_mock: true
+  binary_path: /usr/local/bin/xray
+  config_dir: /etc/xray
+  log_dir: /var/log/xray
+  backup_dir: /var/backups/xray
+  install_dir: /opt/xray

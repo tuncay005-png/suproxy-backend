@@ -22,9 +22,9 @@ func NewMoney(amount int64, currency string) (Money, error) {
 type Method string
 
 const (
-	MethodCreditCard Method = "credit_card"
-	MethodPayPal     Method = "paypal"
-	MethodCrypto     Method = "crypto"
+	MethodCreditCard   Method = "credit_card"
+	MethodPayPal       Method = "paypal"
+	MethodCrypto       Method = "crypto"
 	MethodBankTransfer Method = "bank_transfer"
 )
 

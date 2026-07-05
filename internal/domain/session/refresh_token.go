@@ -7,18 +7,18 @@ import (
 )
 
 type RefreshToken struct {
-	ID           uuid.UUID
-	UserID       uuid.UUID
-	TokenHash    string
-	DeviceName   string
-	Platform     string
-	IPAddress    string
-	UserAgent    string
-	ExpiresAt    time.Time
-	LastUsedAt   *time.Time
-	IsRevoked    bool
-	RevokedAt    *time.Time
-	CreatedAt    time.Time
+	ID         uuid.UUID
+	UserID     uuid.UUID
+	TokenHash  string
+	DeviceName string
+	Platform   string
+	IPAddress  string
+	UserAgent  string
+	ExpiresAt  time.Time
+	LastUsedAt *time.Time
+	IsRevoked  bool
+	RevokedAt  *time.Time
+	CreatedAt  time.Time
 }
 
 func NewRefreshToken(userID uuid.UUID, tokenHash, deviceName, platform, ipAddress, userAgent string, expiresAt time.Time) *RefreshToken {

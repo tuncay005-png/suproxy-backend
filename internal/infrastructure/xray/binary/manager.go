@@ -7,9 +7,9 @@ import (
 )
 
 var (
-	ErrBinaryNotFound    = errors.New("xray binary not found")
-	ErrInvalidVersion    = errors.New("invalid version")
-	ErrDownloadFailed    = errors.New("download failed")
+	ErrBinaryNotFound     = errors.New("xray binary not found")
+	ErrInvalidVersion     = errors.New("invalid version")
+	ErrDownloadFailed     = errors.New("download failed")
 	ErrVerificationFailed = errors.New("verification failed")
 )
 
@@ -43,28 +43,28 @@ type Manager interface {
 
 // BinaryInfo represents Xray binary information
 type BinaryInfo struct {
-	Path         string
-	Version      string
-	Size         int64
-	ModifiedAt   time.Time
-	Executable   bool
-	Verified     bool
+	Path       string
+	Version    string
+	Size       int64
+	ModifiedAt time.Time
+	Executable bool
+	Verified   bool
 }
 
 // MockManager provides a mock implementation for testing
 // TODO: Replace with real binary manager using os/exec and HTTP downloads in production
 type MockManager struct {
-	binaryPath    string
+	binaryPath     string
 	currentVersion string
-	installed     bool
+	installed      bool
 }
 
 // NewMockManager creates a new mock binary manager for testing
 func NewMockManager() Manager {
 	return &MockManager{
-		binaryPath:    "/usr/local/bin/xray",
+		binaryPath:     "/usr/local/bin/xray",
 		currentVersion: "1.8.7",
-		installed:     true,
+		installed:      true,
 	}
 }
 
@@ -131,11 +131,11 @@ func (m *MockManager) IsInstalled(ctx context.Context) bool {
 
 // DownloadOptions represents download configuration
 type DownloadOptions struct {
-	Version      string
-	TargetPath   string
+	Version        string
+	TargetPath     string
 	VerifyChecksum bool
-	OS           string
-	Arch         string
+	OS             string
+	Arch           string
 }
 
 // UpgradeOptions represents upgrade configuration

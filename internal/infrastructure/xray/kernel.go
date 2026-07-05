@@ -5,11 +5,11 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/suproxy/backend/internal/infrastructure/logger"
 	"github.com/suproxy/backend/internal/infrastructure/vpn"
 	"github.com/suproxy/backend/internal/infrastructure/xray/binary"
 	"github.com/suproxy/backend/internal/infrastructure/xray/config"
 	"github.com/suproxy/backend/internal/infrastructure/xray/runtime"
-	"github.com/suproxy/backend/internal/infrastructure/logger"
 )
 
 // Kernel implements the VPN Kernel interface for Xray-core

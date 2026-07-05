@@ -90,12 +90,12 @@ func (n *Node) IsOverloaded() bool {
 	if n.CPUUsage > 90.0 || n.RAMUsage > 90.0 {
 		return true
 	}
-	
+
 	// Bandwidth limit exceeded (if not unlimited)
 	if n.BandwidthLimitBytes > 0 && n.BandwidthUsedBytes >= n.BandwidthLimitBytes {
 		return true
 	}
-	
+
 	return false
 }
 
@@ -125,7 +125,7 @@ func (n *Node) UpdateMetrics(cpuUsage, ramUsage float64, latencyMs int) error {
 
 	// Auto-update health status based on metrics
 	n.updateHealthStatus()
-	
+
 	return nil
 }
 
@@ -189,13 +189,13 @@ func (n *Node) UpdateBandwidthLimit(limitGB int64) error {
 	if limitGB < 0 {
 		return ErrInvalidBandwidthLimit
 	}
-	
+
 	if limitGB == 0 {
 		n.BandwidthLimitBytes = UnlimitedBandwidth
 	} else {
 		n.BandwidthLimitBytes = limitGB * BytesInGB
 	}
-	
+
 	n.UpdatedAt = time.Now().UTC()
 	return nil
 }
@@ -208,7 +208,7 @@ func (n *Node) RemainingBandwidth() int64 {
 	if n.HasUnlimitedBandwidth() {
 		return 0 // 0 indicates unlimited
 	}
-	
+
 	remaining := n.BandwidthLimitBytes - n.BandwidthUsedBytes
 	if remaining < 0 {
 		return 0

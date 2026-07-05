@@ -8,18 +8,18 @@ import (
 
 // Server represents a physical or virtual server that hosts VPN nodes
 type Server struct {
-	ID         uuid.UUID
-	Name       string
-	Country    string
-	City       string
-	Hostname   string
-	Provider   string
-	IPv4       string
-	IPv6       string
-	Status     Status
-	IsPublic   bool
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
+	ID        uuid.UUID
+	Name      string
+	Country   string
+	City      string
+	Hostname  string
+	Provider  string
+	IPv4      string
+	IPv6      string
+	Status    Status
+	IsPublic  bool
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 func NewServer(name, country, city, hostname, provider, ipv4 string) (*Server, error) {

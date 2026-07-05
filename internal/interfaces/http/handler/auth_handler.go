@@ -138,7 +138,6 @@ func (h *AuthHandler) handleError(c *gin.Context, err error) {
 	}
 }
 
-
 func (h *AuthHandler) GetSessions(c *gin.Context) {
 	userIDStr, exists := jwt.GetUserID(c)
 	if !exists {

@@ -35,7 +35,7 @@ func ToSubscriptionResponse(s *subscription.Subscription, plan *subscription.Pla
 	const GBToBytes = 1024 * 1024 * 1024
 	trafficUsedGB := float64(s.TrafficUsedBytes) / float64(GBToBytes)
 	trafficLimitGB := float64(s.TrafficLimitBytes) / float64(GBToBytes)
-	
+
 	var remainingTrafficGB float64
 	if s.HasUnlimitedTraffic() {
 		remainingTrafficGB = -1 // Indicates unlimited
@@ -45,23 +45,23 @@ func ToSubscriptionResponse(s *subscription.Subscription, plan *subscription.Pla
 	}
 
 	return &dto.SubscriptionResponse{
-		ID:                   s.ID,
-		UserID:               s.UserID,
-		Plan:                 ToPlanResponse(plan),
-		Status:               string(s.Status),
-		StartedAt:            s.StartedAt,
-		ExpiresAt:            s.ExpiresAt,
-		TrafficUsedBytes:     s.TrafficUsedBytes,
-		TrafficLimitBytes:    s.TrafficLimitBytes,
-		TrafficUsedGB:        trafficUsedGB,
-		TrafficLimitGB:       trafficLimitGB,
-		RemainingTrafficGB:   remainingTrafficGB,
-		TrafficUsagePercent:  s.TrafficUsagePercentage(),
-		DaysRemaining:        s.DaysRemaining(),
-		AutoRenew:            s.AutoRenew,
-		CanConnect:           s.CanConnect(),
-		HasUnlimitedTraffic:  s.HasUnlimitedTraffic(),
-		CreatedAt:            s.CreatedAt,
-		UpdatedAt:            s.UpdatedAt,
+		ID:                  s.ID,
+		UserID:              s.UserID,
+		Plan:                ToPlanResponse(plan),
+		Status:              string(s.Status),
+		StartedAt:           s.StartedAt,
+		ExpiresAt:           s.ExpiresAt,
+		TrafficUsedBytes:    s.TrafficUsedBytes,
+		TrafficLimitBytes:   s.TrafficLimitBytes,
+		TrafficUsedGB:       trafficUsedGB,
+		TrafficLimitGB:      trafficLimitGB,
+		RemainingTrafficGB:  remainingTrafficGB,
+		TrafficUsagePercent: s.TrafficUsagePercentage(),
+		DaysRemaining:       s.DaysRemaining(),
+		AutoRenew:           s.AutoRenew,
+		CanConnect:          s.CanConnect(),
+		HasUnlimitedTraffic: s.HasUnlimitedTraffic(),
+		CreatedAt:           s.CreatedAt,
+		UpdatedAt:           s.UpdatedAt,
 	}
 }

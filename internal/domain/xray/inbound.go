@@ -8,15 +8,15 @@ import (
 
 // Inbound represents an Xray inbound configuration
 type Inbound struct {
-	ID              uuid.UUID
-	XrayInstanceID  uuid.UUID
-	Protocol        InboundProtocol
-	Port            int
-	Transport       TransportType
-	Security        SecurityType
-	Enabled         bool
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+	ID             uuid.UUID
+	XrayInstanceID uuid.UUID
+	Protocol       InboundProtocol
+	Port           int
+	Transport      TransportType
+	Security       SecurityType
+	Enabled        bool
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
 }
 
 func NewInbound(instanceID uuid.UUID, protocol InboundProtocol, port int, transport TransportType, security SecurityType) (*Inbound, error) {

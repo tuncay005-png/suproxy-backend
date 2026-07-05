@@ -52,7 +52,7 @@ func (c *LoginCommand) Execute(ctx context.Context, req *dto.LoginRequest) (*dto
 	foundUser, err := c.userRepo.FindByEmail(ctx, email)
 	if err != nil {
 		c.logger.Warn("User not found", "email", email.String())
-		
+
 		// Audit log for failed login
 		c.auditRepo.Create(ctx, audit.NewLog(
 			uuid.Nil,
@@ -62,14 +62,14 @@ func (c *LoginCommand) Execute(ctx context.Context, req *dto.LoginRequest) (*dto
 			req.IPAddress,
 			req.UserAgent,
 		))
-		
+
 		return nil, user.ErrInvalidCredentials
 	}
 
 	// Check if account is locked
 	if foundUser.IsLocked() {
 		c.logger.Warn("Locked account attempted login", "user_id", foundUser.ID)
-		
+
 		// Audit log
 		c.auditRepo.Create(ctx, audit.NewLog(
 			foundUser.ID,
@@ -79,7 +79,7 @@ func (c *LoginCommand) Execute(ctx context.Context, req *dto.LoginRequest) (*dto
 			req.IPAddress,
 			req.UserAgent,
 		))
-		
+
 		return nil, user.ErrUserLocked
 	}
 
@@ -92,11 +92,11 @@ func (c *LoginCommand) Execute(ctx context.Context, req *dto.LoginRequest) (*dto
 	// Verify password
 	if err := security.CheckPassword(foundUser.Password.Hash(), req.Password); err != nil {
 		c.logger.Warn("Invalid password attempt", "user_id", foundUser.ID)
-		
+
 		// Record failed login
 		foundUser.RecordFailedLogin()
 		c.userRepo.Update(ctx, foundUser)
-		
+
 		// Audit log
 		c.auditRepo.Create(ctx, audit.NewLog(
 			foundUser.ID,
@@ -106,7 +106,7 @@ func (c *LoginCommand) Execute(ctx context.Context, req *dto.LoginRequest) (*dto
 			req.IPAddress,
 			req.UserAgent,
 		))
-		
+
 		return nil, user.ErrInvalidCredentials
 	}
 

@@ -7,19 +7,19 @@ import (
 )
 
 type User struct {
-	ID               uuid.UUID
-	Email            Email
-	Password         Password
-	Profile          Profile
-	Status           Status
-	Role             Role
-	LastLoginAt      *time.Time
-	LastLoginIP      string
-	FailedLoginCount int
-	LockedUntil      *time.Time
+	ID                uuid.UUID
+	Email             Email
+	Password          Password
+	Profile           Profile
+	Status            Status
+	Role              Role
+	LastLoginAt       *time.Time
+	LastLoginIP       string
+	FailedLoginCount  int
+	LockedUntil       *time.Time
 	PasswordChangedAt *time.Time
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
 }
 
 func NewUser(email Email, password Password, profile Profile) (*User, error) {

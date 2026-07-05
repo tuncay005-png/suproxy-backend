@@ -45,8 +45,8 @@ type PlanResponse struct {
 }
 
 type PlanListResponse struct {
-	Plans  []*PlanResponse `json:"plans"`
-	Total  int64           `json:"total"`
+	Plans []*PlanResponse `json:"plans"`
+	Total int64           `json:"total"`
 }
 
 type CreateSubscriptionRequest struct {
@@ -59,22 +59,22 @@ type ExtendSubscriptionRequest struct {
 }
 
 type SubscriptionResponse struct {
-	ID                   uuid.UUID     `json:"id"`
-	UserID               uuid.UUID     `json:"user_id"`
-	Plan                 *PlanResponse `json:"plan"`
-	Status               string        `json:"status"`
-	StartedAt            time.Time     `json:"started_at"`
-	ExpiresAt            time.Time     `json:"expires_at"`
-	TrafficUsedBytes     int64         `json:"traffic_used_bytes"`
-	TrafficLimitBytes    int64         `json:"traffic_limit_bytes"`
-	TrafficUsedGB        float64       `json:"traffic_used_gb"`
-	TrafficLimitGB       float64       `json:"traffic_limit_gb"`
-	RemainingTrafficGB   float64       `json:"remaining_traffic_gb"`
-	TrafficUsagePercent  float64       `json:"traffic_usage_percent"`
-	DaysRemaining        int           `json:"days_remaining"`
-	AutoRenew            bool          `json:"auto_renew"`
-	CanConnect           bool          `json:"can_connect"`
-	HasUnlimitedTraffic  bool          `json:"has_unlimited_traffic"`
-	CreatedAt            time.Time     `json:"created_at"`
-	UpdatedAt            time.Time     `json:"updated_at"`
+	ID                  uuid.UUID     `json:"id"`
+	UserID              uuid.UUID     `json:"user_id"`
+	Plan                *PlanResponse `json:"plan"`
+	Status              string        `json:"status"`
+	StartedAt           time.Time     `json:"started_at"`
+	ExpiresAt           time.Time     `json:"expires_at"`
+	TrafficUsedBytes    int64         `json:"traffic_used_bytes"`
+	TrafficLimitBytes   int64         `json:"traffic_limit_bytes"`
+	TrafficUsedGB       float64       `json:"traffic_used_gb"`
+	TrafficLimitGB      float64       `json:"traffic_limit_gb"`
+	RemainingTrafficGB  float64       `json:"remaining_traffic_gb"`
+	TrafficUsagePercent float64       `json:"traffic_usage_percent"`
+	DaysRemaining       int           `json:"days_remaining"`
+	AutoRenew           bool          `json:"auto_renew"`
+	CanConnect          bool          `json:"can_connect"`
+	HasUnlimitedTraffic bool          `json:"has_unlimited_traffic"`
+	CreatedAt           time.Time     `json:"created_at"`
+	UpdatedAt           time.Time     `json:"updated_at"`
 }

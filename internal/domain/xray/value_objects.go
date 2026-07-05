@@ -49,11 +49,11 @@ func (p InboundProtocol) String() string {
 type TransportType string
 
 const (
-	TransportTCP        TransportType = "tcp"
-	TransportWebSocket  TransportType = "ws"
-	TransportHTTP       TransportType = "http"
-	TransportQUIC       TransportType = "quic"
-	TransportGRPC       TransportType = "grpc"
+	TransportTCP         TransportType = "tcp"
+	TransportWebSocket   TransportType = "ws"
+	TransportHTTP        TransportType = "http"
+	TransportQUIC        TransportType = "quic"
+	TransportGRPC        TransportType = "grpc"
 	TransportHTTPUpgrade TransportType = "httpupgrade"
 )
 

@@ -52,3 +52,24 @@ func DefaultFactory(xrayKernel Kernel) KernelFactory {
 	// Future: factory.Register(hysteriaKernel)
 	return factory
 }
+
+// KernelConfig holds configuration for creating a kernel
+type KernelConfig struct {
+	ConfigGenerator interface{}
+	ConfigValidator interface{}
+	ConfigWriter    interface{}
+	RuntimeManager  interface{}
+	BinaryManager   interface{}
+}
+
+// NewKernel creates a kernel instance by name
+// This is a helper function used by bootstrap to create specific kernel instances
+func NewKernel(kernelType string, cfg KernelConfig) (Kernel, error) {
+	switch kernelType {
+	case "xray":
+		// Import cycle prevention: actual creation is done in bootstrap
+		return nil, fmt.Errorf("use xray.NewKernel directly")
+	default:
+		return nil, fmt.Errorf("%w: %s", ErrUnsupportedKernel, kernelType)
+	}
+}

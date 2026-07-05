@@ -11,10 +11,10 @@ func ToNodeResponse(n *node.Node) *dto.NodeResponse {
 	}
 
 	const GBToBytes = 1024 * 1024 * 1024
-	
+
 	bandwidthLimitGB := float64(n.BandwidthLimitBytes) / float64(GBToBytes)
 	bandwidthUsedGB := float64(n.BandwidthUsedBytes) / float64(GBToBytes)
-	
+
 	var remainingBandwidthGB float64
 	if n.HasUnlimitedBandwidth() {
 		remainingBandwidthGB = -1 // Indicates unlimited
