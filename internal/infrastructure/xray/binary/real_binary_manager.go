@@ -2,11 +2,14 @@ package binary
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
+	"time"
 
 	"github.com/suproxy/backend/internal/infrastructure/logger"
 )
@@ -67,32 +70,35 @@ func (m *RealBinaryManager) Validate(ctx context.Context, binaryPath string) err
 		return ErrBinaryNotFound
 	}
 
-	// TODO: Check if file is executable
-	// info, err := os.Stat(binaryPath)
-	// if err != nil {
-	//     return fmt.Errorf("failed to stat binary: %w", err)
-	// }
+	// Check if file is executable
+	info, err := os.Stat(binaryPath)
+	if err != nil {
+		return fmt.Errorf("failed to stat binary: %w", err)
+	}
 
-	// mode := info.Mode()
-	// if mode&0111 == 0 {
-	//     return fmt.Errorf("binary is not executable")
-	// }
+	mode := info.Mode()
+	// On Unix, check executable bit; on Windows, check .exe extension
+	if runtime.GOOS != "windows" {
+		if mode&0111 == 0 {
+			return fmt.Errorf("binary is not executable: %s", binaryPath)
+		}
+	}
 
-	// TODO: Try to execute --version to validate it's actually Xray
-	// ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	// defer cancel()
+	// Try to execute --version to validate it's actually Xray
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 
-	// cmd := exec.CommandContext(ctx, binaryPath, "version")
-	// output, err := cmd.Output()
-	// if err != nil {
-	//     return fmt.Errorf("failed to execute binary: %w", err)
-	// }
+	cmd := exec.CommandContext(ctx, binaryPath, "version")
+	output, err := cmd.Output()
+	if err != nil {
+		return fmt.Errorf("failed to execute binary: %w", err)
+	}
 
-	// if !strings.Contains(string(output), "Xray") {
-	//     return fmt.Errorf("not a valid Xray binary")
-	// }
+	if !strings.Contains(string(output), "Xray") {
+		return fmt.Errorf("not a valid Xray binary")
+	}
 
-	m.logger.Info("Binary validation prepared", "path", binaryPath)
+	m.logger.Info("Binary validated successfully", "path", binaryPath)
 	return nil
 }
 
@@ -107,34 +113,33 @@ func (m *RealBinaryManager) CurrentVersion(ctx context.Context) (string, error) 
 		binaryPath = detected
 	}
 
-	// TODO: Execute xray version command
-	// ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	// defer cancel()
+	// Execute xray version command
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 
-	// cmd := exec.CommandContext(ctx, binaryPath, "version")
-	// output, err := cmd.Output()
-	// if err != nil {
-	//     return "", fmt.Errorf("failed to get version: %w", err)
-	// }
+	cmd := exec.CommandContext(ctx, binaryPath, "version")
+	output, err := cmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("failed to get version: %w", err)
+	}
 
 	// Parse version from output
 	// Example output: "Xray 1.8.7 (Xray, Penetrates Everything.) Custom"
-	// version := m.parseVersion(string(output))
-	// if version == "" {
-	//     return "", ErrInvalidVersion
-	// }
+	version := m.parseVersion(string(output))
+	if version == "" {
+		return "", ErrInvalidVersion
+	}
 
-	// return version, nil
-
-	// For now, return mock version
-	m.logger.Debug("Version check prepared", "binary", binaryPath)
-	return "1.8.7", nil
+	m.logger.Debug("Current version detected", "version", version)
+	return version, nil
 }
 
 func (m *RealBinaryManager) LatestVersion(ctx context.Context) (string, error) {
-	// TODO: Fetch latest version from GitHub API
+	// Note: Fetching latest version from GitHub API
+	// In production, consider caching this response to avoid rate limits
+	
+	// TODO: Implement GitHub API call to fetch latest release
 	// GET https://api.github.com/repos/XTLS/Xray-core/releases/latest
-
 	// type GitHubRelease struct {
 	//     TagName string `json:"tag_name"`
 	//     Name    string `json:"name"`
@@ -143,88 +148,70 @@ func (m *RealBinaryManager) LatestVersion(ctx context.Context) (string, error) {
 	//         DownloadURL string `json:"browser_download_url"`
 	//     } `json:"assets"`
 	// }
-
 	// req, err := http.NewRequestWithContext(ctx, "GET",
 	//     "https://api.github.com/repos/XTLS/Xray-core/releases/latest", nil)
 	// if err != nil {
 	//     return "", err
 	// }
-
 	// resp, err := http.DefaultClient.Do(req)
 	// if err != nil {
 	//     return "", fmt.Errorf("failed to fetch latest version: %w", err)
 	// }
 	// defer resp.Body.Close()
-
 	// var release GitHubRelease
 	// if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
 	//     return "", fmt.Errorf("failed to parse release info: %w", err)
 	// }
-
-	// Clean version (remove 'v' prefix if present)
 	// version := strings.TrimPrefix(release.TagName, "v")
 	// return version, nil
 
-	m.logger.Debug("Latest version check prepared")
+	m.logger.Debug("Latest version check (stub implementation)")
 	return "1.8.8", nil
 }
 
 func (m *RealBinaryManager) Download(ctx context.Context, version string) error {
-	// TODO: Download specific version from GitHub
-	// 1. Construct download URL based on OS/Arch
-	// 2. Download archive
-	// 3. Verify checksum
-	// 4. Extract binary
-	// 5. Set executable permissions
-	// 6. Move to install directory
-
-	// Example URL:
-	// https://github.com/XTLS/Xray-core/releases/download/v1.8.7/Xray-linux-64.zip
-
+	// Note: Binary download from GitHub releases
+	// This is a complex operation that requires:
+	// 1. HTTP download with progress tracking
+	// 2. Checksum verification
+	// 3. Archive extraction (zip/tar.gz)
+	// 4. Permission setting
+	// 5. Error handling and cleanup
+	
+	// TODO: Implement full download workflow
 	// osArch := m.getOSArch()
 	// downloadURL := fmt.Sprintf(
 	//     "https://github.com/XTLS/Xray-core/releases/download/v%s/Xray-%s.zip",
 	//     version, osArch,
 	// )
-
-	// Download to temp file
 	// tempFile := filepath.Join(os.TempDir(), fmt.Sprintf("xray-%s.zip", version))
-
+	// // Download file
 	// resp, err := http.Get(downloadURL)
 	// if err != nil {
 	//     return fmt.Errorf("%w: %v", ErrDownloadFailed, err)
 	// }
 	// defer resp.Body.Close()
-
 	// out, err := os.Create(tempFile)
 	// if err != nil {
 	//     return err
 	// }
 	// defer out.Close()
-
 	// if _, err := io.Copy(out, resp.Body); err != nil {
 	//     return err
 	// }
-
-	// Extract and install
+	// // Extract and install
 	// if err := m.extractAndInstall(tempFile, version); err != nil {
 	//     return err
 	// }
 
-	m.logger.Info("Binary download prepared", "version", version)
-	return nil
+	m.logger.Info("Binary download workflow prepared (stub implementation)", "version", version)
+	return fmt.Errorf("download not implemented - manual installation required")
 }
 
 func (m *RealBinaryManager) Upgrade(ctx context.Context, version string) error {
-	// TODO: Upgrade workflow
-	// 1. Check current version
-	// 2. Download new version
-	// 3. Stop running instances (or prepare for restart)
-	// 4. Backup current binary
-	// 5. Replace binary
-	// 6. Validate new binary
-	// 7. Restart instances if needed
-
+	// Note: Upgrade workflow for production systems
+	// Requires careful handling to avoid downtime
+	
 	currentVersion, err := m.CurrentVersion(ctx)
 	if err != nil {
 		return err
@@ -235,19 +222,26 @@ func (m *RealBinaryManager) Upgrade(ctx context.Context, version string) error {
 		return nil
 	}
 
-	// Backup current binary
+	// TODO: Implement full upgrade workflow
+	// 1. Validate new version exists
+	// 2. Backup current binary
+	// 3. Download new version
+	// 4. Validate new binary
+	// 5. Replace binary atomically
+	// 6. Optionally restart services
+	
 	// backupPath := m.binaryPath + ".backup." + currentVersion
 	// if err := m.copyFile(m.binaryPath, backupPath); err != nil {
 	//     m.logger.Warn("Failed to backup binary", "error", err)
 	// }
+	// if err := m.Download(ctx, version); err != nil {
+	//     return err
+	// }
 
-	// Download and install new version
-	if err := m.Download(ctx, version); err != nil {
-		return err
-	}
-
-	m.logger.Info("Binary upgrade prepared", "from", currentVersion, "to", version)
-	return nil
+	m.logger.Info("Binary upgrade workflow prepared (stub implementation)", 
+		"from", currentVersion, 
+		"to", version)
+	return fmt.Errorf("upgrade not implemented - manual upgrade required")
 }
 
 func (m *RealBinaryManager) GetPath() string {
@@ -268,51 +262,79 @@ func (m *RealBinaryManager) parseVersion(output string) string {
 }
 
 func (m *RealBinaryManager) fileExists(path string) bool {
-	// TODO: Check if file exists
-	// _, err := os.Stat(path)
-	// return err == nil
-
-	_, _ = os.Stat, path
-	return false
+	// Check if file exists
+	_, err := os.Stat(path)
+	return err == nil
 }
 
 func (m *RealBinaryManager) getOSArch() string {
-	// TODO: Detect OS and architecture
+	// Detect OS and architecture
 	// Examples: linux-64, linux-arm64-v8a, windows-64, darwin-arm64-v8a
 
-	// osName := runtime.GOOS
-	// arch := runtime.GOARCH
+	osName := runtime.GOOS
+	arch := runtime.GOARCH
 
-	// Map Go arch to Xray naming
-	// switch {
-	// case osName == "linux" && arch == "amd64":
-	//     return "linux-64"
-	// case osName == "linux" && arch == "arm64":
-	//     return "linux-arm64-v8a"
-	// case osName == "windows" && arch == "amd64":
-	//     return "windows-64"
-	// case osName == "darwin" && arch == "arm64":
-	//     return "darwin-arm64-v8a"
-	// default:
-	//     return fmt.Sprintf("%s-%s", osName, arch)
-	// }
-
-	return "linux-64"
+	// Map Go arch to Xray naming convention
+	switch {
+	case osName == "linux" && arch == "amd64":
+		return "linux-64"
+	case osName == "linux" && arch == "arm64":
+		return "linux-arm64-v8a"
+	case osName == "linux" && arch == "386":
+		return "linux-32"
+	case osName == "windows" && arch == "amd64":
+		return "windows-64"
+	case osName == "windows" && arch == "386":
+		return "windows-32"
+	case osName == "darwin" && arch == "arm64":
+		return "darwin-arm64-v8a"
+	case osName == "darwin" && arch == "amd64":
+		return "darwin-64"
+	default:
+		return fmt.Sprintf("%s-%s", osName, arch)
+	}
 }
 
 func (m *RealBinaryManager) extractAndInstall(archivePath, version string) error {
-	// TODO: Extract zip/tar.gz archive
-	// TODO: Find xray binary in extracted files
-	// TODO: Move to install directory
-	// TODO: Set executable permissions (chmod +x)
-	// TODO: Clean up temp files
+	// Note: Archive extraction is platform-specific
+	// Requires handling different archive formats (zip, tar.gz)
+	
+	// TODO: Implement extraction
+	// 1. Detect archive type
+	// 2. Extract to temp directory
+	// 3. Find xray binary in extracted files
+	// 4. Set executable permissions
+	// 5. Move to install directory
+	// 6. Clean up temp files
 
 	_, _ = archivePath, version
-	return nil
+	return fmt.Errorf("extraction not implemented")
 }
 
 func (m *RealBinaryManager) copyFile(src, dst string) error {
-	// TODO: Copy file with permissions preserved
+	// Note: File copy with permission preservation
+	// Important for binary files to maintain executable flag
+	
+	// TODO: Implement with permission preservation
+	// srcFile, err := os.Open(src)
+	// if err != nil {
+	//     return err
+	// }
+	// defer srcFile.Close()
+	// srcInfo, err := srcFile.Stat()
+	// if err != nil {
+	//     return err
+	// }
+	// dstFile, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, srcInfo.Mode())
+	// if err != nil {
+	//     return err
+	// }
+	// defer dstFile.Close()
+	// if _, err := io.Copy(dstFile, srcFile); err != nil {
+	//     return err
+	// }
+	// return dstFile.Sync()
+
 	_, _, _ = src, dst, strings.Contains
-	return nil
+	return fmt.Errorf("copy not implemented")
 }

@@ -1,10 +1,14 @@
 package runtime
 
 import (
+	"bufio"
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
+	"syscall"
 	"time"
 
 	"github.com/google/uuid"
@@ -18,6 +22,7 @@ type RealProcessManager struct {
 	logDir     string
 	registry   Registry
 	logger     *logger.Logger
+	commands   map[uuid.UUID]*exec.Cmd // Track running commands
 }
 
 // NewRealProcessManager creates a new real process manager
@@ -28,6 +33,7 @@ func NewRealProcessManager(binaryPath, configDir, logDir string, logger *logger.
 		logDir:     logDir,
 		registry:   NewRegistry(),
 		logger:     logger,
+		commands:   make(map[uuid.UUID]*exec.Cmd),
 	}
 }
 
@@ -42,24 +48,49 @@ func (m *RealProcessManager) Start(ctx context.Context, instanceID uuid.UUID) er
 	logPath := m.getLogPath(instanceID)
 	errorPath := m.getErrorPath(instanceID)
 
+	// Ensure log directory exists
+	if err := os.MkdirAll(m.logDir, 0755); err != nil {
+		m.logger.Error("Failed to create log directory", "error", err)
+		return fmt.Errorf("failed to create log directory: %w", err)
+	}
+
+	// Open log files
+	logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		m.logger.Error("Failed to open log file", "error", err, "path", logPath)
+		return fmt.Errorf("failed to open log file: %w", err)
+	}
+
+	errorFile, err := os.OpenFile(errorPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		logFile.Close()
+		m.logger.Error("Failed to open error log file", "error", err, "path", errorPath)
+		return fmt.Errorf("failed to open error log file: %w", err)
+	}
+
 	// Prepare command
-	// In production, this will execute: xray run -config /path/to/config.json
-	_ = exec.CommandContext(ctx, m.binaryPath, "run", "-config", configPath)
+	cmd := exec.CommandContext(ctx, m.binaryPath, "run", "-config", configPath)
+	cmd.Stdout = logFile
+	cmd.Stderr = errorFile
 
-	// TODO: Set up log file redirection
-	// cmd.Stdout = logFile
-	// cmd.Stderr = errorFile
+	// Set process group for proper signal handling
+	m.setProcessGroup(cmd)
 
-	// TODO: Start the process
-	// if err := cmd.Start(); err != nil {
-	//     m.logger.Error("Failed to start Xray process", "error", err, "instance_id", instanceID)
-	//     return fmt.Errorf("%w: %v", ErrProcessStartFailed, err)
-	// }
+	// Start the process
+	if err := cmd.Start(); err != nil {
+		logFile.Close()
+		errorFile.Close()
+		m.logger.Error("Failed to start Xray process", "error", err, "instance_id", instanceID)
+		return fmt.Errorf("%w: %v", ErrProcessStartFailed, err)
+	}
+
+	// Store command for later reference
+	m.commands[instanceID] = cmd
 
 	// Register process
 	processInfo := &ProcessInfo{
 		InstanceID: instanceID,
-		ProcessID:  0, // TODO: cmd.Process.Pid after cmd.Start()
+		ProcessID:  cmd.Process.Pid,
 		StartedAt:  time.Now().UTC(),
 		ConfigPath: configPath,
 		LogPath:    logPath,
@@ -69,13 +100,21 @@ func (m *RealProcessManager) Start(ctx context.Context, instanceID uuid.UUID) er
 	}
 
 	if err := m.registry.Register(processInfo); err != nil {
+		// Kill the process if registration fails
+		cmd.Process.Kill()
+		logFile.Close()
+		errorFile.Close()
+		delete(m.commands, instanceID)
 		return err
 	}
 
-	m.logger.Info("Xray process start prepared", "instance_id", instanceID, "config", configPath)
+	m.logger.Info("Xray process started successfully", 
+		"instance_id", instanceID, 
+		"pid", cmd.Process.Pid,
+		"config", configPath)
 
-	// TODO: Monitor process in goroutine
-	// go m.monitorProcess(instanceID, cmd.Process)
+	// Monitor process in background
+	go m.monitorProcess(instanceID, cmd, logFile, errorFile)
 
 	return nil
 }
@@ -87,41 +126,49 @@ func (m *RealProcessManager) Stop(ctx context.Context, instanceID uuid.UUID) err
 		return ErrProcessNotRunning
 	}
 
-	// TODO: Get process and send SIGTERM
-	// process, err := os.FindProcess(info.ProcessID)
-	// if err != nil {
-	//     return fmt.Errorf("%w: %v", ErrProcessNotFound, err)
-	// }
+	// Get process
+	process, err := os.FindProcess(info.ProcessID)
+	if err != nil {
+		m.logger.Error("Failed to find process", "error", err, "instance_id", instanceID)
+		return fmt.Errorf("%w: %v", ErrProcessNotFound, err)
+	}
 
-	// TODO: Send SIGTERM for graceful shutdown
-	// if err := process.Signal(syscall.SIGTERM); err != nil {
-	//     m.logger.Error("Failed to send SIGTERM", "error", err, "instance_id", instanceID)
-	//     return fmt.Errorf("%w: %v", ErrProcessStopFailed, err)
-	// }
+	// Send SIGTERM for graceful shutdown
+	m.logger.Info("Sending SIGTERM to process", "instance_id", instanceID, "pid", info.ProcessID)
+	if err := m.sendSignal(process, syscall.SIGTERM); err != nil {
+		m.logger.Error("Failed to send SIGTERM", "error", err, "instance_id", instanceID)
+		return fmt.Errorf("%w: %v", ErrProcessStopFailed, err)
+	}
 
-	// TODO: Wait for process to exit with timeout
-	// done := make(chan error, 1)
-	// go func() {
-	//     _, err := process.Wait()
-	//     done <- err
-	// }()
+	// Wait for process to exit with timeout
+	done := make(chan error, 1)
+	go func() {
+		_, err := process.Wait()
+		done <- err
+	}()
 
-	// select {
-	// case <-time.After(10 * time.Second):
-	//     // Force kill if not stopped gracefully
-	//     process.Kill()
-	// case err := <-done:
-	//     if err != nil {
-	//         m.logger.Warn("Process exit with error", "error", err, "instance_id", instanceID)
-	//     }
-	// }
+	select {
+	case <-time.After(10 * time.Second):
+		// Force kill if not stopped gracefully
+		m.logger.Warn("Process did not stop gracefully, forcing kill", "instance_id", instanceID)
+		if err := process.Kill(); err != nil {
+			m.logger.Error("Failed to kill process", "error", err, "instance_id", instanceID)
+		}
+	case err := <-done:
+		if err != nil {
+			m.logger.Warn("Process exited with error", "error", err, "instance_id", instanceID)
+		}
+	}
+
+	// Cleanup
+	delete(m.commands, instanceID)
 
 	// Remove from registry
 	if err := m.registry.Remove(instanceID); err != nil {
 		return err
 	}
 
-	m.logger.Info("Xray process stopped", "instance_id", instanceID, "pid", info.ProcessID)
+	m.logger.Info("Xray process stopped successfully", "instance_id", instanceID, "pid", info.ProcessID)
 	return nil
 }
 
@@ -147,17 +194,21 @@ func (m *RealProcessManager) Reload(ctx context.Context, instanceID uuid.UUID) e
 		return ErrProcessNotRunning
 	}
 
-	// TODO: Xray supports hot reload via API
-	// In production, use Xray's gRPC API to reload config without restart
-	// This preserves existing connections
+	// Get process
+	process, err := os.FindProcess(info.ProcessID)
+	if err != nil {
+		return fmt.Errorf("%w: %v", ErrProcessNotFound, err)
+	}
 
-	// For now, log the reload intention
-	m.logger.Info("Config reload prepared", "instance_id", instanceID, "pid", info.ProcessID)
+	// Send SIGHUP for config reload
+	// Xray supports SIGHUP for hot reload without dropping connections
+	m.logger.Info("Sending SIGHUP for config reload", "instance_id", instanceID, "pid", info.ProcessID)
+	if err := m.sendSignal(process, syscall.SIGHUP); err != nil {
+		m.logger.Error("Failed to send SIGHUP", "error", err, "instance_id", instanceID)
+		return fmt.Errorf("failed to reload config: %w", err)
+	}
 
-	// TODO: Implement hot reload via Xray API
-	// xrayAPI := xray.NewAPIClient(...)
-	// xrayAPI.ReloadConfig(ctx, info.ConfigPath)
-
+	m.logger.Info("Config reload signal sent successfully", "instance_id", instanceID, "pid", info.ProcessID)
 	return nil
 }
 
@@ -170,21 +221,29 @@ func (m *RealProcessManager) Status(ctx context.Context, instanceID uuid.UUID) (
 		}, nil
 	}
 
-	// TODO: Check if process is actually running
-	// process, err := os.FindProcess(info.ProcessID)
-	// if err != nil {
-	//     return &ProcessStatus{
-	//         InstanceID: instanceID,
-	//         Running:    false,
-	//         ErrorReason: "process not found",
-	//     }, nil
-	// }
+	// Check if process is actually running
+	process, err := os.FindProcess(info.ProcessID)
+	if err != nil {
+		return &ProcessStatus{
+			InstanceID:  instanceID,
+			Running:     false,
+			ErrorReason: "process not found",
+		}, nil
+	}
 
-	// TODO: Get process stats (CPU, Memory)
-	// In Linux: read from /proc/[pid]/stat
-	// In production, use system monitoring library
+	// Verify process is still alive by sending signal 0
+	if err := m.sendSignal(process, syscall.Signal(0)); err != nil {
+		return &ProcessStatus{
+			InstanceID:  instanceID,
+			Running:     false,
+			ErrorReason: "process not responding",
+		}, nil
+	}
 
 	uptime := time.Since(info.StartedAt)
+
+	// Get process stats (basic implementation)
+	cpuUsage, memoryUsage := m.getProcessStats(info.ProcessID)
 
 	return &ProcessStatus{
 		InstanceID:  info.InstanceID,
@@ -195,8 +254,8 @@ func (m *RealProcessManager) Status(ctx context.Context, instanceID uuid.UUID) (
 		ConfigPath:  info.ConfigPath,
 		LogPath:     info.LogPath,
 		ErrorPath:   info.ErrorPath,
-		CPUUsage:    0, // TODO: Implement
-		MemoryUsage: 0, // TODO: Implement
+		CPUUsage:    cpuUsage,
+		MemoryUsage: memoryUsage,
 	}, nil
 }
 
@@ -222,19 +281,14 @@ func (m *RealProcessManager) GetLogs(ctx context.Context, instanceID uuid.UUID, 
 		return nil, ErrProcessNotRunning
 	}
 
-	// TODO: Tail log file
-	// In production:
-	// 1. Open log file at info.LogPath
-	// 2. Read last N lines
-	// 3. Return as string array
+	// Read last N lines from log file
+	logLines, err := m.tailFile(info.LogPath, lines)
+	if err != nil {
+		m.logger.Error("Failed to read log file", "error", err, "path", info.LogPath)
+		return nil, fmt.Errorf("failed to read log file: %w", err)
+	}
 
-	m.logger.Debug("Log retrieval prepared", "instance_id", instanceID, "log_path", info.LogPath, "lines", lines)
-
-	return []string{
-		fmt.Sprintf("[Info] Process started at %s", info.StartedAt.Format(time.RFC3339)),
-		fmt.Sprintf("[Info] Config loaded from %s", info.ConfigPath),
-		fmt.Sprintf("[Info] PID: %d", info.ProcessID),
-	}, nil
+	return logLines, nil
 }
 
 func (m *RealProcessManager) Kill(ctx context.Context, instanceID uuid.UUID) error {
@@ -243,16 +297,20 @@ func (m *RealProcessManager) Kill(ctx context.Context, instanceID uuid.UUID) err
 		return ErrProcessNotRunning
 	}
 
-	// TODO: Force kill process with SIGKILL
-	// process, err := os.FindProcess(info.ProcessID)
-	// if err != nil {
-	//     return fmt.Errorf("%w: %v", ErrProcessNotFound, err)
-	// }
+	// Force kill process with SIGKILL
+	process, err := os.FindProcess(info.ProcessID)
+	if err != nil {
+		return fmt.Errorf("%w: %v", ErrProcessNotFound, err)
+	}
 
-	// if err := process.Kill(); err != nil {
-	//     m.logger.Error("Failed to kill process", "error", err, "instance_id", instanceID)
-	//     return fmt.Errorf("%w: %v", ErrProcessKillFailed, err)
-	// }
+	m.logger.Warn("Force killing process", "instance_id", instanceID, "pid", info.ProcessID)
+	if err := process.Kill(); err != nil {
+		m.logger.Error("Failed to kill process", "error", err, "instance_id", instanceID)
+		return fmt.Errorf("%w: %v", ErrProcessKillFailed, err)
+	}
+
+	// Cleanup
+	delete(m.commands, instanceID)
 
 	// Remove from registry
 	if err := m.registry.Remove(instanceID); err != nil {
@@ -264,12 +322,48 @@ func (m *RealProcessManager) Kill(ctx context.Context, instanceID uuid.UUID) err
 }
 
 // monitorProcess monitors a running process and handles unexpected exits
-func (m *RealProcessManager) monitorProcess(instanceID uuid.UUID, process interface{}) {
-	// TODO: Implement process monitoring
-	// 1. Wait for process to exit
-	// 2. Log exit status
-	// 3. Remove from registry
-	// 4. Optionally restart if configured for auto-restart
+func (m *RealProcessManager) monitorProcess(instanceID uuid.UUID, cmd *exec.Cmd, logFile, errorFile *os.File) {
+	defer logFile.Close()
+	defer errorFile.Close()
+
+	// Wait for process to exit
+	err := cmd.Wait()
+
+	// Log exit status
+	if err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			m.logger.Error("Process exited with error",
+				"instance_id", instanceID,
+				"pid", cmd.Process.Pid,
+				"exit_code", exitErr.ExitCode(),
+				"error", exitErr)
+		} else {
+			m.logger.Error("Process wait failed",
+				"instance_id", instanceID,
+				"pid", cmd.Process.Pid,
+				"error", err)
+		}
+	} else {
+		m.logger.Info("Process exited normally",
+			"instance_id", instanceID,
+			"pid", cmd.Process.Pid)
+	}
+
+	// Remove from registry
+	if err := m.registry.Remove(instanceID); err != nil {
+		m.logger.Error("Failed to remove process from registry",
+			"instance_id", instanceID,
+			"error", err)
+	}
+
+	// Cleanup command reference
+	delete(m.commands, instanceID)
+
+	// TODO: Implement auto-restart logic if configured
+	// if m.autoRestart {
+	//     m.logger.Info("Auto-restarting crashed process", "instance_id", instanceID)
+	//     go m.Start(context.Background(), instanceID)
+	// }
 }
 
 func (m *RealProcessManager) getConfigPath(instanceID uuid.UUID) string {
@@ -287,4 +381,79 @@ func (m *RealProcessManager) getErrorPath(instanceID uuid.UUID) string {
 // GetRegistry returns the internal registry for testing purposes
 func (m *RealProcessManager) GetRegistry() Registry {
 	return m.registry
+}
+
+// sendSignal sends a signal to a process (cross-platform compatible)
+func (m *RealProcessManager) sendSignal(process *os.Process, sig syscall.Signal) error {
+	if runtime.GOOS == "windows" {
+		// Windows doesn't support POSIX signals
+		// For graceful shutdown, we need to send a different signal or use process.Kill()
+		if sig == syscall.SIGTERM || sig == syscall.SIGHUP {
+			return process.Signal(os.Interrupt)
+		}
+		return process.Kill()
+	}
+	return process.Signal(sig)
+}
+
+// setProcessGroup sets process group for proper signal handling
+func (m *RealProcessManager) setProcessGroup(cmd *exec.Cmd) {
+	if runtime.GOOS != "windows" {
+		// On Unix systems, create a new process group
+		cmd.SysProcAttr = &syscall.SysProcAttr{
+			Setpgid: true,
+		}
+	}
+	// Windows doesn't need special process group handling
+}
+
+// tailFile reads the last N lines from a file
+func (m *RealProcessManager) tailFile(filePath string, lines int) ([]string, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return []string{}, nil
+		}
+		return nil, err
+	}
+	defer file.Close()
+
+	// Read all lines (for simplicity)
+	// In production, use more efficient tail algorithm for large files
+	var allLines []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		allLines = append(allLines, scanner.Text())
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	// Return last N lines
+	if len(allLines) <= lines {
+		return allLines, nil
+	}
+	return allLines[len(allLines)-lines:], nil
+}
+
+// getProcessStats retrieves CPU and memory usage of a process
+func (m *RealProcessManager) getProcessStats(pid int) (cpuUsage, memoryUsage float64) {
+	// Basic implementation - returns 0 for now
+	// In production, use platform-specific methods:
+	// - Linux: Read /proc/[pid]/stat and /proc/[pid]/status
+	// - Windows: Use performance counters or WMI
+	// - Or use a library like gopsutil for cross-platform support
+
+	// TODO: Implement with gopsutil or platform-specific code
+	// import "github.com/shirou/gopsutil/v3/process"
+	// p, err := process.NewProcess(int32(pid))
+	// if err != nil {
+	//     return 0, 0
+	// }
+	// cpuPercent, _ := p.CPUPercent()
+	// memInfo, _ := p.MemoryInfo()
+	// return cpuPercent, float64(memInfo.RSS) / 1024 / 1024 // MB
+
+	return 0.0, 0.0
 }
