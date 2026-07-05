@@ -2,9 +2,15 @@ package auth
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/suproxy/backend/internal/application/dto"
 	"github.com/suproxy/backend/internal/application/mapper"
+	"github.com/suproxy/backend/internal/domain/audit"
+	"github.com/suproxy/backend/internal/domain/session"
 	"github.com/suproxy/backend/internal/domain/user"
 	"github.com/suproxy/backend/internal/infrastructure/jwt"
 	"github.com/suproxy/backend/internal/infrastructure/logger"
@@ -12,16 +18,26 @@ import (
 )
 
 type LoginCommand struct {
-	userRepo   user.Repository
-	jwtManager *jwt.Manager
-	logger     *logger.Logger
+	userRepo         user.Repository
+	refreshTokenRepo session.RefreshTokenRepository
+	auditRepo        audit.Repository
+	jwtManager       *jwt.Manager
+	logger           *logger.Logger
 }
 
-func NewLoginCommand(userRepo user.Repository, jwtManager *jwt.Manager, logger *logger.Logger) *LoginCommand {
+func NewLoginCommand(
+	userRepo user.Repository,
+	refreshTokenRepo session.RefreshTokenRepository,
+	auditRepo audit.Repository,
+	jwtManager *jwt.Manager,
+	logger *logger.Logger,
+) *LoginCommand {
 	return &LoginCommand{
-		userRepo:   userRepo,
-		jwtManager: jwtManager,
-		logger:     logger,
+		userRepo:         userRepo,
+		refreshTokenRepo: refreshTokenRepo,
+		auditRepo:        auditRepo,
+		jwtManager:       jwtManager,
+		logger:           logger,
 	}
 }
 
@@ -36,7 +52,35 @@ func (c *LoginCommand) Execute(ctx context.Context, req *dto.LoginRequest) (*dto
 	foundUser, err := c.userRepo.FindByEmail(ctx, email)
 	if err != nil {
 		c.logger.Warn("User not found", "email", email.String())
+		
+		// Audit log for failed login
+		c.auditRepo.Create(ctx, audit.NewLog(
+			uuid.Nil,
+			audit.ActionLogin,
+			"user",
+			uuid.Nil,
+			req.IPAddress,
+			req.UserAgent,
+		))
+		
 		return nil, user.ErrInvalidCredentials
+	}
+
+	// Check if account is locked
+	if foundUser.IsLocked() {
+		c.logger.Warn("Locked account attempted login", "user_id", foundUser.ID)
+		
+		// Audit log
+		c.auditRepo.Create(ctx, audit.NewLog(
+			foundUser.ID,
+			audit.ActionLogin,
+			"user",
+			foundUser.ID,
+			req.IPAddress,
+			req.UserAgent,
+		))
+		
+		return nil, user.ErrUserLocked
 	}
 
 	// Check if user is active
@@ -48,7 +92,28 @@ func (c *LoginCommand) Execute(ctx context.Context, req *dto.LoginRequest) (*dto
 	// Verify password
 	if err := security.CheckPassword(foundUser.Password.Hash(), req.Password); err != nil {
 		c.logger.Warn("Invalid password attempt", "user_id", foundUser.ID)
+		
+		// Record failed login
+		foundUser.RecordFailedLogin()
+		c.userRepo.Update(ctx, foundUser)
+		
+		// Audit log
+		c.auditRepo.Create(ctx, audit.NewLog(
+			foundUser.ID,
+			audit.ActionLogin,
+			"user",
+			foundUser.ID,
+			req.IPAddress,
+			req.UserAgent,
+		))
+		
 		return nil, user.ErrInvalidCredentials
+	}
+
+	// Record successful login
+	foundUser.RecordSuccessfulLogin(req.IPAddress)
+	if err := c.userRepo.Update(ctx, foundUser); err != nil {
+		c.logger.Error("Failed to update user login info", "error", err)
 	}
 
 	// Generate JWT tokens
@@ -61,6 +126,35 @@ func (c *LoginCommand) Execute(ctx context.Context, req *dto.LoginRequest) (*dto
 		return nil, err
 	}
 
+	// Store refresh token
+	tokenHash := hashRefreshToken(refreshToken)
+	refreshTokenEntity := session.NewRefreshToken(
+		foundUser.ID,
+		tokenHash,
+		req.DeviceName,
+		req.Platform,
+		req.IPAddress,
+		req.UserAgent,
+		time.Now().UTC().Add(time.Duration(c.jwtManager.Config().RefreshTokenExpiry)*time.Hour),
+	)
+
+	if err := c.refreshTokenRepo.Create(ctx, refreshTokenEntity); err != nil {
+		c.logger.Error("Failed to store refresh token", "error", err)
+		// Continue anyway, user can still use access token
+	}
+
+	// Audit log for successful login
+	auditLog := audit.NewLog(
+		foundUser.ID,
+		audit.ActionLogin,
+		"user",
+		foundUser.ID,
+		req.IPAddress,
+		req.UserAgent,
+	)
+	auditLog.AddMetadata("status", "success")
+	c.auditRepo.Create(ctx, auditLog)
+
 	c.logger.Info("User logged in successfully", "user_id", foundUser.ID, "email", email.String())
 
 	// Map to response
@@ -71,4 +165,9 @@ func (c *LoginCommand) Execute(ctx context.Context, req *dto.LoginRequest) (*dto
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}, nil
+}
+
+func hashRefreshToken(token string) string {
+	hash := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(hash[:])
 }

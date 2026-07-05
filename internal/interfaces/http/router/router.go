@@ -38,6 +38,9 @@ func (r *Router) Setup() {
 			authenticated.Use(middleware.AuthMiddleware(r.jwtManager))
 			{
 				authenticated.GET("/me", r.authHandler.GetCurrentUser)
+				authenticated.GET("/sessions", r.authHandler.GetSessions)
+				authenticated.DELETE("/sessions/:id", r.authHandler.LogoutSingle)
+				authenticated.POST("/logout-all", r.authHandler.LogoutAll)
 			}
 		}
 	}

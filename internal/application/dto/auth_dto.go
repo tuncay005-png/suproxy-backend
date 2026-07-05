@@ -8,8 +8,12 @@ type RegisterRequest struct {
 }
 
 type LoginRequest struct {
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required"`
+	Email      string `json:"email" binding:"required,email"`
+	Password   string `json:"password" binding:"required"`
+	DeviceName string `json:"device_name"`
+	Platform   string `json:"platform"`
+	IPAddress  string `json:"-"`
+	UserAgent  string `json:"-"`
 }
 
 type RefreshTokenRequest struct {
