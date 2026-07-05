@@ -55,15 +55,18 @@ func (g *generator) Generate(ctx context.Context, instanceID uuid.UUID) (*XrayCo
 		return nil, err
 	}
 
-	// Build config
+	// Build config with production-grade settings
 	config := &XrayConfig{
 		Log: &LogConfig{
 			Loglevel: "warning",
+			Access:   "",     // Empty means no access log
+			Error:    "",     // Empty means stderr
 		},
 		API: &APIConfig{
 			Tag:      "api",
-			Services: []string{"HandlerService", "StatsService"},
+			Services: []string{"HandlerService", "StatsService", "LoggerService"},
 		},
+		DNS:       g.generateDNS(),
 		Stats:     &StatsConfig{},
 		Policy:    g.generatePolicy(),
 		Inbounds:  make([]InboundConfig, 0, len(inbounds)+1),
@@ -71,7 +74,7 @@ func (g *generator) Generate(ctx context.Context, instanceID uuid.UUID) (*XrayCo
 		Routing:   g.generateRouting(),
 	}
 
-	// Add API inbound
+	// Add API inbound for management
 	config.Inbounds = append(config.Inbounds, g.generateAPIInbound())
 
 	// Generate inbound configs
@@ -79,6 +82,11 @@ func (g *generator) Generate(ctx context.Context, instanceID uuid.UUID) (*XrayCo
 		// Find clients for this inbound
 		clients, err := g.clientRepo.FindEnabledByInboundID(ctx, inbound.ID)
 		if err != nil {
+			continue
+		}
+
+		// Skip if no clients
+		if len(clients) == 0 {
 			continue
 		}
 
@@ -116,7 +124,7 @@ func (g *generator) GenerateInbound(ctx context.Context, inbound *xray.Inbound, 
 		Protocol: string(inbound.Protocol),
 		Sniffing: &SniffingConfig{
 			Enabled:      true,
-			DestOverride: []string{"http", "tls"},
+			DestOverride: []string{"http", "tls", "quic"},
 		},
 	}
 
@@ -132,7 +140,7 @@ func (g *generator) GenerateInbound(ctx context.Context, inbound *xray.Inbound, 
 		inboundConfig.Settings = g.generateShadowsocksSettings(clients)
 	}
 
-	// Generate stream settings
+	// Generate stream settings with proper Reality support
 	inboundConfig.StreamSettings = g.generateStreamSettings(inbound, reality)
 
 	return inboundConfig, nil
@@ -167,18 +175,88 @@ func (g *generator) generateAPIInbound() InboundConfig {
 		Settings: map[string]interface{}{
 			"address": "127.0.0.1",
 		},
+		// Note: API inbound should only be accessible locally
+	}
+}
+
+// GenerateExampleConfig generates a complete example config for testing
+func (g *generator) GenerateExampleConfig() *XrayConfig {
+	return &XrayConfig{
+		Log: &LogConfig{
+			Loglevel: "warning",
+		},
+		API: &APIConfig{
+			Tag:      "api",
+			Services: []string{"HandlerService", "StatsService", "LoggerService"},
+		},
+		DNS: g.generateDNS(),
+		Stats: &StatsConfig{},
+		Policy: g.generatePolicy(),
+		Inbounds: []InboundConfig{
+			{
+				Tag:      "vless-reality-example",
+				Port:     443,
+				Protocol: "vless",
+				Settings: map[string]interface{}{
+					"clients": []VLESSClient{
+						{
+							ID:    "00000000-0000-0000-0000-000000000000",
+							Flow:  "xtls-rprx-vision",
+							Email: "example@suproxy.com",
+							Level: 0,
+						},
+					},
+					"decryption": "none",
+				},
+				StreamSettings: &StreamSettings{
+					Network:  "tcp",
+					Security: "reality",
+					TCPSettings: &TCPSettings{
+						Header: map[string]interface{}{
+							"type": "none",
+						},
+					},
+					RealitySettings: &RealitySettings{
+						Show:        false,
+						Dest:        "www.google.com:443",
+						Xver:        0,
+						ServerNames: []string{"www.google.com", "www.youtube.com"},
+						PrivateKey:  "PRIVATE_KEY_HERE",
+						ShortIds:    []string{"0123456789abcdef"},
+						Fingerprint: "chrome",
+						SpiderX:     "/",
+					},
+				},
+				Sniffing: &SniffingConfig{
+					Enabled:      true,
+					DestOverride: []string{"http", "tls", "quic"},
+				},
+			},
+		},
+		Outbounds: g.generateOutbounds(),
+		Routing:   g.generateRouting(),
 	}
 }
 
 func (g *generator) generateOutbounds() []OutboundConfig {
 	return []OutboundConfig{
+		// Direct outbound for direct connections
 		{
 			Tag:      "direct",
 			Protocol: "freedom",
+			Settings: map[string]interface{}{
+				"domainStrategy": "UseIPv4",
+			},
 		},
+		// Block outbound for blocking traffic
 		{
 			Tag:      "block",
 			Protocol: "blackhole",
+			Settings: map[string]interface{}{
+				"response": map[string]interface{}{
+					"type": "http",
+				},
+			},
 		},
 	}
 }
@@ -187,12 +265,52 @@ func (g *generator) generateRouting() *RoutingConfig {
 	return &RoutingConfig{
 		DomainStrategy: "AsIs",
 		Rules: []RoutingRule{
+			// API routing
 			{
 				Type:        "field",
 				InboundTag:  []string{"api"},
 				OutboundTag: "api",
 			},
+			// Block ads and trackers
+			{
+				Type: "field",
+				Domain: []string{
+					"geosite:category-ads-all",
+				},
+				OutboundTag: "block",
+			},
+			// Direct connection for private IPs
+			{
+				Type: "field",
+				IP: []string{
+					"geoip:private",
+				},
+				OutboundTag: "direct",
+			},
+			// Default: direct
 		},
+	}
+}
+
+// generateDNS creates DNS configuration
+func (g *generator) generateDNS() *DNSConfig {
+	return &DNSConfig{
+		Servers: []DNSServer{
+			{
+				Address: "1.1.1.1",
+				Port:    53,
+				Domains: []string{"geosite:geolocation-!cn"},
+			},
+			{
+				Address: "223.5.5.5",
+				Port:    53,
+				Domains: []string{"geosite:cn"},
+			},
+			{
+				Address: "localhost",
+			},
+		},
+		QueryStrategy: "UseIPv4",
 	}
 }
 
@@ -264,29 +382,42 @@ func (g *generator) generateStreamSettings(inbound *xray.Inbound, reality *xray.
 		Security: string(inbound.Security),
 	}
 
-	// Configure transport
+	// Configure transport with production-grade settings
 	switch inbound.Transport {
 	case xray.TransportTCP:
-		stream.TCPSettings = &TCPSettings{}
+		stream.TCPSettings = &TCPSettings{
+			Header: map[string]interface{}{
+				"type": "none",
+			},
+		}
 	case xray.TransportWebSocket:
 		stream.WSSettings = &WSSettings{
 			Path: "/",
+			Headers: map[string]string{
+				"Host": "www.example.com",
+			},
 		}
 	case xray.TransportHTTP:
 		stream.HTTPSettings = &HTTPSettings{
+			Host: []string{"www.example.com"},
 			Path: "/",
 		}
 	case xray.TransportGRPC:
 		stream.GRPCSettings = &GRPCSettings{
 			ServiceName: "GunService",
+			MultiMode:   false,
 		}
 	case xray.TransportQUIC:
 		stream.QUICSettings = &QUICSettings{
 			Security: "none",
+			Key:      "",
+			Header: map[string]interface{}{
+				"type": "none",
+			},
 		}
 	}
 
-	// Configure security
+	// Configure security with full Reality support
 	switch inbound.Security {
 	case xray.SecurityTLS:
 		stream.TLSSettings = &TLSSettings{
@@ -294,15 +425,31 @@ func (g *generator) generateStreamSettings(inbound *xray.Inbound, reality *xray.
 		}
 	case xray.SecurityREALITY:
 		if reality != nil {
+			// Production-grade Reality configuration
+			stream.RealitySettings = &RealitySettings{
+				Show:         false,
+				Dest:         reality.Dest,
+				Xver:         0,
+				ServerNames:  []string{reality.ServerName},
+				PrivateKey:   reality.PrivateKey,
+				MinClientVer: "",
+				MaxClientVer: "",
+				MaxTimeDiff:  0,
+				ShortIds:     []string{reality.ShortID},
+				Fingerprint:  reality.Fingerprint,
+				SpiderX:      reality.SpiderX,
+			}
+		} else {
+			// Fallback Reality config if not provided
 			stream.RealitySettings = &RealitySettings{
 				Show:        false,
 				Dest:        "www.google.com:443",
 				Xver:        0,
-				ServerNames: []string{reality.ServerName},
-				PrivateKey:  reality.PrivateKey,
-				ShortIds:    []string{reality.ShortID},
-				Fingerprint: reality.Fingerprint,
-				SpiderX:     reality.SpiderX,
+				ServerNames: []string{"www.google.com"},
+				PrivateKey:  "", // Must be provided by domain entity
+				ShortIds:    []string{""},
+				Fingerprint: "chrome",
+				SpiderX:     "/",
 			}
 		}
 	}
