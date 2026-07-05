@@ -6,41 +6,47 @@ import (
 	"github.com/google/uuid"
 )
 
+// Server represents a physical or virtual server that hosts VPN nodes
 type Server struct {
-	ID          uuid.UUID
-	Name        string
-	Location    Location
-	IPAddress   string
-	Domain      string
-	Port        int
-	Capacity    Capacity
-	Status      Status
-	Tags        []string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID         uuid.UUID
+	Name       string
+	Country    string
+	City       string
+	Hostname   string
+	Provider   string
+	IPv4       string
+	IPv6       string
+	Status     Status
+	IsPublic   bool
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
 }
 
-func NewServer(name string, location Location, ipAddress string, domain string, port int, capacity Capacity) (*Server, error) {
+func NewServer(name, country, city, hostname, provider, ipv4 string) (*Server, error) {
 	if name == "" {
 		return nil, ErrInvalidServerName
 	}
-	if ipAddress == "" {
-		return nil, ErrInvalidIPAddress
+	if country == "" {
+		return nil, ErrInvalidCountry
 	}
-	if port <= 0 || port > 65535 {
-		return nil, ErrInvalidPort
+	if hostname == "" {
+		return nil, ErrInvalidHostname
+	}
+	if ipv4 == "" {
+		return nil, ErrInvalidIPAddress
 	}
 
 	return &Server{
 		ID:        uuid.New(),
 		Name:      name,
-		Location:  location,
-		IPAddress: ipAddress,
-		Domain:    domain,
-		Port:      port,
-		Capacity:  capacity,
-		Status:    StatusActive,
-		Tags:      []string{},
+		Country:   country,
+		City:      city,
+		Hostname:  hostname,
+		Provider:  provider,
+		IPv4:      ipv4,
+		IPv6:      "",
+		Status:    StatusOffline,
+		IsPublic:  true,
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),
 	}, nil
@@ -65,44 +71,43 @@ func (s *Server) Deactivate() error {
 }
 
 func (s *Server) SetMaintenance() error {
-	if s.Status == StatusMaintenance {
-		return ErrServerAlreadyInMaintenance
-	}
 	s.Status = StatusMaintenance
 	s.UpdatedAt = time.Now().UTC()
 	return nil
 }
 
-func (s *Server) UpdateCapacity(capacity Capacity) {
-	s.Capacity = capacity
-	s.UpdatedAt = time.Now().UTC()
-}
-
-func (s *Server) AddTag(tag string) {
-	for _, t := range s.Tags {
-		if t == tag {
-			return
-		}
-	}
-	s.Tags = append(s.Tags, tag)
-	s.UpdatedAt = time.Now().UTC()
-}
-
-func (s *Server) RemoveTag(tag string) {
-	newTags := []string{}
-	for _, t := range s.Tags {
-		if t != tag {
-			newTags = append(newTags, t)
-		}
-	}
-	s.Tags = newTags
-	s.UpdatedAt = time.Now().UTC()
-}
-
-func (s *Server) IsActive() bool {
+func (s *Server) IsOnline() bool {
 	return s.Status == StatusActive
 }
 
 func (s *Server) IsAvailable() bool {
-	return s.Status == StatusActive && !s.Capacity.IsFull()
+	return s.Status == StatusActive && s.IsPublic
+}
+
+func (s *Server) UpdateDetails(name, city, provider string) {
+	if name != "" {
+		s.Name = name
+	}
+	if city != "" {
+		s.City = city
+	}
+	if provider != "" {
+		s.Provider = provider
+	}
+	s.UpdatedAt = time.Now().UTC()
+}
+
+func (s *Server) UpdateIPv6(ipv6 string) {
+	s.IPv6 = ipv6
+	s.UpdatedAt = time.Now().UTC()
+}
+
+func (s *Server) MakePublic() {
+	s.IsPublic = true
+	s.UpdatedAt = time.Now().UTC()
+}
+
+func (s *Server) MakePrivate() {
+	s.IsPublic = false
+	s.UpdatedAt = time.Now().UTC()
 }
