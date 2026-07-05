@@ -39,6 +39,17 @@ func NewAuthHandler(
 	}
 }
 
+// Register godoc
+// @Summary User registration
+// @Description Register a new user account
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body dto.RegisterRequest true "Registration data"
+// @Success 201 {object} dto.RegisterResponse
+// @Failure 400 {object} response.Response
+// @Failure 409 {object} response.Response
+// @Router /api/v1/auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req dto.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -55,6 +66,17 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	response.SuccessCreated(c, result)
 }
 
+// Login godoc
+// @Summary User login
+// @Description Authenticate user with email and password
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body dto.LoginRequest true "Login credentials"
+// @Success 200 {object} dto.LoginResponse
+// @Failure 400 {object} response.Response
+// @Failure 401 {object} response.Response
+// @Router /api/v1/auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req dto.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -75,6 +97,17 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	response.SuccessOK(c, result)
 }
 
+// RefreshToken godoc
+// @Summary Refresh access token
+// @Description Get a new access token using refresh token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body dto.RefreshTokenRequest true "Refresh token"
+// @Success 200 {object} dto.TokenResponse
+// @Failure 400 {object} response.Response
+// @Failure 401 {object} response.Response
+// @Router /api/v1/auth/refresh [post]
 func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	var req dto.RefreshTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -91,6 +124,16 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	response.SuccessOK(c, result)
 }
 
+// GetCurrentUser godoc
+// @Summary Get current user
+// @Description Get the authenticated user's information
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} dto.UserResponse
+// @Failure 401 {object} response.Response
+// @Router /api/v1/auth/me [get]
 func (h *AuthHandler) GetCurrentUser(c *gin.Context) {
 	userIDStr, exists := jwt.GetUserID(c)
 	if !exists {
