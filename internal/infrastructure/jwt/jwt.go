@@ -25,6 +25,7 @@ const (
 type Claims struct {
 	UserID    string    `json:"user_id"`
 	Email     string    `json:"email"`
+	Role      string    `json:"role"`
 	TokenType TokenType `json:"token_type"`
 	jwt.RegisteredClaims
 }
@@ -38,23 +39,23 @@ func NewManager(cfg *config.JWTConfig) *Manager {
 }
 
 // GenerateAccessToken generates a new access token
-func (m *Manager) GenerateAccessToken(userID, email string) (string, error) {
-	return m.generateToken(userID, email, AccessToken, time.Duration(m.config.AccessTokenExpiry)*time.Minute)
+func (m *Manager) GenerateAccessToken(userID, email, role string) (string, error) {
+	return m.generateToken(userID, email, role, AccessToken, time.Duration(m.config.AccessTokenExpiry)*time.Minute)
 }
 
 // GenerateRefreshToken generates a new refresh token
-func (m *Manager) GenerateRefreshToken(userID, email string) (string, error) {
-	return m.generateToken(userID, email, RefreshToken, time.Duration(m.config.RefreshTokenExpiry)*time.Hour)
+func (m *Manager) GenerateRefreshToken(userID, email, role string) (string, error) {
+	return m.generateToken(userID, email, role, RefreshToken, time.Duration(m.config.RefreshTokenExpiry)*time.Hour)
 }
 
 // GenerateTokenPair generates both access and refresh tokens
-func (m *Manager) GenerateTokenPair(userID, email string) (accessToken, refreshToken string, err error) {
-	accessToken, err = m.GenerateAccessToken(userID, email)
+func (m *Manager) GenerateTokenPair(userID, email, role string) (accessToken, refreshToken string, err error) {
+	accessToken, err = m.GenerateAccessToken(userID, email, role)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to generate access token: %w", err)
 	}
 
-	refreshToken, err = m.GenerateRefreshToken(userID, email)
+	refreshToken, err = m.GenerateRefreshToken(userID, email, role)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to generate refresh token: %w", err)
 	}
@@ -62,11 +63,12 @@ func (m *Manager) GenerateTokenPair(userID, email string) (accessToken, refreshT
 	return accessToken, refreshToken, nil
 }
 
-func (m *Manager) generateToken(userID, email string, tokenType TokenType, expiry time.Duration) (string, error) {
+func (m *Manager) generateToken(userID, email, role string, tokenType TokenType, expiry time.Duration) (string, error) {
 	now := time.Now()
 	claims := Claims{
 		UserID:    userID,
 		Email:     email,
+		Role:      role,
 		TokenType: tokenType,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    m.config.Issuer,

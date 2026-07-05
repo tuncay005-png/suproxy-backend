@@ -181,6 +181,16 @@ func (h *AuthHandler) handleError(c *gin.Context, err error) {
 	}
 }
 
+// GetSessions godoc
+// @Summary Get active sessions
+// @Description Get all active sessions for the authenticated user
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} dto.ActiveSessionsResponse
+// @Failure 401 {object} response.Response
+// @Router /api/v1/auth/sessions [get]
 func (h *AuthHandler) GetSessions(c *gin.Context) {
 	userIDStr, exists := jwt.GetUserID(c)
 	if !exists {
@@ -206,6 +216,17 @@ func (h *AuthHandler) GetSessions(c *gin.Context) {
 	})
 }
 
+// LogoutSingle godoc
+// @Summary Logout single session
+// @Description Logout from a specific session by token ID
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Token ID"
+// @Success 204
+// @Failure 401 {object} response.Response
+// @Router /api/v1/auth/sessions/{id} [delete]
 func (h *AuthHandler) LogoutSingle(c *gin.Context) {
 	userIDStr, exists := jwt.GetUserID(c)
 	if !exists {
@@ -241,6 +262,16 @@ func (h *AuthHandler) LogoutSingle(c *gin.Context) {
 	response.SuccessNoContent(c)
 }
 
+// LogoutAll godoc
+// @Summary Logout all sessions
+// @Description Logout from all active sessions
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 204
+// @Failure 401 {object} response.Response
+// @Router /api/v1/auth/logout-all [post]
 func (h *AuthHandler) LogoutAll(c *gin.Context) {
 	userIDStr, exists := jwt.GetUserID(c)
 	if !exists {

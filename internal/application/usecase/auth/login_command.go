@@ -120,6 +120,7 @@ func (c *LoginCommand) Execute(ctx context.Context, req *dto.LoginRequest) (*dto
 	accessToken, refreshToken, err := c.jwtManager.GenerateTokenPair(
 		foundUser.ID.String(),
 		foundUser.Email.String(),
+		string(foundUser.Role),
 	)
 	if err != nil {
 		c.logger.Error("Failed to generate tokens", "error", err, "user_id", foundUser.ID)

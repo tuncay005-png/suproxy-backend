@@ -77,6 +77,7 @@ func (c *RefreshTokenCommand) Execute(ctx context.Context, req *dto.RefreshToken
 	accessToken, newRefreshToken, err := c.jwtManager.GenerateTokenPair(
 		foundUser.ID.String(),
 		foundUser.Email.String(),
+		string(foundUser.Role),
 	)
 	if err != nil {
 		c.logger.Error("Failed to generate new tokens", "error", err, "user_id", foundUser.ID)

@@ -12,6 +12,7 @@ const (
 	BearerPrefix        = "Bearer "
 	UserIDKey           = "user_id"
 	EmailKey            = "email"
+	RoleKey             = "role"
 )
 
 // AuthMiddleware creates a JWT authentication middleware
@@ -47,6 +48,7 @@ func AuthMiddleware(manager *Manager) gin.HandlerFunc {
 		// Set user information in context
 		c.Set(UserIDKey, claims.UserID)
 		c.Set(EmailKey, claims.Email)
+		c.Set(RoleKey, claims.Role)
 
 		c.Next()
 	}
@@ -70,4 +72,14 @@ func GetEmail(c *gin.Context) (string, bool) {
 	}
 	e, ok := email.(string)
 	return e, ok
+}
+
+// GetRole retrieves role from gin context
+func GetRole(c *gin.Context) (string, bool) {
+	role, exists := c.Get(RoleKey)
+	if !exists {
+		return "", false
+	}
+	r, ok := role.(string)
+	return r, ok
 }

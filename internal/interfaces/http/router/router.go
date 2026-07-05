@@ -90,35 +90,46 @@ func (r *Router) Setup() {
 			users.PUT("/me", r.userHandler.UpdateMe)
 		}
 
-		// Plan routes (public)
+		// Plan routes (public read, admin write)
 		plans := v1.Group("/plans")
 		{
+			// Public endpoints
 			plans.GET("", r.planHandler.ListPlans)
 			plans.GET("/:id", r.planHandler.GetPlan)
+
+			// Admin endpoints (future implementation)
+			// admin := plans.Group("")
+			// admin.Use(middleware.AuthMiddleware(r.jwtManager))
+			// admin.Use(middleware.RequireAdmin())
+			// {
+			// 	admin.POST("", r.planHandler.CreatePlan)
+			// 	admin.PUT("/:id", r.planHandler.UpdatePlan)
+			// 	admin.DELETE("/:id", r.planHandler.DeletePlan)
+			// }
 		}
 
-		// Subscription routes (protected)
+		// Subscription routes (protected - user)
 		subscriptions := v1.Group("/subscriptions")
 		subscriptions.Use(middleware.AuthMiddleware(r.jwtManager))
 		{
 			subscriptions.GET("/me", r.subscriptionHandler.GetMySubscription)
 		}
 
-		// Server routes (protected)
+		// Server routes (protected - user read, admin write)
 		servers := v1.Group("/servers")
 		servers.Use(middleware.AuthMiddleware(r.jwtManager))
 		{
 			servers.GET("", r.serverHandler.ListServers)
 		}
 
-		// Node routes (protected)
+		// Node routes (protected - user read, admin write)
 		nodes := v1.Group("/nodes")
 		nodes.Use(middleware.AuthMiddleware(r.jwtManager))
 		{
 			nodes.GET("", r.nodeHandler.ListNodes)
 		}
 
-		// Xray routes (protected)
+		// Xray routes (protected - user read, admin write)
 		xray := v1.Group("/xray")
 		xray.Use(middleware.AuthMiddleware(r.jwtManager))
 		{
