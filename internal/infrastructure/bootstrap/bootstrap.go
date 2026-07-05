@@ -15,6 +15,7 @@ type Application struct {
 	Database       *database.Database
 	JWTManager     *jwt.Manager
 	TxManager      *database.TransactionManager
+	Router         interface{ Setup() }
 }
 
 func Initialize() (*Application, error) {

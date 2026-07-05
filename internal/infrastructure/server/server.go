@@ -26,6 +26,9 @@ func New(app *bootstrap.Application) *Server {
 	router.Use(gin.Recovery())
 	router.Use(loggerMiddleware(app))
 
+	// Initialize auth system
+	bootstrap.InitializeAuthSystem(app, router)
+
 	s := &Server{
 		app:    app,
 		router: router,
@@ -52,6 +55,11 @@ func (s *Server) setupRoutes() {
 	v1 := s.router.Group("/api/v1")
 	{
 		v1.GET("/ping", s.pingHandler)
+	}
+	
+	// Setup additional routes via router
+	if s.app.Router != nil {
+		s.app.Router.Setup()
 	}
 }
 
