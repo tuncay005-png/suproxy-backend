@@ -32,7 +32,7 @@ func New(level, format string) *Logger {
 		EncodeCaller:   zapcore.ShortCallerEncoder,
 	}
 
-	var encoder zapcore.encoder
+	var encoder zapcore.Encoder
 	if format == "json" {
 		encoder = zapcore.NewJSONEncoder(encoderConfig)
 	} else {
