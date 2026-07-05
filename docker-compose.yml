@@ -1,0 +1,53 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: suproxy-postgres
+    environment:
+      POSTGRES_USER: suproxy
+      POSTGRES_PASSWORD: suproxy
+      POSTGRES_DB: suproxy
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U suproxy"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - suproxy-network
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: suproxy-api
+    ports:
+      - "8080:8080"
+    environment:
+      SUPROXY_ENVIRONMENT: development
+      SUPROXY_DATABASE_HOST: postgres
+      SUPROXY_DATABASE_PORT: 5432
+      SUPROXY_DATABASE_USER: suproxy
+      SUPROXY_DATABASE_PASSWORD: suproxy
+      SUPROXY_DATABASE_DBNAME: suproxy
+      SUPROXY_DATABASE_SSLMODE: disable
+      SUPROXY_LOG_LEVEL: info
+      SUPROXY_LOG_FORMAT: json
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - suproxy-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  suproxy-network:
+    driver: bridge

@@ -1,0 +1,19 @@
+environment: development
+
+server:
+  address: :8080
+  read_timeout: 10
+  write_timeout: 10
+  shutdown_timeout: 10
+
+database:
+  host: postgres
+  port: 5432
+  user: suproxy
+  password: suproxy
+  dbname: suproxy
+  sslmode: disable
+
+log:
+  level: info
+  format: json
