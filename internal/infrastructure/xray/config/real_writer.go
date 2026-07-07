@@ -122,6 +122,21 @@ func (w *RealWriter) Delete(ctx context.Context, instanceID uuid.UUID) error {
 	return nil
 }
 
+func (w *RealWriter) DeleteBackup(ctx context.Context, instanceID uuid.UUID, timestamp int64) error {
+	// Find backup file with matching timestamp
+	backupTime := time.Unix(timestamp, 0).UTC()
+	backupPath := w.getBackupPath(instanceID, backupTime)
+
+	// Delete backup file
+	if err := os.Remove(backupPath); err != nil {
+		if !os.IsNotExist(err) {
+			return fmt.Errorf("failed to delete backup: %w", err)
+		}
+	}
+
+	return nil
+}
+
 func (w *RealWriter) GetPath(instanceID uuid.UUID) string {
 	return filepath.Join(w.configDir, instanceID.String()+".json")
 }

@@ -102,3 +102,57 @@ func (r *xrayInstanceRepository) Count(ctx context.Context) (int64, error) {
 	}
 	return count, nil
 }
+
+func (r *xrayInstanceRepository) ListWithFilters(ctx context.Context, filters xray.XrayInstanceFilters) ([]*xray.XrayInstance, int64, error) {
+	query := r.db.WithContext(ctx).Model(&XrayInstanceModel{})
+
+	// Apply filters
+	if filters.NodeID != nil {
+		query = query.Where("node_id = ?", *filters.NodeID)
+	}
+
+	if filters.Status != nil {
+		query = query.Where("status = ?", string(*filters.Status))
+	}
+
+	// Count total before pagination
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Apply sorting
+	sortField := "created_at"
+	if filters.SortBy != "" {
+		sortField = filters.SortBy
+	}
+
+	sortOrder := "DESC"
+	if filters.SortOrder == "asc" {
+		sortOrder = "ASC"
+	}
+
+	query = query.Order(sortField + " " + sortOrder)
+
+	// Apply pagination
+	if filters.Limit > 0 {
+		query = query.Limit(filters.Limit)
+	}
+	if filters.Offset > 0 {
+		query = query.Offset(filters.Offset)
+	}
+
+	// Execute query
+	var models []XrayInstanceModel
+	if err := query.Find(&models).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Convert to domain instances
+	instances := make([]*xray.XrayInstance, 0, len(models))
+	for _, model := range models {
+		instances = append(instances, toDomainXrayInstance(&model))
+	}
+
+	return instances, total, nil
+}

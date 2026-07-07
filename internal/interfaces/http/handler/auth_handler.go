@@ -57,7 +57,11 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	result, err := h.registerCmd.Execute(c.Request.Context(), &req)
+	// Extract IP and User-Agent
+	ipAddress := c.ClientIP()
+	userAgent := c.GetHeader("User-Agent")
+
+	result, err := h.registerCmd.Execute(c.Request.Context(), &req, ipAddress, userAgent)
 	if err != nil {
 		h.handleError(c, err)
 		return

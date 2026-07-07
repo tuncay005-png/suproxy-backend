@@ -15,4 +15,16 @@ type Repository interface {
 	List(ctx context.Context, offset, limit int) ([]*User, error)
 	Count(ctx context.Context) (int64, error)
 	ExistsByEmail(ctx context.Context, email Email) (bool, error)
+	ListWithFilters(ctx context.Context, filters UserFilters) ([]*User, int64, error)
+}
+
+// UserFilters defines filter options for user listing
+type UserFilters struct {
+	Offset    int
+	Limit     int
+	Role      *Role
+	Status    *Status
+	Email     string
+	SortBy    string
+	SortOrder string
 }

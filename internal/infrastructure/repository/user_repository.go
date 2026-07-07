@@ -97,3 +97,65 @@ func (r *userRepository) ExistsByEmail(ctx context.Context, email user.Email) (b
 	}
 	return count > 0, nil
 }
+
+func (r *userRepository) ListWithFilters(ctx context.Context, filters user.UserFilters) ([]*user.User, int64, error) {
+	query := r.db.WithContext(ctx).Model(&UserModel{})
+
+	// Apply filters
+	if filters.Role != nil {
+		query = query.Where("role = ?", string(*filters.Role))
+	}
+
+	if filters.Status != nil {
+		query = query.Where("status = ?", string(*filters.Status))
+	}
+
+	if filters.Email != "" {
+		query = query.Where("email LIKE ?", "%"+filters.Email+"%")
+	}
+
+	// Count total before pagination
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Apply sorting
+	sortField := "created_at"
+	if filters.SortBy != "" {
+		sortField = filters.SortBy
+	}
+
+	sortOrder := "DESC"
+	if filters.SortOrder == "asc" {
+		sortOrder = "ASC"
+	}
+
+	query = query.Order(sortField + " " + sortOrder)
+
+	// Apply pagination
+	if filters.Limit > 0 {
+		query = query.Limit(filters.Limit)
+	}
+	if filters.Offset > 0 {
+		query = query.Offset(filters.Offset)
+	}
+
+	// Execute query
+	var models []UserModel
+	if err := query.Find(&models).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Convert to domain users
+	users := make([]*user.User, 0, len(models))
+	for _, model := range models {
+		u, err := toDomainUser(&model)
+		if err != nil {
+			return nil, 0, err
+		}
+		users = append(users, u)
+	}
+
+	return users, total, nil
+}

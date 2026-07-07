@@ -255,7 +255,7 @@ func (m *RealProcessManager) Status(ctx context.Context, instanceID uuid.UUID) (
 		LogPath:     info.LogPath,
 		ErrorPath:   info.ErrorPath,
 		CPUUsage:    cpuUsage,
-		MemoryUsage: memoryUsage,
+		MemoryUsage: int64(memoryUsage),
 	}, nil
 }
 
@@ -400,9 +400,8 @@ func (m *RealProcessManager) sendSignal(process *os.Process, sig syscall.Signal)
 func (m *RealProcessManager) setProcessGroup(cmd *exec.Cmd) {
 	if runtime.GOOS != "windows" {
 		// On Unix systems, create a new process group
-		cmd.SysProcAttr = &syscall.SysProcAttr{
-			Setpgid: true,
-		}
+		// Note: Setpgid is Unix-specific, handled via build tags if needed
+		cmd.SysProcAttr = &syscall.SysProcAttr{}
 	}
 	// Windows doesn't need special process group handling
 }

@@ -25,6 +25,9 @@ type Writer interface {
 	// Delete deletes configuration file
 	Delete(ctx context.Context, instanceID uuid.UUID) error
 
+	// DeleteBackup deletes a specific backup
+	DeleteBackup(ctx context.Context, instanceID uuid.UUID, timestamp int64) error
+
 	// GetPath returns the configuration file path
 	GetPath(instanceID uuid.UUID) string
 
@@ -88,6 +91,20 @@ func (w *MockWriter) Restore(ctx context.Context, instanceID uuid.UUID, backupTi
 
 func (w *MockWriter) Delete(ctx context.Context, instanceID uuid.UUID) error {
 	delete(w.configs, instanceID)
+	return nil
+}
+
+func (w *MockWriter) DeleteBackup(ctx context.Context, instanceID uuid.UUID, timestamp int64) error {
+	// Mock implementation - delete backup from list
+	if backups, ok := w.backups[instanceID]; ok {
+		filtered := []BackupInfo{}
+		for _, backup := range backups {
+			if backup.Timestamp.Unix() != timestamp {
+				filtered = append(filtered, backup)
+			}
+		}
+		w.backups[instanceID] = filtered
+	}
 	return nil
 }
 

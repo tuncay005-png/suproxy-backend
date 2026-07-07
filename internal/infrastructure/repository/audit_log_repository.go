@@ -113,6 +113,163 @@ func (r *auditLogRepository) Count(ctx context.Context) (int64, error) {
 	return count, nil
 }
 
+func (r *auditLogRepository) ListWithFilters(ctx context.Context, filters audit.AuditFilters) ([]*audit.Log, int64, error) {
+	query := r.db.WithContext(ctx).Model(&AuditLogModel{})
+
+	// Apply filters
+	if filters.UserID != nil {
+		query = query.Where("user_id = ?", *filters.UserID)
+	}
+	if filters.Action != nil && *filters.Action != "" {
+		query = query.Where("action = ?", *filters.Action)
+	}
+	if filters.EntityType != nil && *filters.EntityType != "" {
+		query = query.Where("entity_type = ?", *filters.EntityType)
+	}
+	if filters.EntityID != nil {
+		query = query.Where("entity_id = ?", *filters.EntityID)
+	}
+	if filters.IPAddress != nil && *filters.IPAddress != "" {
+		query = query.Where("ip_address = ?", *filters.IPAddress)
+	}
+	if filters.DateFrom != nil {
+		query = query.Where("created_at >= ?", *filters.DateFrom)
+	}
+	if filters.DateTo != nil {
+		query = query.Where("created_at <= ?", *filters.DateTo)
+	}
+
+	// Count total (before pagination)
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Apply sorting
+	sortBy := filters.SortBy
+	if sortBy == "" {
+		sortBy = "created_at"
+	}
+	sortOrder := filters.SortOrder
+	if sortOrder == "" {
+		sortOrder = "desc"
+	}
+	query = query.Order(sortBy + " " + sortOrder)
+
+	// Apply pagination
+	if filters.Limit > 0 {
+		query = query.Limit(filters.Limit)
+	}
+	if filters.Offset > 0 {
+		query = query.Offset(filters.Offset)
+	}
+
+	// Execute query
+	var models []AuditLogModel
+	if err := query.Find(&models).Error; err != nil {
+		return nil, 0, err
+	}
+
+	logs := make([]*audit.Log, 0, len(models))
+	for _, model := range models {
+		logs = append(logs, toDomainAuditLog(&model))
+	}
+
+	return logs, total, nil
+}
+
+func (r *auditLogRepository) CountByAction(ctx context.Context) (map[string]int64, error) {
+	var results []struct {
+		Action string
+		Count  int64
+	}
+
+	if err := r.db.WithContext(ctx).
+		Model(&AuditLogModel{}).
+		Select("action, COUNT(*) as count").
+		Group("action").
+		Find(&results).Error; err != nil {
+		return nil, err
+	}
+
+	counts := make(map[string]int64)
+	for _, result := range results {
+		counts[result.Action] = result.Count
+	}
+	return counts, nil
+}
+
+func (r *auditLogRepository) CountByEntityType(ctx context.Context) (map[string]int64, error) {
+	var results []struct {
+		EntityType string
+		Count      int64
+	}
+
+	if err := r.db.WithContext(ctx).
+		Model(&AuditLogModel{}).
+		Select("entity_type, COUNT(*) as count").
+		Group("entity_type").
+		Find(&results).Error; err != nil {
+		return nil, err
+	}
+
+	counts := make(map[string]int64)
+	for _, result := range results {
+		counts[result.EntityType] = result.Count
+	}
+	return counts, nil
+}
+
+func (r *auditLogRepository) CountUniqueUsers(ctx context.Context) (int64, error) {
+	var count int64
+	if err := r.db.WithContext(ctx).
+		Model(&AuditLogModel{}).
+		Distinct("user_id").
+		Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (r *auditLogRepository) CountUniqueIPs(ctx context.Context) (int64, error) {
+	var count int64
+	if err := r.db.WithContext(ctx).
+		Model(&AuditLogModel{}).
+		Distinct("ip_address").
+		Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (r *auditLogRepository) GetOldestLogDate(ctx context.Context) (*time.Time, error) {
+	var model AuditLogModel
+	if err := r.db.WithContext(ctx).
+		Model(&AuditLogModel{}).
+		Order("created_at ASC").
+		First(&model).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &model.CreatedAt, nil
+}
+
+func (r *auditLogRepository) GetNewestLogDate(ctx context.Context) (*time.Time, error) {
+	var model AuditLogModel
+	if err := r.db.WithContext(ctx).
+		Model(&AuditLogModel{}).
+		Order("created_at DESC").
+		First(&model).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &model.CreatedAt, nil
+}
+
 func (r *auditLogRepository) DeleteOlderThan(ctx context.Context, date time.Time) error {
 	return r.db.WithContext(ctx).
 		Where("created_at < ?", date).

@@ -102,6 +102,35 @@ func (m *RealBinaryManager) Validate(ctx context.Context, binaryPath string) err
 	return nil
 }
 
+func (m *RealBinaryManager) ValidateConfig(ctx context.Context, configPath string) error {
+	// Use Xray binary to validate config: xray run -test -config=<path>
+	binaryPath, err := m.Detect(ctx)
+	if err != nil {
+		return fmt.Errorf("xray binary not found: %w", err)
+	}
+
+	// Create context with timeout for validation
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	// Execute: xray run -test -c <configPath>
+	cmd := exec.CommandContext(ctx, binaryPath, "run", "-test", "-c", configPath)
+	output, err := cmd.CombinedOutput()
+	
+	if err != nil {
+		m.logger.Error("Config validation failed",
+			"error", err,
+			"config_path", configPath,
+			"output", string(output))
+		return fmt.Errorf("config validation failed: %w", err)
+	}
+
+	m.logger.Debug("Config validation successful",
+		"config_path", configPath)
+	
+	return nil
+}
+
 func (m *RealBinaryManager) CurrentVersion(ctx context.Context) (string, error) {
 	// Detect binary if not set
 	binaryPath := m.binaryPath

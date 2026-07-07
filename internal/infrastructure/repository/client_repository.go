@@ -131,3 +131,62 @@ func (r *clientRepository) Count(ctx context.Context) (int64, error) {
 	}
 	return count, nil
 }
+
+
+func (r *clientRepository) ListWithFilters(ctx context.Context, filters xray.ClientFilters) ([]*xray.Client, int64, error) {
+	query := r.db.WithContext(ctx).Model(&ClientModel{})
+
+	// Apply filters
+	if filters.InboundID != nil {
+		query = query.Where("inbound_id = ?", *filters.InboundID)
+	}
+
+	if filters.UserID != nil {
+		query = query.Where("user_id = ?", *filters.UserID)
+	}
+
+	if filters.Enabled != nil {
+		query = query.Where("enabled = ?", *filters.Enabled)
+	}
+
+	// Count total before pagination
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Apply sorting
+	sortField := "created_at"
+	if filters.SortBy != "" {
+		sortField = filters.SortBy
+	}
+
+	sortOrder := "DESC"
+	if filters.SortOrder == "asc" {
+		sortOrder = "ASC"
+	}
+
+	query = query.Order(sortField + " " + sortOrder)
+
+	// Apply pagination
+	if filters.Limit > 0 {
+		query = query.Limit(filters.Limit)
+	}
+	if filters.Offset > 0 {
+		query = query.Offset(filters.Offset)
+	}
+
+	// Execute query
+	var models []ClientModel
+	if err := query.Find(&models).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Convert to domain clients
+	clients := make([]*xray.Client, 0, len(models))
+	for _, model := range models {
+		clients = append(clients, toDomainClient(&model))
+	}
+
+	return clients, total, nil
+}

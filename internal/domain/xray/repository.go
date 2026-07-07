@@ -16,6 +16,17 @@ type XrayInstanceRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, offset, limit int) ([]*XrayInstance, error)
 	Count(ctx context.Context) (int64, error)
+	ListWithFilters(ctx context.Context, filters XrayInstanceFilters) ([]*XrayInstance, int64, error)
+}
+
+// XrayInstanceFilters defines filter options for instance listing
+type XrayInstanceFilters struct {
+	Offset    int
+	Limit     int
+	NodeID    *uuid.UUID
+	Status    *InstanceStatus
+	SortBy    string
+	SortOrder string
 }
 
 // InboundRepository manages Inbound persistence
@@ -28,6 +39,18 @@ type InboundRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, offset, limit int) ([]*Inbound, error)
 	Count(ctx context.Context) (int64, error)
+	ListWithFilters(ctx context.Context, filters InboundFilters) ([]*Inbound, int64, error)
+}
+
+// InboundFilters defines filter options for inbound listing
+type InboundFilters struct {
+	Offset     int
+	Limit      int
+	InstanceID *uuid.UUID
+	Protocol   *InboundProtocol
+	Enabled    *bool
+	SortBy     string
+	SortOrder  string
 }
 
 // ClientRepository manages Client persistence
@@ -42,6 +65,18 @@ type ClientRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, offset, limit int) ([]*Client, error)
 	Count(ctx context.Context) (int64, error)
+	ListWithFilters(ctx context.Context, filters ClientFilters) ([]*Client, int64, error)
+}
+
+// ClientFilters defines filter options for client listing
+type ClientFilters struct {
+	Offset    int
+	Limit     int
+	InboundID *uuid.UUID
+	UserID    *uuid.UUID
+	Enabled   *bool
+	SortBy    string
+	SortOrder string
 }
 
 // RealityConfigRepository manages RealityConfig persistence

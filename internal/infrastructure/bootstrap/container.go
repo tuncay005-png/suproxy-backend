@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"github.com/suproxy/backend/internal/application/service"
 	"github.com/suproxy/backend/internal/domain/audit"
 	"github.com/suproxy/backend/internal/domain/node"
 	"github.com/suproxy/backend/internal/domain/server"
@@ -36,4 +37,7 @@ type Container struct {
 	XrayConfigGenerator xrayConfig.Generator
 	XrayConfigValidator xrayConfig.Validator
 	XrayBinaryManager  xrayBinary.Manager
+
+	// Application Services
+	XrayProvisioningService *service.XrayProvisioningService
 }

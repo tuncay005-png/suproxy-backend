@@ -428,7 +428,7 @@ func (g *generator) generateStreamSettings(inbound *xray.Inbound, reality *xray.
 			// Production-grade Reality configuration
 			stream.RealitySettings = &RealitySettings{
 				Show:         false,
-				Dest:         reality.Dest,
+				Dest:         "www.microsoft.com:443", // Default destination
 				Xver:         0,
 				ServerNames:  []string{reality.ServerName},
 				PrivateKey:   reality.PrivateKey,

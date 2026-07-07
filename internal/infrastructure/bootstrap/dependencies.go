@@ -5,6 +5,7 @@ import (
 
 	"gorm.io/gorm"
 
+	"github.com/suproxy/backend/internal/application/service"
 	"github.com/suproxy/backend/internal/infrastructure/config"
 	"github.com/suproxy/backend/internal/infrastructure/logger"
 	"github.com/suproxy/backend/internal/infrastructure/repository"
@@ -26,6 +27,11 @@ func BuildContainer(cfg *config.Config, db *gorm.DB, log *logger.Logger) (*Conta
 	// Initialize Xray infrastructure based on configuration
 	if err := initializeXrayInfrastructure(container, cfg, log); err != nil {
 		return nil, fmt.Errorf("failed to initialize Xray infrastructure: %w", err)
+	}
+
+	// Initialize application services
+	if err := initializeApplicationServices(container, log); err != nil {
+		return nil, fmt.Errorf("failed to initialize application services: %w", err)
 	}
 
 	log.Info("Dependency container built successfully",
@@ -112,4 +118,24 @@ func getXrayMode(cfg *config.Config) string {
 		return "mock"
 	}
 	return "real"
+}
+
+// initializeApplicationServices initializes application layer services
+func initializeApplicationServices(container *Container, log *logger.Logger) error {
+	// Xray Provisioning Service
+	container.XrayProvisioningService = service.NewXrayProvisioningService(
+		container.XrayInstanceRepository,
+		container.InboundRepository,
+		container.ClientRepository,
+		container.RealityConfigRepository,
+		container.AuditLogRepository,
+		container.XrayConfigGenerator,
+		container.XrayConfigWriter,
+		container.XrayProcessManager,
+		container.XrayBinaryManager,
+		log,
+	)
+
+	log.Info("Application services initialized successfully")
+	return nil
 }

@@ -22,6 +22,9 @@ type Manager interface {
 	// Validate validates the binary is executable and correct
 	Validate(ctx context.Context, binaryPath string) error
 
+	// ValidateConfig validates Xray config using binary --test flag
+	ValidateConfig(ctx context.Context, configPath string) error
+
 	// CurrentVersion returns the currently installed version
 	CurrentVersion(ctx context.Context) (string, error)
 
@@ -77,6 +80,15 @@ func (m *MockManager) Detect(ctx context.Context) (string, error) {
 
 func (m *MockManager) Validate(ctx context.Context, binaryPath string) error {
 	// Mock implementation - in real implementation, check file permissions and execute --version
+	if !m.installed {
+		return ErrBinaryNotFound
+	}
+	return nil
+}
+
+func (m *MockManager) ValidateConfig(ctx context.Context, configPath string) error {
+	// Mock implementation - in real implementation: xray run -test -config=<path>
+	// Returns nil if config is valid, error otherwise
 	if !m.installed {
 		return ErrBinaryNotFound
 	}
