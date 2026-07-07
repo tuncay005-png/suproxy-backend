@@ -14,6 +14,7 @@ type Config struct {
 	Log         LogConfig      `mapstructure:"log"`
 	JWT         JWTConfig      `mapstructure:"jwt"`
 	Xray        XrayConfig     `mapstructure:"xray"`
+	Metrics     MetricsConfig  `mapstructure:"metrics"`
 }
 
 type ServerConfig struct {
@@ -55,6 +56,11 @@ type XrayConfig struct {
 	LogDir      string `mapstructure:"log_dir"`
 	BackupDir   string `mapstructure:"backup_dir"`
 	InstallDir  string `mapstructure:"install_dir"`
+}
+
+type MetricsConfig struct {
+	Enabled            bool `mapstructure:"enabled"`
+	CollectionInterval int  `mapstructure:"collection_interval"` // in seconds
 }
 
 func Load() (*Config, error) {
@@ -113,4 +119,6 @@ func setDefaults() {
 	viper.SetDefault("xray.log_dir", "/var/log/xray")
 	viper.SetDefault("xray.backup_dir", "/var/backups/xray")
 	viper.SetDefault("xray.install_dir", "/opt/xray")
+	viper.SetDefault("metrics.enabled", true)
+	viper.SetDefault("metrics.collection_interval", 30)
 }

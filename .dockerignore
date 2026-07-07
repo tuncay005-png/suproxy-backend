@@ -1,0 +1,60 @@
+# Git
+.git
+.gitignore
+
+# Environment
+.env
+.env.production
+.env.local
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Binaries
+*.exe
+bin/
+tmp/
+
+# Tests
+*.test
+coverage.out
+
+# Logs
+*.log
+
+# Backups
+backups/
+*.sql
+*.sql.gz
+*.sql.zip
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Scripts
+scripts/
+
+# Monitoring configs
+prometheus/
+grafana/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Air
+.air.toml

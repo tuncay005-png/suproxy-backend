@@ -1,0 +1,36 @@
+# docker-compose.override.yml example
+# Copy this file to docker-compose.override.yml for local customizations
+# This file is automatically loaded by docker-compose
+
+version: '3.8'
+
+services:
+  api:
+    # Override for hot reload during development
+    volumes:
+      - .:/app
+    environment:
+      # Override environment variables for local dev
+      SUPROXY_LOG_LEVEL: debug
+      SUPROXY_XRAY_USE_MOCK: "true"
+    # Expose additional ports if needed
+    # ports:
+    #   - "8081:8080"
+
+  postgres:
+    # Expose postgres port for local DB tools
+    ports:
+      - "5432:5432"
+    # Override postgres config for development
+    # command: postgres -c log_statement=all
+
+  # Add additional services for local development
+  # pgadmin:
+  #   image: dpage/pgadmin4:latest
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: admin@example.com
+  #     PGADMIN_DEFAULT_PASSWORD: admin
+  #   ports:
+  #     - "5050:80"
+  #   networks:
+  #     - suproxy-network

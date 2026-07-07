@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/suproxy/backend/internal/domain/audit"
+	"github.com/suproxy/backend/internal/infrastructure/metrics"
 	"gorm.io/gorm"
 )
 
@@ -45,6 +46,10 @@ func (r *auditLogRepository) Create(ctx context.Context, log *audit.Log) error {
 		Metadata:   log.Metadata,
 		CreatedAt:  log.CreatedAt,
 	}
+	
+	// Record metric
+	metrics.IncAuditLogs()
+	
 	return r.db.WithContext(ctx).Create(model).Error
 }
 

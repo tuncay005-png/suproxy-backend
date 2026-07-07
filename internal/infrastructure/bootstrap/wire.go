@@ -206,6 +206,7 @@ func InitializeAuthSystem(app *Application, engine *gin.Engine) {
 
 	// Initialize handlers
 	healthHandler := handler.NewHealthHandler(app.Database)
+	metricsHandler := handler.NewMetricsHandler()
 	authHandler := handler.NewAuthHandler(registerCmd, loginCmd, refreshTokenCmd, logoutCmd, getCurrentUserQuery, getSessionsQuery)
 	userHandler := handler.NewUserHandler()
 	planHandler := handler.NewPlanHandler(listPlansQuery, getPlanQuery)
@@ -260,6 +261,7 @@ func InitializeAuthSystem(app *Application, engine *gin.Engine) {
 		app.Logger,
 		app.JWTManager,
 		healthHandler,
+		metricsHandler,
 		authHandler,
 		userHandler,
 		planHandler,

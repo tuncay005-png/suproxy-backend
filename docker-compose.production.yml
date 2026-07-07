@@ -1,0 +1,180 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: suproxy-postgres-prod
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=en_US.UTF-8 --lc-ctype=en_US.UTF-8"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backups:/backups
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - suproxy-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+    security_opt:
+      - no-new-privileges:true
+    read_only: false
+    tmpfs:
+      - /tmp
+      - /run
+
+  api:
+    image: ${DOCKER_REGISTRY:-suproxy}/backend:${VERSION:-latest}
+    container_name: suproxy-api-prod
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SUPROXY_ENVIRONMENT: production
+      SUPROXY_SERVER_ADDRESS: :8080
+      SUPROXY_SERVER_READ_TIMEOUT: ${SERVER_READ_TIMEOUT:-30}
+      SUPROXY_SERVER_WRITE_TIMEOUT: ${SERVER_WRITE_TIMEOUT:-30}
+      SUPROXY_SERVER_SHUTDOWN_TIMEOUT: ${SERVER_SHUTDOWN_TIMEOUT:-30}
+      SUPROXY_DATABASE_HOST: postgres
+      SUPROXY_DATABASE_PORT: 5432
+      SUPROXY_DATABASE_USER: ${DB_USER}
+      SUPROXY_DATABASE_PASSWORD: ${DB_PASSWORD}
+      SUPROXY_DATABASE_DBNAME: ${DB_NAME}
+      SUPROXY_DATABASE_SSLMODE: ${DB_SSLMODE:-require}
+      SUPROXY_DATABASE_MAX_OPEN_CONNS: ${DB_MAX_OPEN_CONNS:-50}
+      SUPROXY_DATABASE_MAX_IDLE_CONNS: ${DB_MAX_IDLE_CONNS:-25}
+      SUPROXY_DATABASE_CONN_MAX_LIFETIME: ${DB_CONN_MAX_LIFETIME:-10}
+      SUPROXY_DATABASE_CONN_MAX_IDLE_TIME: ${DB_CONN_MAX_IDLE_TIME:-20}
+      SUPROXY_LOG_LEVEL: ${LOG_LEVEL:-info}
+      SUPROXY_LOG_FORMAT: json
+      SUPROXY_JWT_SECRET_KEY: ${JWT_SECRET}
+      SUPROXY_JWT_ACCESS_TOKEN_EXPIRY: ${JWT_ACCESS_EXPIRY:-15}
+      SUPROXY_JWT_REFRESH_TOKEN_EXPIRY: ${JWT_REFRESH_EXPIRY:-168}
+      SUPROXY_JWT_ISSUER: ${JWT_ISSUER:-suproxy-backend}
+      SUPROXY_XRAY_USE_MOCK: ${XRAY_USE_MOCK:-false}
+      SUPROXY_XRAY_BINARY_PATH: /usr/local/bin/xray
+      SUPROXY_XRAY_CONFIG_DIR: /etc/xray
+      SUPROXY_XRAY_LOG_DIR: /var/log/xray
+      SUPROXY_XRAY_BACKUP_DIR: /var/backups/xray
+      SUPROXY_XRAY_INSTALL_DIR: /opt/xray
+      SUPROXY_METRICS_ENABLED: ${METRICS_ENABLED:-true}
+      SUPROXY_METRICS_COLLECTION_INTERVAL: ${METRICS_INTERVAL:-30}
+    ports:
+      - "${API_PORT:-8080}:8080"
+    volumes:
+      - xray_config:/etc/xray
+      - xray_logs:/var/log/xray
+      - xray_backups:/var/backups/xray
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - suproxy-network
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 4G
+        reservations:
+          cpus: '2'
+          memory: 2G
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,nodev,size=100m
+
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: suproxy-prometheus
+    restart: always
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    networks:
+      - suproxy-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    security_opt:
+      - no-new-privileges:true
+
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: suproxy-grafana
+    restart: always
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_INSTALL_PLUGINS: ""
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - suproxy-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  postgres_data:
+    driver: local
+  xray_config:
+    driver: local
+  xray_logs:
+    driver: local
+  xray_backups:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  suproxy-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16

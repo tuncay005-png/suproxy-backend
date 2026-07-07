@@ -22,6 +22,8 @@ go.work
 
 # Environment variables
 .env
+.env.production
+.env.local
 
 # IDE
 .idea/
@@ -38,5 +40,22 @@ Thumbs.db
 *.log
 build-errors.log
 
+# Test coverage
+coverage*.out
+*.test
+
 # Air
 .air.toml.local
+
+# Backups
+backups/
+*.sql
+*.sql.gz
+*.sql.zip
+
+# Docker
+docker-compose.override.yml
+
+# Prometheus & Grafana data
+grafana/data/
+prometheus/data/

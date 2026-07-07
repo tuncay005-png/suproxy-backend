@@ -13,6 +13,7 @@ type Router struct {
 	logger                 *logger.Logger
 	jwtManager             *jwt.Manager
 	healthHandler          *handler.HealthHandler
+	metricsHandler         *handler.MetricsHandler
 	authHandler            *handler.AuthHandler
 	userHandler            *handler.UserHandler
 	planHandler            *handler.PlanHandler
@@ -28,6 +29,7 @@ func NewRouter(
 	log *logger.Logger,
 	jwtManager *jwt.Manager,
 	healthHandler *handler.HealthHandler,
+	metricsHandler *handler.MetricsHandler,
 	authHandler *handler.AuthHandler,
 	userHandler *handler.UserHandler,
 	planHandler *handler.PlanHandler,
@@ -42,6 +44,7 @@ func NewRouter(
 		logger:              log,
 		jwtManager:          jwtManager,
 		healthHandler:       healthHandler,
+		metricsHandler:      metricsHandler,
 		authHandler:         authHandler,
 		userHandler:         userHandler,
 		planHandler:         planHandler,
@@ -55,6 +58,8 @@ func NewRouter(
 
 func (r *Router) Setup() {
 	// Global middlewares
+	r.engine.Use(middleware.RequestIDMiddleware()) // Request ID first
+	r.engine.Use(middleware.MetricsMiddleware())   // Metrics second
 	r.engine.Use(middleware.CORS())
 	r.engine.Use(middleware.ErrorHandler(r.logger))
 	r.engine.Use(middleware.RequestLogger(r.logger))
@@ -62,6 +67,9 @@ func (r *Router) Setup() {
 	// Health check endpoints (no auth required)
 	r.engine.GET("/health", r.healthHandler.Health)
 	r.engine.GET("/ready", r.healthHandler.Ready)
+	
+	// Metrics endpoint (no auth required - can be protected with network rules)
+	r.engine.GET("/metrics", r.metricsHandler.Metrics)
 
 	// API v1 group
 	v1 := r.engine.Group("/api/v1")

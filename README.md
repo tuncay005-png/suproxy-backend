@@ -1,208 +1,290 @@
 # SuProxy Backend
 
-Production-grade VPN platform backend built with Go, following Clean Architecture and Domain-Driven Design principles.
+Modern, production-ready VPN proxy management backend built with Go and Clean Architecture.
 
-## 🏗️ Architecture
+## Features
 
-This project follows **Clean Architecture** and **Domain-Driven Design (DDD)** principles:
+- 🏗️ Clean Architecture (Domain, Application, Infrastructure, Interface)
+- 🔐 JWT Authentication & Authorization
+- 👥 User Management (Admin & User roles)
+- 🚀 Xray Instance Management
+- 📊 Real-time Metrics & Monitoring (Prometheus + Grafana)
+- 🔍 Audit Logging
+- 🐳 Docker & Docker Compose support
+- 📝 Structured Logging
+- ✅ Health Checks
+- 🔄 Graceful Shutdown
+- 🛡️ Production-ready security hardening
+
+## Quick Start
+
+### Development
+
+```bash
+# Copy environment file
+cp .env.example .env
+
+# Start services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f api
+```
+
+Access the API at http://localhost:8080
+
+### Production
+
+```bash
+# Setup production environment
+cp .env.example .env.production
+# Edit .env.production with secure values
+
+# Deploy (Linux/Mac)
+./scripts/deploy.sh
+
+# Deploy (Windows)
+.\scripts\deploy.ps1
+```
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed production deployment instructions.
+
+## API Endpoints
+
+### Public Endpoints
+- `POST /api/v1/auth/register` - User registration
+- `POST /api/v1/auth/login` - User login
+- `GET /health` - Health check
+- `GET /metrics` - Prometheus metrics
+
+### User Endpoints (Authenticated)
+- `GET /api/v1/auth/me` - Current user info
+- `GET /api/v1/auth/sessions` - User sessions
+- `POST /api/v1/auth/refresh` - Refresh token
+- `POST /api/v1/auth/logout` - Logout
+- `GET /api/v1/subscriptions` - User subscriptions
+- `GET /api/v1/devices` - User devices
+- `GET /api/v1/servers` - Available servers
+
+### Admin Endpoints (Admin Role)
+- User Management: 4 endpoints
+- Xray Instance Management: 8 endpoints
+- Inbound Management: 7 endpoints
+- Client Management: 8 endpoints
+- Audit Logs: 3 endpoints
+- System Admin: 5 endpoints
+
+Total: 47 production-ready endpoints
+
+## Project Structure
 
 ```
+.
 ├── cmd/
 │   └── api/              # Application entry point
 ├── internal/
-│   ├── domain/           # Business logic & entities (planned)
-│   ├── application/      # Use cases & application logic (planned)
-│   ├── infrastructure/   # External dependencies
-│   │   ├── config/       # Configuration management
-│   │   ├── logger/       # Logging system
-│   │   └── server/       # HTTP server setup
-│   └── interfaces/       # API handlers & DTOs (planned)
+│   ├── domain/           # Domain entities & business logic
+│   ├── application/      # Use cases, DTOs, mappers
+│   │   ├── dto/         # Data Transfer Objects
+│   │   ├── mapper/      # Entity-DTO mappers
+│   │   ├── service/     # Application services
+│   │   └── usecase/     # Use case implementations
+│   ├── infrastructure/   # External concerns
+│   │   ├── config/      # Configuration
+│   │   ├── database/    # Database & migrations
+│   │   ├── jwt/         # JWT implementation
+│   │   ├── logger/      # Structured logging
+│   │   ├── metrics/     # Prometheus metrics
+│   │   └── xray/        # Xray integration
+│   └── interfaces/       # External interfaces
+│       └── http/         # HTTP handlers & middleware
 ├── configs/              # Configuration files
-├── migrations/           # Database migrations (planned)
-└── docs/                 # Documentation (planned)
+├── scripts/              # Deployment & maintenance scripts
+├── prometheus/           # Prometheus configuration
+├── grafana/              # Grafana provisioning
+└── docs/                 # Documentation
 ```
 
-## 🚀 Tech Stack
+## Technology Stack
 
-- **Go 1.21** - Programming language
-- **Gin** - HTTP web framework
-- **PostgreSQL** - Database
-- **GORM** - ORM
-- **Docker & Docker Compose** - Containerization
-- **Viper** - Configuration management
-- **Zap** - Structured logging
-- **Air** - Hot reload for development
+- **Language**: Go 1.21+
+- **Framework**: Gin (HTTP router)
+- **Database**: PostgreSQL 15
+- **Metrics**: Prometheus
+- **Visualization**: Grafana
+- **Migration**: golang-migrate
+- **Container**: Docker & Docker Compose
+- **Logging**: Structured JSON logging
 
-## 📋 Prerequisites
+## Architecture Principles
 
-- Go 1.21 or higher
+### Clean Architecture Layers
+
+1. **Domain Layer**: Core business entities and interfaces
+2. **Application Layer**: Use cases, business logic orchestration
+3. **Infrastructure Layer**: External dependencies (DB, Xray, etc.)
+4. **Interface Layer**: HTTP handlers, middleware
+
+### Design Patterns
+
+- Repository pattern for data access
+- Service pattern for business logic
+- DTO pattern for data transfer
+- Dependency injection via constructor
+- Interface-based abstractions
+
+## Monitoring & Observability
+
+### Metrics (Prometheus)
+- HTTP request duration & count
+- Active users, clients, xray instances
+- Database connection pool metrics
+- Go runtime metrics
+- Custom business metrics
+
+### Logging
+- Structured JSON logs
+- Request ID tracking
+- Correlation ID support
+- Log levels: debug, info, warn, error
+
+### Health Checks
+- Database connectivity
+- Xray process status
+- Application health
+- System statistics
+
+## Security Features
+
+- 🔐 JWT-based authentication
+- 🛡️ Role-based access control (RBAC)
+- 🔒 Non-root container execution
+- 📦 Read-only container filesystem
+- 🚫 No new privileges security option
+- 🔑 Environment-based secrets
+- 📝 Comprehensive audit logging
+- 🌐 SSL/TLS support (via reverse proxy)
+
+## Development
+
+### Prerequisites
+- Go 1.21+
 - Docker & Docker Compose
-- Make (optional, for using Makefile commands)
+- PostgreSQL 15 (optional, Docker provides)
+- Make (optional)
 
-## 🛠️ Getting Started
-
-### 1. Clone the repository
-
-```bash
-git clone <repository-url>
-cd suproxy-backend
-```
-
-### 2. Environment Configuration
-
-Copy the example environment file:
+### Running Locally
 
 ```bash
-cp .env.example .env
+# Install dependencies
+go mod download
+
+# Run database (Docker)
+docker-compose up -d postgres
+
+# Run migrations
+make migrate-up
+
+# Run application
+make run
 ```
 
-### 3. Run with Docker
-
-Start all services:
+### Testing
 
 ```bash
-make docker-up
+# Run tests
+make test
+
+# Run tests with coverage
+make test-coverage
+
+# Run linter
+make lint
 ```
 
-Or manually:
+### Building
 
+```bash
+# Build binary
+make build
+
+# Build Docker image
+make docker-build
+```
+
+## Deployment
+
+### Environment Variables
+
+See `.env.example` for all available configuration options.
+
+**Critical Production Settings:**
+- `SUPROXY_ENVIRONMENT=production`
+- `SUPROXY_JWT_SECRET_KEY` (64+ chars)
+- `SUPROXY_DATABASE_PASSWORD` (strong password)
+- `SUPROXY_DATABASE_SSLMODE=require`
+- `SUPROXY_XRAY_USE_MOCK=false`
+
+### Docker Compose
+
+**Development:**
 ```bash
 docker-compose up -d
 ```
 
-### 4. Verify Installation
-
-Check health endpoint:
-
+**Production:**
 ```bash
-curl http://localhost:8080/health
+docker-compose -f docker-compose.production.yml up -d
 ```
 
-Expected response:
+### Resource Requirements
 
-```json
-{
-  "status": "healthy",
-  "service": "suproxy-backend",
-  "version": "1.0.0"
-}
-```
+**Minimum:**
+- CPU: 2 cores
+- RAM: 4GB
+- Disk: 20GB
 
-## 📝 Available Commands
+**Recommended (Production):**
+- CPU: 4+ cores
+- RAM: 8GB+
+- Disk: 50GB+ SSD
 
+## Backup & Restore
+
+### Database Backup
 ```bash
-make help           # Display all available commands
-make build          # Build the application
-make run            # Run the application
-make dev            # Run with hot reload (requires air)
-make docker-build   # Build Docker image
-make docker-up      # Start Docker containers
-make docker-down    # Stop Docker containers
-make docker-logs    # Show Docker logs
-make test           # Run tests
-make lint           # Run linter
-make clean          # Clean build artifacts
+# Linux/Mac
+./scripts/backup.sh
+
+# Windows
+.\scripts\backup.ps1
 ```
 
-## 🔌 API Endpoints
+Backups are stored in `./backups` with automatic 30-day retention.
 
-### Health Check
-
-- **GET** `/health` - Service health check
-- **GET** `/api/v1/ping` - Simple ping endpoint
-
-## 🏗️ Project Structure Details
-
-### Clean Architecture Layers
-
-1. **Domain Layer** (Planned)
-   - Business entities
-   - Business rules
-   - Domain services
-
-2. **Application Layer** (Planned)
-   - Use cases
-   - Application services
-   - DTOs
-
-3. **Infrastructure Layer** (Current)
-   - Database implementation
-   - External services
-   - Configuration
-   - Logging
-
-4. **Interface Layer** (Planned)
-   - HTTP handlers
-   - Request/Response models
-   - Middleware
-
-## 🔐 Security
-
-- Environment variables for sensitive data
-- Structured logging (no sensitive data in logs)
-- Graceful shutdown handling
-- CORS support (planned)
-- JWT authentication (planned)
-
-## 🧪 Development
-
-### Local Development with Hot Reload
-
-Install Air:
-
+### Restore
 ```bash
-go install github.com/cosmtrek/air@latest
+docker-compose -f docker-compose.production.yml exec -T postgres psql \
+    -U suproxy_prod -d suproxy_prod < backup.sql
 ```
 
-Run with hot reload:
+## Contributing
 
-```bash
-make dev
-```
+1. Follow Clean Architecture principles
+2. Write unit tests for new features
+3. Update documentation
+4. Follow Go best practices
+5. Use structured logging
+6. Add metrics for monitoring
 
-### Database Migrations
+## License
 
-Database migration support with golang-migrate (planned).
+Copyright © 2024 SuProxy. All rights reserved.
 
-## 📊 Monitoring & Logging
+## Support
 
-- Structured JSON logging with Zap
-- Request/Response logging middleware
-- Log levels: debug, info, warn, error, fatal
-- Configurable log format (JSON/Console)
+For production deployment assistance, see [DEPLOYMENT.md](DEPLOYMENT.md)
 
-## 🔄 Version
+For API documentation, see [docs/swagger.md](docs/swagger.md)
 
-Current version: **1.0.0**
-
-## 🛣️ Roadmap
-
-- [ ] Phase 1: Infrastructure Setup ✅ (Current)
-- [ ] Phase 2: User Management System
-- [ ] Phase 3: Authentication & Authorization (JWT)
-- [ ] Phase 4: Payment Integration
-- [ ] Phase 5: VPN Server Management (Xray)
-- [ ] Phase 6: Admin Panel APIs
-- [ ] Phase 7: Android App Integration
-
-## 📱 Mobile App Integration
-
-This backend is designed to integrate with the SuProxy Android application. The architecture is scalable and extensible to support future mobile requirements.
-
-## 🤝 Contributing
-
-This is a commercial project. Contribution guidelines will be added later.
-
-## 📄 License
-
-Proprietary - All rights reserved
-
-## 👤 Author
-
-SuProxy Team
-
----
-
-**Status:** 🟢 Phase 1 Complete - Infrastructure Setup
-
-**Last Updated:** 2026-07-05
+For authentication details, see [docs/authentication.md](docs/authentication.md)

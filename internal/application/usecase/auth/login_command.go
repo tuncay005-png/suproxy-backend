@@ -14,6 +14,7 @@ import (
 	"github.com/suproxy/backend/internal/domain/user"
 	"github.com/suproxy/backend/internal/infrastructure/jwt"
 	"github.com/suproxy/backend/internal/infrastructure/logger"
+	"github.com/suproxy/backend/internal/infrastructure/metrics"
 	"github.com/suproxy/backend/internal/infrastructure/security"
 )
 
@@ -63,6 +64,9 @@ func (c *LoginCommand) Execute(ctx context.Context, req *dto.LoginRequest) (*dto
 			req.UserAgent,
 		))
 
+		// Record failed login metric
+		metrics.IncUserLoginFailures()
+
 		return nil, user.ErrInvalidCredentials
 	}
 
@@ -106,6 +110,9 @@ func (c *LoginCommand) Execute(ctx context.Context, req *dto.LoginRequest) (*dto
 			req.IPAddress,
 			req.UserAgent,
 		))
+
+		// Record failed login metric
+		metrics.IncUserLoginFailures()
 
 		return nil, user.ErrInvalidCredentials
 	}
@@ -155,6 +162,9 @@ func (c *LoginCommand) Execute(ctx context.Context, req *dto.LoginRequest) (*dto
 	)
 	auditLog.AddMetadata("status", "success")
 	c.auditRepo.Create(ctx, auditLog)
+	
+	// Record successful login metric
+	metrics.IncUserLogins()
 
 	c.logger.Info("User logged in successfully", "user_id", foundUser.ID, "email", email.String())
 

@@ -8,6 +8,7 @@ import (
 	"github.com/suproxy/backend/internal/application/service"
 	"github.com/suproxy/backend/internal/domain/user"
 	"github.com/suproxy/backend/internal/infrastructure/logger"
+	"github.com/suproxy/backend/internal/infrastructure/metrics"
 	"github.com/suproxy/backend/internal/infrastructure/security"
 )
 
@@ -81,6 +82,9 @@ func (c *RegisterCommand) Execute(ctx context.Context, req *dto.RegisterRequest,
 	}
 
 	c.logger.Info("User registered successfully", "user_id", newUser.ID, "email", email.String())
+
+	// Record metrics
+	metrics.IncUserRegistrations()
 
 	// Automatically provision user to Xray
 	if err := c.provisioningService.ProvisionUserToXray(ctx, newUser, ipAddress, userAgent); err != nil {
