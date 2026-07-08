@@ -42,7 +42,7 @@ func TestInboundRepository_Create(t *testing.T) {
 		found, err := inboundRepo.FindByID(ctx, inbound.ID)
 		require.NoError(t, err)
 		assert.Equal(t, inbound.ID, found.ID)
-		assert.Equal(t, inbound.InstanceID, found.InstanceID)
+		assert.Equal(t, inbound.XrayInstanceID, found.XrayInstanceID)
 		assert.Equal(t, inbound.Protocol, found.Protocol)
 	})
 }
@@ -75,7 +75,7 @@ func TestInboundRepository_FindByID(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, inbound.ID, found.ID)
 		assert.Equal(t, inbound.Port, found.Port)
-		assert.Equal(t, inbound.Network, found.Network)
+		assert.Equal(t, inbound.Transport, found.Transport)
 	})
 
 	t.Run("FindByID_NotFound", func(t *testing.T) {
@@ -118,7 +118,7 @@ func TestInboundRepository_FindByInstanceID(t *testing.T) {
 		assert.Len(t, inbounds, 3)
 
 		for _, inbound := range inbounds {
-			assert.Equal(t, instance.ID, inbound.InstanceID)
+			assert.Equal(t, instance.ID, inbound.XrayInstanceID)
 		}
 	})
 
@@ -169,7 +169,7 @@ func TestInboundRepository_FindEnabledByInstanceID(t *testing.T) {
 		assert.GreaterOrEqual(t, len(inbounds), 1)
 
 		for _, inbound := range inbounds {
-			assert.True(t, inbound.IsEnabled)
+			assert.True(t, inbound.IsEnabled())
 		}
 	})
 }
@@ -206,7 +206,7 @@ func TestInboundRepository_Update(t *testing.T) {
 		// Verify update
 		found, err := inboundRepo.FindByID(ctx, inbound.ID)
 		require.NoError(t, err)
-		assert.False(t, found.IsEnabled)
+		assert.False(t, found.IsEnabled())
 	})
 
 	t.Run("Update_NotFound", func(t *testing.T) {
@@ -388,7 +388,7 @@ func TestInboundRepository_ListWithFilters(t *testing.T) {
 		assert.GreaterOrEqual(t, total, int64(1))
 
 		for _, inbound := range inbounds {
-			assert.True(t, inbound.IsEnabled)
+			assert.True(t, inbound.IsEnabled())
 		}
 	})
 
@@ -404,7 +404,7 @@ func TestInboundRepository_ListWithFilters(t *testing.T) {
 		assert.GreaterOrEqual(t, total, int64(2))
 
 		for _, inbound := range inbounds {
-			assert.Equal(t, instance.ID, inbound.InstanceID)
+			assert.Equal(t, instance.ID, inbound.XrayInstanceID)
 		}
 	})
 }

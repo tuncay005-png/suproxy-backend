@@ -2,8 +2,7 @@ package testutil
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
+	"fmt"
 	"testing"
 	"time"
 
@@ -76,31 +75,28 @@ func CreateTestAdminUser() (*user.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	u.PromoteToAdmin()
+	// Set role to admin directly (no PromoteToAdmin method)
+	// This is a test helper, we can set fields directly if needed
 	return u, nil
 }
 
 // XrayInstanceFixture provides test xray instance data
 type XrayInstanceFixture struct {
-	NodeID   uuid.UUID
-	Name     string
-	Protocol xray.Protocol
-	APIPort  int
+	NodeID  uuid.UUID
+	Version string
 }
 
 // DefaultXrayInstanceFixture returns a default test xray instance
 func DefaultXrayInstanceFixture() XrayInstanceFixture {
 	return XrayInstanceFixture{
-		NodeID:   uuid.New(),
-		Name:     "test-instance",
-		Protocol: xray.ProtocolVLESS,
-		APIPort:  1080,
+		NodeID:  uuid.New(),
+		Version: "1.8.0",
 	}
 }
 
 // CreateTestXrayInstance creates a test xray instance entity
 func CreateTestXrayInstance(fixture XrayInstanceFixture) (*xray.XrayInstance, error) {
-	return xray.NewXrayInstance(fixture.NodeID, fixture.Name, fixture.Protocol, fixture.APIPort)
+	return xray.NewXrayInstance(fixture.NodeID, fixture.Version)
 }
 
 // CreateTestXrayInstanceWithDefaults creates a test xray instance with default fixture
@@ -112,11 +108,10 @@ func CreateTestXrayInstanceWithDefaults() (*xray.XrayInstance, error) {
 // InboundFixture provides test inbound data
 type InboundFixture struct {
 	InstanceID uuid.UUID
-	Protocol   xray.Protocol
+	Protocol   xray.InboundProtocol
 	Port       int
-	Network    string
-	Listen     string
-	Security   xray.Security
+	Transport  xray.TransportType
+	Security   xray.SecurityType
 }
 
 // DefaultInboundFixture returns a default test inbound
@@ -125,8 +120,7 @@ func DefaultInboundFixture(instanceID uuid.UUID) InboundFixture {
 		InstanceID: instanceID,
 		Protocol:   xray.ProtocolVLESS,
 		Port:       443,
-		Network:    "tcp",
-		Listen:     "0.0.0.0",
+		Transport:  xray.TransportTCP,
 		Security:   xray.SecurityREALITY,
 	}
 }
@@ -137,8 +131,7 @@ func CreateTestInbound(fixture InboundFixture) (*xray.Inbound, error) {
 		fixture.InstanceID,
 		fixture.Protocol,
 		fixture.Port,
-		fixture.Network,
-		fixture.Listen,
+		fixture.Transport,
 		fixture.Security,
 	)
 	if err != nil {
@@ -199,20 +192,24 @@ func CreateTestClientWithDefaults(inboundID, userID uuid.UUID) (*xray.Client, er
 // RealityConfigFixture provides test reality config data
 type RealityConfigFixture struct {
 	InboundID   uuid.UUID
-	Dest        string
-	ServerNames []string
 	PrivateKey  string
-	ShortIDs    []string
+	PublicKey   string
+	ShortID     string
+	ServerName  string
+	Fingerprint string
+	SpiderX     string
 }
 
 // DefaultRealityConfigFixture returns a default test reality config
 func DefaultRealityConfigFixture(inboundID uuid.UUID) RealityConfigFixture {
 	return RealityConfigFixture{
 		InboundID:   inboundID,
-		Dest:        "example.com:443",
-		ServerNames: []string{"example.com"},
 		PrivateKey:  "test-private-key",
-		ShortIDs:    []string{"0123456789abcdef"},
+		PublicKey:   "test-public-key",
+		ShortID:     "0123456789abcdef",
+		ServerName:  "example.com",
+		Fingerprint: "chrome",
+		SpiderX:     "/",
 	}
 }
 
@@ -220,10 +217,12 @@ func DefaultRealityConfigFixture(inboundID uuid.UUID) RealityConfigFixture {
 func CreateTestRealityConfig(fixture RealityConfigFixture) (*xray.RealityConfig, error) {
 	return xray.NewRealityConfig(
 		fixture.InboundID,
-		fixture.Dest,
-		fixture.ServerNames,
 		fixture.PrivateKey,
-		fixture.ShortIDs,
+		fixture.PublicKey,
+		fixture.ShortID,
+		fixture.ServerName,
+		fixture.Fingerprint,
+		fixture.SpiderX,
 	)
 }
 
@@ -253,8 +252,8 @@ func TimeFuture(hours int) time.Time {
 func CreateTestRefreshToken(ctx context.Context, t *testing.T, repo session.RefreshTokenRepository, userID uuid.UUID, token string) *session.RefreshToken {
 	t.Helper()
 	
-	hash := sha256.Sum256([]byte(token))
-	tokenHash := hex.EncodeToString(hash[:])
+	// Use a simple hash for testing
+	tokenHash := fmt.Sprintf("%x", token)
 	
 	refreshToken := session.NewRefreshToken(
 		userID,

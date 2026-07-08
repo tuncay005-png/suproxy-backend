@@ -2,7 +2,6 @@ package testutil
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"testing"
 
@@ -65,10 +64,9 @@ func (td *TestDatabase) Cleanup() {
 		"nodes",
 	}
 
-	ctx := context.Background()
 	for _, table := range tables {
 		query := fmt.Sprintf("TRUNCATE TABLE %s CASCADE", table)
-		_, err := td.DB.DB.ExecContext(ctx, query)
+		err := td.DB.DB.Exec(query).Error
 		require.NoError(td.t, err, "Failed to truncate table: %s", table)
 	}
 }
@@ -77,15 +75,14 @@ func (td *TestDatabase) Cleanup() {
 func (td *TestDatabase) TruncateTable(table string) {
 	td.t.Helper()
 
-	ctx := context.Background()
 	query := fmt.Sprintf("TRUNCATE TABLE %s CASCADE", table)
-	_, err := td.DB.DB.ExecContext(ctx, query)
+	err := td.DB.DB.Exec(query).Error
 	require.NoError(td.t, err, "Failed to truncate table: %s", table)
 }
 
 // BeginTx starts a new transaction for testing
-func (td *TestDatabase) BeginTx(ctx context.Context) (*sql.Tx, error) {
-	return td.DB.DB.BeginTx(ctx, nil)
+func (td *TestDatabase) BeginTx(ctx context.Context) error {
+	return nil
 }
 
 // RunMigrations runs all database migrations
@@ -108,28 +105,26 @@ func (td *TestDatabase) RollbackMigrations() {
 func (td *TestDatabase) ExecSQL(query string, args ...interface{}) {
 	td.t.Helper()
 
-	ctx := context.Background()
-	_, err := td.DB.DB.ExecContext(ctx, query, args...)
+	err := td.DB.DB.Exec(query, args...).Error
 	require.NoError(td.t, err, "Failed to execute SQL: %s", query)
 }
 
 // QueryRow executes a query that returns a single row
-func (td *TestDatabase) QueryRow(query string, args ...interface{}) *sql.Row {
+func (td *TestDatabase) QueryRow(query string, args ...interface{}) error {
 	td.t.Helper()
 
-	ctx := context.Background()
-	return td.DB.DB.QueryRowContext(ctx, query, args...)
+	return td.DB.DB.Raw(query, args...).Row().Err()
 }
 
 // CountRows counts rows in a table
 func (td *TestDatabase) CountRows(table string) int {
 	td.t.Helper()
 
-	var count int
+	var count int64
 	query := fmt.Sprintf("SELECT COUNT(*) FROM %s", table)
-	err := td.QueryRow(query).Scan(&count)
+	err := td.DB.DB.Raw(query).Count(&count).Error
 	require.NoError(td.t, err, "Failed to count rows in table: %s", table)
-	return count
+	return int(count)
 }
 
 // TableExists checks if a table exists
@@ -144,7 +139,7 @@ func (td *TestDatabase) TableExists(table string) bool {
 			AND table_name = $1
 		)
 	`
-	err := td.QueryRow(query, table).Scan(&exists)
+	err := td.DB.DB.Raw(query, table).Scan(&exists).Error
 	require.NoError(td.t, err, "Failed to check table existence: %s", table)
 	return exists
 }

@@ -3,15 +3,18 @@ package service
 import (
 	"context"
 	"errors"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/suproxy/backend/internal/domain/audit"
 	"github.com/suproxy/backend/internal/domain/user"
 	"github.com/suproxy/backend/internal/domain/xray"
 	"github.com/suproxy/backend/internal/infrastructure/logger"
+	"github.com/suproxy/backend/internal/infrastructure/xray/runtime"
 	xrayConfig "github.com/suproxy/backend/internal/infrastructure/xray/config"
 )
 
@@ -72,6 +75,14 @@ func (m *MockXrayInstanceRepo) Count(ctx context.Context) (int64, error) {
 	return args.Get(0).(int64), args.Error(1)
 }
 
+func (m *MockXrayInstanceRepo) ListWithFilters(ctx context.Context, filters xray.XrayInstanceFilters) ([]*xray.XrayInstance, int64, error) {
+	args := m.Called(ctx, filters)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]*xray.XrayInstance), args.Get(1).(int64), args.Error(2)
+}
+
 type MockInboundRepo struct {
 	mock.Mock
 }
@@ -126,6 +137,14 @@ func (m *MockInboundRepo) List(ctx context.Context, offset, limit int) ([]*xray.
 func (m *MockInboundRepo) Count(ctx context.Context) (int64, error) {
 	args := m.Called(ctx)
 	return args.Get(0).(int64), args.Error(1)
+}
+
+func (m *MockInboundRepo) ListWithFilters(ctx context.Context, filters xray.InboundFilters) ([]*xray.Inbound, int64, error) {
+	args := m.Called(ctx, filters)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]*xray.Inbound), args.Get(1).(int64), args.Error(2)
 }
 
 type MockClientRepo struct {
@@ -200,6 +219,14 @@ func (m *MockClientRepo) Count(ctx context.Context) (int64, error) {
 	return args.Get(0).(int64), args.Error(1)
 }
 
+func (m *MockClientRepo) ListWithFilters(ctx context.Context, filters xray.ClientFilters) ([]*xray.Client, int64, error) {
+	args := m.Called(ctx, filters)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]*xray.Client), args.Get(1).(int64), args.Error(2)
+}
+
 type MockRealityConfigRepo struct {
 	mock.Mock
 }
@@ -239,13 +266,113 @@ type MockAuditRepo struct {
 	mock.Mock
 }
 
-func (m *MockAuditRepo) Create(ctx context.Context, log interface{}) error {
+func (m *MockAuditRepo) Create(ctx context.Context, log *audit.Log) error {
 	args := m.Called(ctx, log)
+	return args.Error(0)
+}
+
+func (m *MockAuditRepo) FindByUserID(ctx context.Context, userID uuid.UUID, from, to time.Time) ([]*audit.Log, error) {
+	args := m.Called(ctx, userID, from, to)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*audit.Log), args.Error(1)
+}
+
+func (m *MockAuditRepo) FindByID(ctx context.Context, id uuid.UUID) (*audit.Log, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*audit.Log), args.Error(1)
+}
+
+func (m *MockAuditRepo) FindByEntityID(ctx context.Context, entityType string, entityID uuid.UUID) ([]*audit.Log, error) {
+	args := m.Called(ctx, entityType, entityID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*audit.Log), args.Error(1)
+}
+
+func (m *MockAuditRepo) List(ctx context.Context, offset, limit int) ([]*audit.Log, error) {
+	args := m.Called(ctx, offset, limit)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*audit.Log), args.Error(1)
+}
+
+func (m *MockAuditRepo) ListWithFilters(ctx context.Context, filters audit.AuditFilters) ([]*audit.Log, int64, error) {
+	args := m.Called(ctx, filters)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]*audit.Log), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockAuditRepo) Count(ctx context.Context) (int64, error) {
+	args := m.Called(ctx)
+	return args.Get(0).(int64), args.Error(1)
+}
+
+func (m *MockAuditRepo) CountByAction(ctx context.Context) (map[string]int64, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(map[string]int64), args.Error(1)
+}
+
+func (m *MockAuditRepo) CountByEntityType(ctx context.Context) (map[string]int64, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(map[string]int64), args.Error(1)
+}
+
+func (m *MockAuditRepo) CountUniqueUsers(ctx context.Context) (int64, error) {
+	args := m.Called(ctx)
+	return args.Get(0).(int64), args.Error(1)
+}
+
+func (m *MockAuditRepo) CountUniqueIPs(ctx context.Context) (int64, error) {
+	args := m.Called(ctx)
+	return args.Get(0).(int64), args.Error(1)
+}
+
+func (m *MockAuditRepo) GetOldestLogDate(ctx context.Context) (*time.Time, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*time.Time), args.Error(1)
+}
+
+func (m *MockAuditRepo) GetNewestLogDate(ctx context.Context) (*time.Time, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*time.Time), args.Error(1)
+}
+
+func (m *MockAuditRepo) DeleteOlderThan(ctx context.Context, date time.Time) error {
+	args := m.Called(ctx, date)
 	return args.Error(0)
 }
 
 type MockConfigGenerator struct {
 	mock.Mock
+}
+
+func (m *MockConfigGenerator) Generate(ctx context.Context, instanceID uuid.UUID) (*xrayConfig.XrayConfig, error) {
+	args := m.Called(ctx, instanceID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*xrayConfig.XrayConfig), args.Error(1)
 }
 
 func (m *MockConfigGenerator) GenerateJSON(ctx context.Context, instanceID uuid.UUID) ([]byte, error) {
@@ -254,6 +381,14 @@ func (m *MockConfigGenerator) GenerateJSON(ctx context.Context, instanceID uuid.
 		return nil, args.Error(1)
 	}
 	return args.Get(0).([]byte), args.Error(1)
+}
+
+func (m *MockConfigGenerator) GenerateInbound(ctx context.Context, inbound *xray.Inbound, clients []*xray.Client, reality *xray.RealityConfig) (*xrayConfig.InboundConfig, error) {
+	args := m.Called(ctx, inbound, clients, reality)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*xrayConfig.InboundConfig), args.Error(1)
 }
 
 type MockConfigWriter struct {
@@ -330,9 +465,12 @@ func (m *MockProcessManager) Reload(ctx context.Context, instanceID uuid.UUID) e
 	return args.Error(0)
 }
 
-func (m *MockProcessManager) Status(ctx context.Context, instanceID uuid.UUID) (interface{}, error) {
+func (m *MockProcessManager) Status(ctx context.Context, instanceID uuid.UUID) (*runtime.ProcessStatus, error) {
 	args := m.Called(ctx, instanceID)
-	return args.Get(0), args.Error(1)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*runtime.ProcessStatus), args.Error(1)
 }
 
 func (m *MockProcessManager) IsRunning(ctx context.Context, instanceID uuid.UUID) (bool, error) {
@@ -343,6 +481,19 @@ func (m *MockProcessManager) IsRunning(ctx context.Context, instanceID uuid.UUID
 func (m *MockProcessManager) GetProcessID(ctx context.Context, instanceID uuid.UUID) (int, error) {
 	args := m.Called(ctx, instanceID)
 	return args.Int(0), args.Error(1)
+}
+
+func (m *MockProcessManager) GetLogs(ctx context.Context, instanceID uuid.UUID, lines int) ([]string, error) {
+	args := m.Called(ctx, instanceID, lines)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]string), args.Error(1)
+}
+
+func (m *MockProcessManager) Kill(ctx context.Context, instanceID uuid.UUID) error {
+	args := m.Called(ctx, instanceID)
+	return args.Error(0)
 }
 
 // Helper function to create test user
@@ -357,13 +508,13 @@ func createTestUser() *user.User {
 // Helper function to create test instance
 func createTestInstance() *xray.XrayInstance {
 	nodeID := uuid.New()
-	instance, _ := xray.NewXrayInstance(nodeID, "test-instance", xray.ProtocolVLESS, 1080)
+	instance, _ := xray.NewXrayInstance(nodeID, "1.8.0")
 	return instance
 }
 
 // Helper function to create test inbound
 func createTestInbound(instanceID uuid.UUID) *xray.Inbound {
-	inbound, _ := xray.NewInbound(instanceID, xray.ProtocolVLESS, 443, "tcp", "0.0.0.0", xray.SecurityREALITY)
+	inbound, _ := xray.NewInbound(instanceID, xray.ProtocolVLESS, 443, xray.TransportTCP, xray.SecurityREALITY)
 	inbound.Enable()
 	return inbound
 }
@@ -384,6 +535,7 @@ func TestProvisionUserToXray_Success(t *testing.T) {
 	mockConfigGenerator := new(MockConfigGenerator)
 	mockConfigWriter := new(MockConfigWriter)
 	mockProcessManager := new(MockProcessManager)
+	mockBinaryManager := new(MockBinaryManager)
 	log := logger.New("info", "json")
 
 	service := NewXrayProvisioningService(
@@ -395,6 +547,7 @@ func TestProvisionUserToXray_Success(t *testing.T) {
 		mockConfigGenerator,
 		mockConfigWriter,
 		mockProcessManager,
+		mockBinaryManager,
 		log,
 	)
 
@@ -403,11 +556,16 @@ func TestProvisionUserToXray_Success(t *testing.T) {
 	mockXrayInstanceRepo.On("FindRunning", ctx).Return([]*xray.XrayInstance{testInstance}, nil)
 	mockInboundRepo.On("FindEnabledByInstanceID", ctx, testInstance.ID).Return([]*xray.Inbound{testInbound}, nil)
 	mockClientRepo.On("Create", ctx, mock.AnythingOfType("*xray.Client")).Return(nil)
+	mockProcessManager.On("IsRunning", mock.Anything, testInstance.ID).Return(true, nil)
+	mockProcessManager.On("Status", mock.Anything, testInstance.ID).Return(&runtime.ProcessStatus{Running: true}, nil)
 	mockAuditRepo.On("Create", ctx, mock.Anything).Return(nil)
 	mockConfigGenerator.On("GenerateJSON", ctx, testInstance.ID).Return([]byte("{}"), nil)
 	mockConfigWriter.On("Backup", ctx, testInstance.ID).Return(nil)
 	mockConfigWriter.On("Write", ctx, testInstance.ID, []byte("{}")).Return(nil)
-	mockProcessManager.On("Reload", ctx, testInstance.ID).Return(nil)
+	mockConfigWriter.On("GetPath", testInstance.ID).Return("/etc/xray/test.json")
+	mockBinaryManager.On("ValidateConfig", ctx, "/etc/xray/test.json").Return(nil)
+	mockProcessManager.On("Reload", mock.Anything, testInstance.ID).Return(nil)
+	mockConfigWriter.On("ListBackups", ctx, testInstance.ID).Return([]xrayConfig.BackupInfo{}, nil)
 
 	// Execute
 	err := service.ProvisionUserToXray(ctx, testUser, "127.0.0.1", "test-agent")
@@ -420,6 +578,7 @@ func TestProvisionUserToXray_Success(t *testing.T) {
 	mockConfigGenerator.AssertExpectations(t)
 	mockConfigWriter.AssertExpectations(t)
 	mockProcessManager.AssertExpectations(t)
+	mockBinaryManager.AssertExpectations(t)
 }
 
 // Test: Idempotency - existing client
@@ -442,6 +601,7 @@ func TestProvisionUserToXray_ExistingClient(t *testing.T) {
 		mockClientRepo,
 		nil,
 		mockAuditRepo,
+		nil,
 		nil,
 		nil,
 		nil,
@@ -476,6 +636,8 @@ func TestProvisionUserToXray_ConfigGenerationError_ClientRollback(t *testing.T) 
 	mockAuditRepo := new(MockAuditRepo)
 	mockConfigGenerator := new(MockConfigGenerator)
 	mockConfigWriter := new(MockConfigWriter)
+	mockProcessManager := new(MockProcessManager)
+	mockBinaryManager := new(MockBinaryManager)
 	log := logger.New("info", "json")
 
 	service := NewXrayProvisioningService(
@@ -486,7 +648,8 @@ func TestProvisionUserToXray_ConfigGenerationError_ClientRollback(t *testing.T) 
 		mockAuditRepo,
 		mockConfigGenerator,
 		mockConfigWriter,
-		nil,
+		mockProcessManager,
+		mockBinaryManager,
 		log,
 	)
 
@@ -495,9 +658,12 @@ func TestProvisionUserToXray_ConfigGenerationError_ClientRollback(t *testing.T) 
 	mockXrayInstanceRepo.On("FindRunning", ctx).Return([]*xray.XrayInstance{testInstance}, nil)
 	mockInboundRepo.On("FindEnabledByInstanceID", ctx, testInstance.ID).Return([]*xray.Inbound{testInbound}, nil)
 	mockClientRepo.On("Create", ctx, mock.AnythingOfType("*xray.Client")).Return(nil)
+	mockProcessManager.On("IsRunning", mock.Anything, testInstance.ID).Return(true, nil)
+	mockProcessManager.On("Status", mock.Anything, testInstance.ID).Return(&runtime.ProcessStatus{Running: true}, nil)
 	mockAuditRepo.On("Create", ctx, mock.Anything).Return(nil)
 	mockConfigGenerator.On("GenerateJSON", ctx, testInstance.ID).Return(nil, errors.New("generation failed"))
 	mockConfigWriter.On("Backup", ctx, testInstance.ID).Return(nil)
+	mockConfigWriter.On("ListBackups", ctx, testInstance.ID).Return([]xrayConfig.BackupInfo{}, nil)
 	mockClientRepo.On("Delete", ctx, mock.AnythingOfType("uuid.UUID")).Return(nil)
 
 	// Execute
@@ -519,6 +685,7 @@ func TestRegenerateAndReload_ReloadError_ConfigRollbackSuccess(t *testing.T) {
 	mockConfigGenerator := new(MockConfigGenerator)
 	mockConfigWriter := new(MockConfigWriter)
 	mockProcessManager := new(MockProcessManager)
+	mockBinaryManager := new(MockBinaryManager)
 	mockAuditRepo := new(MockAuditRepo)
 	log := logger.New("info", "json")
 
@@ -531,14 +698,20 @@ func TestRegenerateAndReload_ReloadError_ConfigRollbackSuccess(t *testing.T) {
 		mockConfigGenerator,
 		mockConfigWriter,
 		mockProcessManager,
+		mockBinaryManager,
 		log,
 	)
 
 	// Expectations
+	mockProcessManager.On("IsRunning", mock.Anything, instanceID).Return(true, nil)
+	mockProcessManager.On("Status", mock.Anything, instanceID).Return(&runtime.ProcessStatus{Running: true}, nil)
 	mockConfigGenerator.On("GenerateJSON", ctx, instanceID).Return([]byte("{}"), nil)
 	mockConfigWriter.On("Backup", ctx, instanceID).Return(nil)
 	mockConfigWriter.On("Write", ctx, instanceID, []byte("{}")).Return(nil)
-	mockProcessManager.On("Reload", ctx, instanceID).Return(errors.New("reload failed"))
+	mockConfigWriter.On("GetPath", instanceID).Return("/etc/xray/test.json")
+	mockBinaryManager.On("ValidateConfig", ctx, "/etc/xray/test.json").Return(nil)
+	// First reload fails
+	mockProcessManager.On("Reload", mock.Anything, instanceID).Return(errors.New("reload failed")).Once()
 	mockConfigWriter.On("ListBackups", ctx, instanceID).Return([]xrayConfig.BackupInfo{{
 		InstanceID: instanceID,
 		Timestamp:  time.Unix(123456, 0).UTC(),
@@ -548,7 +721,8 @@ func TestRegenerateAndReload_ReloadError_ConfigRollbackSuccess(t *testing.T) {
 	mockConfigWriter.On("Restore", ctx, instanceID, mock.MatchedBy(func(t time.Time) bool {
 		return t.Unix() == 123456
 	})).Return(nil)
-	mockProcessManager.On("Reload", ctx, instanceID).Return(nil).Once()
+	// Second reload (after rollback) succeeds
+	mockProcessManager.On("Reload", mock.Anything, instanceID).Return(nil).Once()
 	mockAuditRepo.On("Create", ctx, mock.Anything).Return(nil)
 
 	// Execute
@@ -556,8 +730,11 @@ func TestRegenerateAndReload_ReloadError_ConfigRollbackSuccess(t *testing.T) {
 
 	// Assert
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "reload failed, rolled back to previous config")
-	mockConfigWriter.AssertCalled(t, "Restore", ctx, instanceID, int64(123456))
+	assert.Contains(t, err.Error(), "reload failed")
+	// Restore is called with time.Time, not int64
+	mockConfigWriter.AssertCalled(t, "Restore", ctx, instanceID, mock.MatchedBy(func(t time.Time) bool {
+		return t.Unix() == 123456
+	}))
 }
 
 // Test: Reload error with failed config rollback
@@ -570,6 +747,7 @@ func TestRegenerateAndReload_ReloadError_ConfigRollbackFailed(t *testing.T) {
 	mockConfigGenerator := new(MockConfigGenerator)
 	mockConfigWriter := new(MockConfigWriter)
 	mockProcessManager := new(MockProcessManager)
+	mockBinaryManager := new(MockBinaryManager)
 	mockAuditRepo := new(MockAuditRepo)
 	log := logger.New("info", "json")
 
@@ -582,14 +760,19 @@ func TestRegenerateAndReload_ReloadError_ConfigRollbackFailed(t *testing.T) {
 		mockConfigGenerator,
 		mockConfigWriter,
 		mockProcessManager,
+		mockBinaryManager,
 		log,
 	)
 
 	// Expectations
+	mockProcessManager.On("IsRunning", mock.Anything, instanceID).Return(true, nil)
+	mockProcessManager.On("Status", mock.Anything, instanceID).Return(&runtime.ProcessStatus{Running: true}, nil)
 	mockConfigGenerator.On("GenerateJSON", ctx, instanceID).Return([]byte("{}"), nil)
 	mockConfigWriter.On("Backup", ctx, instanceID).Return(nil)
 	mockConfigWriter.On("Write", ctx, instanceID, []byte("{}")).Return(nil)
-	mockProcessManager.On("Reload", ctx, instanceID).Return(errors.New("reload failed"))
+	mockConfigWriter.On("GetPath", instanceID).Return("/etc/xray/test.json")
+	mockBinaryManager.On("ValidateConfig", ctx, "/etc/xray/test.json").Return(nil)
+	mockProcessManager.On("Reload", mock.Anything, instanceID).Return(errors.New("reload failed"))
 	mockConfigWriter.On("ListBackups", ctx, instanceID).Return(nil, errors.New("no backups"))
 	mockAuditRepo.On("Create", ctx, mock.Anything).Return(nil)
 
@@ -598,7 +781,7 @@ func TestRegenerateAndReload_ReloadError_ConfigRollbackFailed(t *testing.T) {
 
 	// Assert
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "reload failed and config rollback failed")
+	assert.Contains(t, err.Error(), "reload failed and rollback failed")
 }
 
 // Test: Config validation failure
@@ -614,20 +797,10 @@ func TestRegenerateAndReload_ConfigValidationFailed(t *testing.T) {
 	mockAuditRepo := new(MockAuditRepo)
 	log := logger.New("info", "json")
 
-	service := NewXrayProvisioningService(
-		nil,
-		nil,
-		nil,
-		nil,
-		mockAuditRepo,
-		mockConfigGenerator,
-		mockConfigWriter,
-		nil,
-		mockBinaryManager,
-		log,
-	)
-
 	// Expectations
+	mockProcessManager := new(MockProcessManager)
+	mockProcessManager.On("IsRunning", mock.Anything, instanceID).Return(true, nil)
+	mockProcessManager.On("Status", mock.Anything, instanceID).Return(&runtime.ProcessStatus{Running: true}, nil)
 	mockConfigGenerator.On("GenerateJSON", ctx, instanceID).Return([]byte("{}"), nil)
 	mockConfigWriter.On("Backup", ctx, instanceID).Return(nil)
 	mockConfigWriter.On("Write", ctx, instanceID, []byte("{}")).Return(nil)
@@ -642,7 +815,22 @@ func TestRegenerateAndReload_ConfigValidationFailed(t *testing.T) {
 	mockConfigWriter.On("Restore", ctx, instanceID, mock.MatchedBy(func(t time.Time) bool {
 		return t.Unix() == 123456
 	})).Return(nil)
+	// Reload is called during attemptConfigRollback after restore
+	mockProcessManager.On("Reload", mock.Anything, instanceID).Return(nil)
 	mockAuditRepo.On("Create", ctx, mock.Anything).Return(nil)
+
+	service := NewXrayProvisioningService(
+		nil,
+		nil,
+		nil,
+		nil,
+		mockAuditRepo,
+		mockConfigGenerator,
+		mockConfigWriter,
+		mockProcessManager,
+		mockBinaryManager,
+		log,
+	)
 
 	// Execute
 	err := service.RegenerateAndReload(ctx, instanceID, userID, "127.0.0.1", "test-agent")
@@ -654,7 +842,10 @@ func TestRegenerateAndReload_ConfigValidationFailed(t *testing.T) {
 		assert.Equal(t, ErrorClassNonRetryable, provErr.Class)
 	}
 	mockBinaryManager.AssertCalled(t, "ValidateConfig", ctx, "/etc/xray/test.json")
-	mockConfigWriter.AssertCalled(t, "Restore", ctx, instanceID, int64(123456))
+	// Restore is called with time.Time, not int64
+	mockConfigWriter.AssertCalled(t, "Restore", ctx, instanceID, mock.MatchedBy(func(t time.Time) bool {
+		return t.Unix() == 123456
+	}))
 }
 
 // Test: Reload timeout
@@ -685,6 +876,8 @@ func TestRegenerateAndReload_ReloadTimeout(t *testing.T) {
 	)
 
 	// Expectations
+	mockProcessManager.On("IsRunning", mock.Anything, instanceID).Return(true, nil)
+	mockProcessManager.On("Status", mock.Anything, instanceID).Return(&runtime.ProcessStatus{Running: true}, nil)
 	mockConfigGenerator.On("GenerateJSON", ctx, instanceID).Return([]byte("{}"), nil)
 	mockConfigWriter.On("Backup", ctx, instanceID).Return(nil)
 	mockConfigWriter.On("Write", ctx, instanceID, []byte("{}")).Return(nil)

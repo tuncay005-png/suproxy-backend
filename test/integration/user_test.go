@@ -48,7 +48,7 @@ func TestUserRepository_Integration(t *testing.T) {
 		require.NoError(t, err)
 
 		// Find by email
-		found, err := userRepo.FindByEmail(ctx, testUser.Email.String())
+		found, err := userRepo.FindByEmail(ctx, testUser.Email)
 		require.NoError(t, err)
 		assert.Equal(t, testUser.ID, found.ID)
 	})
@@ -62,7 +62,7 @@ func TestUserRepository_Integration(t *testing.T) {
 		require.NoError(t, err)
 
 		// Update user
-		testUser.PromoteToAdmin()
+		testUser.Role = user.RoleAdmin
 		err = userRepo.Update(ctx, testUser)
 		require.NoError(t, err)
 

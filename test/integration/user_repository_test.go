@@ -141,7 +141,7 @@ func TestUserRepository_Update(t *testing.T) {
 		require.NoError(t, err)
 
 		// Update user
-		testUser.PromoteToAdmin()
+		testUser.Role = user.RoleAdmin
 		newProfile := user.NewProfile("Updated", "Name", "1234567890", "avatar.jpg")
 		testUser.UpdateProfile(newProfile)
 

@@ -83,7 +83,7 @@ func TestAuditService_CreateLog(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			log := audit.NewLog(
 				tt.userID,
-				tt.action,
+				audit.Action(tt.action),
 				tt.entityType,
 				tt.entityID,
 				tt.ipAddress,
@@ -97,7 +97,7 @@ func TestAuditService_CreateLog(t *testing.T) {
 			found, err := repo.FindByID(ctx, log.ID)
 			require.NoError(t, err)
 			assert.Equal(t, tt.userID, found.UserID)
-			assert.Equal(t, tt.action, found.Action)
+			assert.Equal(t, audit.Action(tt.action), found.Action)
 			assert.Equal(t, tt.entityType, found.EntityType)
 			assert.Equal(t, tt.entityID, found.EntityID)
 			assert.Equal(t, tt.ipAddress, found.IPAddress)
@@ -138,7 +138,7 @@ func TestAuditService_ActionTypes(t *testing.T) {
 		t.Run(action, func(t *testing.T) {
 			log := audit.NewLog(
 				userID,
-				action,
+				audit.Action(action),
 				"test_entity",
 				entityID,
 				"127.0.0.1",
@@ -150,7 +150,7 @@ func TestAuditService_ActionTypes(t *testing.T) {
 
 			found, err := repo.FindByID(ctx, log.ID)
 			require.NoError(t, err)
-			assert.Equal(t, action, found.Action)
+			assert.Equal(t, audit.Action(action), found.Action)
 		})
 	}
 }
@@ -184,7 +184,7 @@ func TestAuditService_EntityTypes(t *testing.T) {
 		t.Run(entityType, func(t *testing.T) {
 			log := audit.NewLog(
 				userID,
-				"entity.action",
+				audit.Action("entity.action"),
 				entityType,
 				uuid.New(),
 				"127.0.0.1",
@@ -228,7 +228,7 @@ func TestAuditService_IPAddressTracking(t *testing.T) {
 		t.Run(ip, func(t *testing.T) {
 			log := audit.NewLog(
 				userID,
-				"user.action",
+				audit.Action("user.action"),
 				"user",
 				uuid.New(),
 				ip,
@@ -272,7 +272,7 @@ func TestAuditService_UserAgentTracking(t *testing.T) {
 		t.Run(ua[:20], func(t *testing.T) { // Truncate name for readability
 			log := audit.NewLog(
 				userID,
-				"user.action",
+				audit.Action("user.action"),
 				"user",
 				uuid.New(),
 				"127.0.0.1",
@@ -307,7 +307,7 @@ func TestAuditService_BulkLogging(t *testing.T) {
 		for i := 0; i < 100; i++ {
 			log := audit.NewLog(
 				userID,
-				"user.action",
+				audit.Action("user.action"),
 				"user",
 				uuid.New(),
 				"127.0.0.1",
@@ -340,7 +340,7 @@ func TestAuditService_Timestamps(t *testing.T) {
 	t.Run("CreatedAt_AutoSet", func(t *testing.T) {
 		log := audit.NewLog(
 			uuid.New(),
-			"user.action",
+			audit.Action("user.action"),
 			"user",
 			uuid.New(),
 			"127.0.0.1",
@@ -381,7 +381,7 @@ func TestAuditService_QueryByEntity(t *testing.T) {
 		for _, action := range actions {
 			log := audit.NewLog(
 				userID,
-				"xray_instance."+action,
+				audit.Action("xray_instance."+action),
 				entityType,
 				entityID,
 				"127.0.0.1",
@@ -433,7 +433,7 @@ func TestAuditService_SecurityAudit(t *testing.T) {
 		for _, event := range securityEvents {
 			log := audit.NewLog(
 				userID,
-				event,
+				audit.Action(event),
 				"user",
 				userID,
 				"192.168.1.100",

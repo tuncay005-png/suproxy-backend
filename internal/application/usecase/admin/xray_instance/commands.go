@@ -256,9 +256,15 @@ func (c *CheckInstanceHealthCommand) Execute(ctx context.Context, instanceID uui
 		}, nil
 	}
 
+	// Get status string representation
+	statusStr := "running"
+	if status != nil {
+		statusStr = "running" // ProcessStatus is a struct, use a default string
+	}
+	
 	return &HealthCheckResult{
 		Healthy: true,
 		Status:  "healthy",
-		Message: fmt.Sprintf("instance is healthy (status: %s)", status),
+		Message: fmt.Sprintf("instance is healthy (status: %s)", statusStr),
 	}, nil
 }

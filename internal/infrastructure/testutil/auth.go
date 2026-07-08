@@ -28,7 +28,7 @@ func NewAuthHelper(jwtManager *jwt.Manager, t *testing.T) *AuthHelper {
 func (ah *AuthHelper) GenerateAccessToken(userID uuid.UUID, role user.Role) string {
 	ah.t.Helper()
 
-	token, err := ah.jwtManager.GenerateAccessToken(userID, role)
+	token, err := ah.jwtManager.GenerateAccessToken(userID.String(), "test@example.com", string(role))
 	require.NoError(ah.t, err, "Failed to generate access token")
 	return token
 }
@@ -37,7 +37,7 @@ func (ah *AuthHelper) GenerateAccessToken(userID uuid.UUID, role user.Role) stri
 func (ah *AuthHelper) GenerateRefreshToken(userID uuid.UUID) string {
 	ah.t.Helper()
 
-	token, err := ah.jwtManager.GenerateRefreshToken(userID)
+	token, err := ah.jwtManager.GenerateRefreshToken(userID.String(), "test@example.com", string(user.RoleUser))
 	require.NoError(ah.t, err, "Failed to generate refresh token")
 	return token
 }

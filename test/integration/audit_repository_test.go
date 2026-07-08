@@ -15,7 +15,7 @@ import (
 func createTestAuditLog(userID uuid.UUID) *audit.Log {
 	return audit.NewLog(
 		userID,
-		"user.created",
+		audit.ActionCreate,
 		"user",
 		uuid.New(),
 		"127.0.0.1",
@@ -153,7 +153,7 @@ func TestAuditRepository_FindByEntityID(t *testing.T) {
 		for i := 0; i < 2; i++ {
 			log := audit.NewLog(
 				uuid.New(),
-				"user.updated",
+				audit.ActionUpdate,
 				entityType,
 				entityID,
 				"127.0.0.1",
@@ -268,7 +268,7 @@ func TestAuditRepository_ListWithFilters(t *testing.T) {
 	})
 
 	t.Run("Filter_ByAction", func(t *testing.T) {
-		action := "user.created"
+		action := string(audit.ActionCreate)
 		filters := audit.AuditFilters{
 			Action: &action,
 			Offset: 0,
@@ -280,7 +280,7 @@ func TestAuditRepository_ListWithFilters(t *testing.T) {
 		assert.GreaterOrEqual(t, total, int64(5))
 
 		for _, log := range logs {
-			assert.Equal(t, action, log.Action)
+			assert.Equal(t, audit.Action(action), log.Action)
 		}
 	})
 
@@ -385,7 +385,7 @@ func TestAuditRepository_CountByAction(t *testing.T) {
 		userID := uuid.New()
 
 		// Create different action types
-		actions := []string{"user.created", "user.updated", "user.deleted"}
+		actions := []audit.Action{audit.ActionCreate, audit.ActionUpdate, audit.ActionDelete}
 		for _, action := range actions {
 			for i := 0; i < 2; i++ {
 				log := audit.NewLog(
@@ -406,7 +406,7 @@ func TestAuditRepository_CountByAction(t *testing.T) {
 		assert.GreaterOrEqual(t, len(counts), 3)
 
 		for action, count := range counts {
-			if action == "user.created" || action == "user.updated" || action == "user.deleted" {
+			if action == string(audit.ActionCreate) || action == string(audit.ActionUpdate) || action == string(audit.ActionDelete) {
 				assert.GreaterOrEqual(t, count, int64(2))
 			}
 		}
@@ -434,7 +434,7 @@ func TestAuditRepository_CountByEntityType(t *testing.T) {
 			for i := 0; i < 2; i++ {
 				log := audit.NewLog(
 					userID,
-					"entity.created",
+					audit.ActionCreate,
 					entityType,
 					uuid.New(),
 					"127.0.0.1",
@@ -506,7 +506,7 @@ func TestAuditRepository_CountUniqueIPs(t *testing.T) {
 			for i := 0; i < 2; i++ {
 				log := audit.NewLog(
 					userID,
-					"user.login",
+					audit.ActionLogin,
 					"user",
 					uuid.New(),
 					ip,

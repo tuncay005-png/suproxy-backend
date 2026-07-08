@@ -309,7 +309,7 @@ func TestClientRepository_FindEnabledByInboundID(t *testing.T) {
 		assert.GreaterOrEqual(t, len(clients), 1)
 
 		for _, client := range clients {
-			assert.True(t, client.IsEnabled)
+			assert.True(t, client.IsEnabled())
 		}
 	})
 }
@@ -358,7 +358,7 @@ func TestClientRepository_Update(t *testing.T) {
 		// Verify update
 		found, err := clientRepo.FindByID(ctx, client.ID)
 		require.NoError(t, err)
-		assert.False(t, found.IsEnabled)
+		assert.False(t, found.IsEnabled())
 	})
 
 	t.Run("Update_NotFound", func(t *testing.T) {
@@ -588,7 +588,7 @@ func TestClientRepository_ListWithFilters(t *testing.T) {
 		assert.GreaterOrEqual(t, total, int64(1))
 
 		for _, client := range clients {
-			assert.True(t, client.IsEnabled)
+			assert.True(t, client.IsEnabled())
 		}
 	})
 
