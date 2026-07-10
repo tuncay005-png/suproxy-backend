@@ -73,18 +73,18 @@ func setupE2EAdminRouter(t *testing.T, app *testutil.TestApp) *gin.Engine {
 	deleteClientCmd := adminclient.NewDeleteClientCommand(app.Container.ClientRepository, app.Container.InboundRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
 	enableClientCmd := adminclient.NewEnableClientCommand(app.Container.ClientRepository, app.Container.InboundRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
 	disableClientCmd := adminclient.NewDisableClientCommand(app.Container.ClientRepository, app.Container.InboundRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
-	regenerateClientUUIDCmd := adminclient.NewRegenerateClientUUIDCommand(app.Container.ClientRepository, app.Container.AuditLogRepository, app.Logger)
-	reprovisionClientCmd := adminclient.NewReprovisionClientCommand(app.Container.ClientRepository, app.Container.InboundRepository, app.Container.AuditLogRepository, app.Logger)
+	regenerateClientUUIDCmd := adminclient.NewRegenerateClientUUIDCommand(app.Container.ClientRepository, app.Container.InboundRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
+	reprovisionClientCmd := adminclient.NewReprovisionClientCommand(app.Container.ClientRepository, app.Container.InboundRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
 	
 	listAuditLogsQuery := adminaudit.NewListAuditLogsQuery(app.Container.AuditLogRepository)
 	getAuditLogQuery := adminaudit.NewGetAuditLogQuery(app.Container.AuditLogRepository)
 	getAuditStatsQuery := adminaudit.NewGetAuditStatsQuery(app.Container.AuditLogRepository)
 	
-	getSystemHealthQuery := adminsystem.NewGetSystemHealthQuery(app.Container.XrayInstanceRepository, app.Container.XrayProcessManager, app.DB)
-	getSystemStatsQuery := adminsystem.NewGetSystemStatsQuery(app.Container.UserRepository, app.Container.XrayInstanceRepository, app.Container.InboundRepository, app.Container.ClientRepository)
+	getSystemHealthQuery := adminsystem.NewGetSystemHealthQuery(app.DB, app.Container.XrayInstanceRepository, app.Container.XrayProcessManager)
+	getSystemStatsQuery := adminsystem.NewGetSystemStatsQuery(app.Container.UserRepository, app.Container.XrayInstanceRepository, app.Container.InboundRepository, app.Container.ClientRepository, app.Container.AuditLogRepository)
 	getVersionQuery := adminsystem.NewGetVersionQuery()
 	getDatabaseStatusQuery := adminsystem.NewGetDatabaseStatusQuery(app.DB)
-	getXraySystemStatusQuery := adminsystem.NewGetXraySystemStatusQuery(app.Container.XrayInstanceRepository, app.Container.XrayProcessManager)
+	getXraySystemStatusQuery := adminsystem.NewGetXraySystemStatusQuery(app.Container.XrayInstanceRepository)
 
 	// Admin handler
 	adminHandler := handler.NewAdminHandler(
@@ -128,7 +128,7 @@ func setupE2EAdminRouter(t *testing.T, app *testutil.TestApp) *gin.Engine {
 
 	// Middleware
 	authMw := middleware.AuthMiddleware(app.JWT)
-	adminMw := middleware.AdminMiddleware(app.Logger)
+	adminMw := middleware.AdminAuthorization(app.Logger)
 
 	// Auth routes
 	authGroup := router.Group("/api/v1/auth")
