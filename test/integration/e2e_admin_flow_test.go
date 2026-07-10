@@ -80,10 +80,10 @@ func setupE2EAdminRouter(t *testing.T, app *testutil.TestApp) *gin.Engine {
 	getAuditLogQuery := adminaudit.NewGetAuditLogQuery(app.Container.AuditLogRepository)
 	getAuditStatsQuery := adminaudit.NewGetAuditStatsQuery(app.Container.AuditLogRepository)
 	
-	getSystemHealthQuery := adminsystem.NewGetSystemHealthQuery(app.DB, app.Container.XrayInstanceRepository, app.Container.XrayProcessManager)
+	getSystemHealthQuery := adminsystem.NewGetSystemHealthQuery(app.Database, app.Container.XrayInstanceRepository, app.Container.XrayProcessManager)
 	getSystemStatsQuery := adminsystem.NewGetSystemStatsQuery(app.Container.UserRepository, app.Container.XrayInstanceRepository, app.Container.InboundRepository, app.Container.ClientRepository, app.Container.AuditLogRepository)
 	getVersionQuery := adminsystem.NewGetVersionQuery()
-	getDatabaseStatusQuery := adminsystem.NewGetDatabaseStatusQuery(app.DB)
+	getDatabaseStatusQuery := adminsystem.NewGetDatabaseStatusQuery(app.Database)
 	getXraySystemStatusQuery := adminsystem.NewGetXraySystemStatusQuery(app.Container.XrayInstanceRepository)
 
 	// Admin handler
