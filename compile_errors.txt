@@ -1,0 +1,304 @@
+﻿?   	github.com/suproxy/backend/cmd/api	[no test files]
+?   	github.com/suproxy/backend/internal/application/dto	[no test files]
+?   	github.com/suproxy/backend/internal/application/mapper	[no test files]
+ok  	github.com/suproxy/backend/internal/application/service	(cached) [no tests to run]
+?   	github.com/suproxy/backend/internal/application/usecase/admin/audit	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/admin/client	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/admin/inbound	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/admin/system	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/admin/user	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/admin/xray_instance	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/auth	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/device	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/inbound	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/node	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/payment	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/plan	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/server	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/session	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/subscription	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/subscriptions	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/user	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/xray_instance	[no test files]
+?   	github.com/suproxy/backend/internal/domain/audit	[no test files]
+?   	github.com/suproxy/backend/internal/domain/device	[no test files]
+?   	github.com/suproxy/backend/internal/domain/node	[no test files]
+?   	github.com/suproxy/backend/internal/domain/payment	[no test files]
+?   	github.com/suproxy/backend/internal/domain/server	[no test files]
+?   	github.com/suproxy/backend/internal/domain/session	[no test files]
+?   	github.com/suproxy/backend/internal/domain/subscription	[no test files]
+?   	github.com/suproxy/backend/internal/domain/traffic	[no test files]
+?   	github.com/suproxy/backend/internal/domain/user	[no test files]
+?   	github.com/suproxy/backend/internal/domain/xray	[no test files]
+?   	github.com/suproxy/backend/internal/infrastructure/bootstrap	[no test files]
+?   	github.com/suproxy/backend/internal/infrastructure/config	[no test files]
+?   	github.com/suproxy/backend/internal/infrastructure/database	[no test files]
+?   	github.com/suproxy/backend/internal/infrastructure/jwt	[no test files]
+?   	github.com/suproxy/backend/internal/infrastructure/logger	[no test files]
+?   	github.com/suproxy/backend/internal/infrastructure/metrics	[no test files]
+?   	github.com/suproxy/backend/internal/infrastructure/repository	[no test files]
+?   	github.com/suproxy/backend/internal/infrastructure/security	[no test files]
+?   	github.com/suproxy/backend/internal/infrastructure/server	[no test files]
+?   	github.com/suproxy/backend/internal/infrastructure/testutil	[no test files]
+?   	github.com/suproxy/backend/internal/infrastructure/vpn	[no test files]
+?   	github.com/suproxy/backend/internal/infrastructure/xray	[no test files]
+?   	github.com/suproxy/backend/internal/infrastructure/xray/binary	[no test files]
+ok  	github.com/suproxy/backend/internal/infrastructure/xray/config	(cached) [no tests to run]
+?   	github.com/suproxy/backend/internal/infrastructure/xray/runtime	[no test files]
+?   	github.com/suproxy/backend/internal/interfaces/http/handler	[no test files]
+?   	github.com/suproxy/backend/internal/interfaces/http/middleware	[no test files]
+?   	github.com/suproxy/backend/internal/interfaces/http/response	[no test files]
+?   	github.com/suproxy/backend/internal/interfaces/http/router	[no test files]
+?   	github.com/suproxy/backend/internal/interfaces/http/validation	[no test files]
+go : # github.com/supr
+oxy/backend/test/integ
+ration [github.com/sup
+roxy/backend/test/inte
+gration.test]
+At line:1 char:1
++ go test ./... -run "
+^$" 2>&1 | Out-File -F
+ilePath compile_errors
+.txt  ...
++ ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (# github.c   
+ om/su...tegration    
+.test]:String) []    ,
+ RemoteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+test\integration\admin
+_inbound_handler_test.
+go:44:134: not enough 
+arguments in call to a
+dmininbound.NewCreateI
+nboundCommand
+	have ("github.com/sup
+roxy/backend/internal/
+domain/xray".InboundRe
+pository, "github.com/
+suproxy/backend/intern
+al/domain/xray".XrayIn
+stanceRepository, "git
+hub.com/suproxy/backen
+d/internal/domain/audi
+t".Repository)
+	want ("github.com/sup
+roxy/backend/internal/
+domain/xray".InboundRe
+pository, "github.com/
+suproxy/backend/intern
+al/domain/xray".XrayIn
+stanceRepository, *ser
+vice.XrayProvisioningS
+ervice, "github.com/su
+proxy/backend/internal
+/domain/audit".Reposit
+ory)
+test\integration\admin
+_inbound_handler_test.
+go:45:96: not enough a
+rguments in call to ad
+mininbound.NewUpdateIn
+boundCommand
+	have ("github.com/sup
+roxy/backend/internal/
+domain/xray".InboundRe
+pository, "github.com/
+suproxy/backend/intern
+al/domain/audit".Repos
+itory)
+	want ("github.com/sup
+roxy/backend/internal/
+domain/xray".InboundRe
+pository, *service.Xra
+yProvisioningService, 
+"github.com/suproxy/ba
+ckend/internal/domain/
+audit".Repository)
+test\integration\admin
+_inbound_handler_test.
+go:46:96: not enough a
+rguments in call to ad
+mininbound.NewDeleteIn
+boundCommand
+	have ("github.com/sup
+roxy/backend/internal/
+domain/xray".InboundRe
+pository, "github.com/
+suproxy/backend/intern
+al/domain/audit".Repos
+itory)
+	want ("github.com/sup
+roxy/backend/internal/
+domain/xray".InboundRe
+pository, "github.com/
+suproxy/backend/intern
+al/domain/xray".Client
+Repository, *service.X
+rayProvisioningService
+, "github.com/suproxy/
+backend/internal/domai
+n/audit".Repository)
+test\integration\admin
+_inbound_handler_test.
+go:47:96: not enough a
+rguments in call to ad
+mininbound.NewEnableIn
+boundCommand
+	have ("github.com/sup
+roxy/backend/internal/
+domain/xray".InboundRe
+pository, "github.com/
+suproxy/backend/intern
+al/domain/audit".Repos
+itory)
+	want ("github.com/sup
+roxy/backend/internal/
+domain/xray".InboundRe
+pository, *service.Xra
+yProvisioningService, 
+"github.com/suproxy/ba
+ckend/internal/domain/
+audit".Repository)
+test\integration\admin
+_inbound_handler_test.
+go:48:98: not enough a
+rguments in call to ad
+mininbound.NewDisableI
+nboundCommand
+	have ("github.com/sup
+roxy/backend/internal/
+domain/xray".InboundRe
+pository, "github.com/
+suproxy/backend/intern
+al/domain/audit".Repos
+itory)
+	want ("github.com/sup
+roxy/backend/internal/
+domain/xray".InboundRe
+pository, *service.Xra
+yProvisioningService, 
+"github.com/suproxy/ba
+ckend/internal/domain/
+audit".Repository)
+test\integration\admin
+_inbound_handler_test.
+go:51:125: cannot use 
+app.Container.UserRepo
+sitory (variable of in
+terface type "github.c
+om/suproxy/backend/int
+ernal/domain/user".Rep
+ository) as *service.X
+rayProvisioningService
+ value in argument to 
+adminclient.NewCreateC
+lientCommand
+test\integration\admin
+_inbound_handler_test.
+go:52:92: not enough a
+rguments in call to ad
+minclient.NewDeleteCli
+entCommand
+	have ("github.com/sup
+roxy/backend/internal/
+domain/xray".ClientRep
+ository, "github.com/s
+uproxy/backend/interna
+l/domain/audit".Reposi
+tory)
+	want ("github.com/sup
+roxy/backend/internal/
+domain/xray".ClientRep
+ository, "github.com/s
+uproxy/backend/interna
+l/domain/xray".Inbound
+Repository, *service.X
+rayProvisioningService
+, "github.com/suproxy/
+backend/internal/domai
+n/audit".Repository)
+test\integration\admin
+_inbound_handler_test.
+go:53:92: not enough a
+rguments in call to ad
+minclient.NewEnableCli
+entCommand
+	have ("github.com/sup
+roxy/backend/internal/
+domain/xray".ClientRep
+ository, "github.com/s
+uproxy/backend/interna
+l/domain/audit".Reposi
+tory)
+	want ("github.com/sup
+roxy/backend/internal/
+domain/xray".ClientRep
+ository, "github.com/s
+uproxy/backend/interna
+l/domain/xray".Inbound
+Repository, *service.X
+rayProvisioningService
+, "github.com/suproxy/
+backend/internal/domai
+n/audit".Repository)
+test\integration\admin
+_inbound_handler_test.
+go:54:94: not enough a
+rguments in call to ad
+minclient.NewDisableCl
+ientCommand
+	have ("github.com/sup
+roxy/backend/internal/
+domain/xray".ClientRep
+ository, "github.com/s
+uproxy/backend/interna
+l/domain/audit".Reposi
+tory)
+	want ("github.com/sup
+roxy/backend/internal/
+domain/xray".ClientRep
+ository, "github.com/s
+uproxy/backend/interna
+l/domain/xray".Inbound
+Repository, *service.X
+rayProvisioningService
+, "github.com/suproxy/
+backend/internal/domai
+n/audit".Repository)
+test\integration\admin
+_inbound_handler_test.
+go:55:108: not enough 
+arguments in call to a
+dminclient.NewRegenera
+teClientUUIDCommand
+	have ("github.com/sup
+roxy/backend/internal/
+domain/xray".ClientRep
+ository, "github.com/s
+uproxy/backend/interna
+l/domain/audit".Reposi
+tory)
+	want ("github.com/sup
+roxy/backend/internal/
+domain/xray".ClientRep
+ository, "github.com/s
+uproxy/backend/interna
+l/domain/xray".Inbound
+Repository, *service.X
+rayProvisioningService
+, "github.com/suproxy/
+backend/internal/domai
+n/audit".Repository)
+test\integration\admin
+_inbound_handler_test.
+go:55:108: too many er
+rors
+FAIL	github.com/suproxy/backend/test/integration [build failed]
+FAIL

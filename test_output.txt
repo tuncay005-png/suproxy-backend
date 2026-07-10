@@ -1,0 +1,177 @@
+﻿?   	github.com/suproxy/backend/cmd/api	[no test files]
+?   	github.com/suproxy/backend/internal/application/dto	[no test files]
+?   	github.com/suproxy/backend/internal/application/mapper	[no test files]
+go : # github.com/suproxy/backend/test/integration [github.com/suproxy/backend/
+test/integration.test]
+At line:1 char:1
++ go test ./... 2>&1 | Out-File -FilePath test_output.txt -Encoding utf ...
++ ~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (# github.com/su...tegration.test] 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+test\integration\admin_audit_system_handler_test.go:22:17: app.Container.Logger
+ undefined (type *bootstrap.Container has no field or method Logger)
+test\integration\admin_audit_system_handler_test.go:23:17: app.Container.AdminL
+istUsersQuery undefined (type *bootstrap.Container has no field or method Admin
+ListUsersQuery)
+test\integration\admin_audit_system_handler_test.go:24:17: app.Container.AdminG
+etUserQuery undefined (type *bootstrap.Container has no field or method AdminGe
+tUserQuery)
+test\integration\admin_audit_system_handler_test.go:25:17: app.Container.AdminU
+pdateUserStatusCommand undefined (type *bootstrap.Container has no field or met
+hod AdminUpdateUserStatusCommand)
+test\integration\admin_audit_system_handler_test.go:26:17: app.Container.AdminU
+pdateUserRoleCommand undefined (type *bootstrap.Container has no field or metho
+d AdminUpdateUserRoleCommand)
+test\integration\admin_audit_system_handler_test.go:27:17: app.Container.AdminL
+istInstancesQuery undefined (type *bootstrap.Container has no field or method A
+dminListInstancesQuery)
+test\integration\admin_audit_system_handler_test.go:28:17: app.Container.AdminG
+etInstanceQuery undefined (type *bootstrap.Container has no field or method Adm
+inGetInstanceQuery)
+test\integration\admin_audit_system_handler_test.go:29:17: app.Container.AdminG
+etInstanceStatsQuery undefined (type *bootstrap.Container has no field or metho
+d AdminGetInstanceStatsQuery)
+test\integration\admin_audit_system_handler_test.go:30:17: app.Container.AdminS
+tartInstanceCommand undefined (type *bootstrap.Container has no field or method
+ AdminStartInstanceCommand)
+test\integration\admin_audit_system_handler_test.go:31:17: app.Container.AdminS
+topInstanceCommand undefined (type *bootstrap.Container has no field or method 
+AdminStopInstanceCommand)
+test\integration\admin_audit_system_handler_test.go:31:17: too many errors
+# github.com/suproxy/backend/test/integration_test [github.com/suproxy/backend/
+test/integration.test]
+test\integration\audit_repository_test.go:393:6: cannot use action (variable of
+ type string) as "github.com/suproxy/backend/internal/domain/audit".Action valu
+e in argument to audit.NewLog
+test\integration\audit_service_test.go:86:5: cannot use tt.action (variable of 
+type string) as "github.com/suproxy/backend/internal/domain/audit".Action value
+ in argument to audit.NewLog
+test\integration\audit_service_test.go:141:5: cannot use action (variable of ty
+pe string) as "github.com/suproxy/backend/internal/domain/audit".Action value i
+n argument to audit.NewLog
+test\integration\audit_service_test.go:384:5: cannot use "xray_instance." + act
+ion (value of type string) as "github.com/suproxy/backend/internal/domain/audit
+".Action value in argument to audit.NewLog
+test\integration\audit_service_test.go:436:5: cannot use event (variable of typ
+e string) as "github.com/suproxy/backend/internal/domain/audit".Action value in
+ argument to audit.NewLog
+test\integration\client_repository_test.go:312:19: cannot use client.IsEnabled 
+(value of type func() bool) as bool value in argument to assert.True
+test\integration\client_repository_test.go:361:19: cannot use found.IsEnabled (
+value of type func() bool) as bool value in argument to assert.False
+test\integration\client_repository_test.go:591:19: cannot use client.IsEnabled 
+(value of type func() bool) as bool value in argument to assert.True
+test\integration\inbound_repository_test.go:45:27: inbound.InstanceID undefined
+ (type *"github.com/suproxy/backend/internal/domain/xray".Inbound has no field 
+or method InstanceID)
+test\integration\inbound_repository_test.go:45:45: found.InstanceID undefined (
+type *"github.com/suproxy/backend/internal/domain/xray".Inbound has no field or
+ method InstanceID)
+test\integration\inbound_repository_test.go:45:45: too many errors
+{"level":"info","timestamp":"2026-07-08T18:35:03.464+0300","caller":"service/xray_provisioning_service_test.go:571","message":"Starting Xray provisioning for new useruser_id554a65a0-ae3b-48fb-befb-12b0b430cfa9emailtest@example.comip_address127.0.0.1operationprovision_start"}
+{"level":"info","timestamp":"2026-07-08T18:35:03.547+0300","caller":"service/xray_provisioning_service_test.go:571","message":"Client created successfullyclient_id125a93b9-f2f7-402c-b3c2-c39dab8558d4user_id554a65a0-ae3b-48fb-befb-12b0b430cfa9instance_ide943e5bf-994f-40c9-8bb0-911fee5cf876inbound_id40e9a845-440f-458b-9e78-857acc70a3e3uuid0890fa16-a45f-4289-954b-b759c1bfb719"}
+{"level":"info","timestamp":"2026-07-08T18:35:03.548+0300","caller":"service/xray_provisioning_service.go:537","message":"Regenerating Xray configurationinstance_ide943e5bf-994f-40c9-8bb0-911fee5cf876user_id554a65a0-ae3b-48fb-befb-12b0b430cfa9operationconfig_reload"}
+{"level":"info","timestamp":"2026-07-08T18:35:03.548+0300","caller":"service/xray_provisioning_service.go:537","message":"Config generated successfullyinstance_ide943e5bf-994f-40c9-8bb0-911fee5cf876user_id554a65a0-ae3b-48fb-befb-12b0b430cfa9config_size2operationconfig_generationduration_ms0"}
+{"level":"info","timestamp":"2026-07-08T18:35:03.549+0300","caller":"service/xray_provisioning_service.go:537","message":"Config written successfullyinstance_ide943e5bf-994f-40c9-8bb0-911fee5cf876user_id554a65a0-ae3b-48fb-befb-12b0b430cfa9operationconfig_write"}
+{"level":"info","timestamp":"2026-07-08T18:35:03.549+0300","caller":"service/xray_provisioning_service.go:537","message":"Config validation successfulinstance_ide943e5bf-994f-40c9-8bb0-911fee5cf876user_id554a65a0-ae3b-48fb-befb-12b0b430cfa9config_path/etc/xray/test.jsonoperationconfig_validation"}
+{"level":"info","timestamp":"2026-07-08T18:35:03.549+0300","caller":"service/xray_provisioning_service.go:537","message":"Xray process reloaded successfullyinstance_ide943e5bf-994f-40c9-8bb0-911fee5cf876user_id554a65a0-ae3b-48fb-befb-12b0b430cfa9operationreload_successreload_duration_ms0total_duration_ms1"}
+{"level":"info","timestamp":"2026-07-08T18:35:03.549+0300","caller":"service/xray_provisioning_service_test.go:571","message":"Xray provisioning completed successfullyuser_id554a65a0-ae3b-48fb-befb-12b0b430cfa9client_id125a93b9-f2f7-402c-b3c2-c39dab8558d4instance_ide943e5bf-994f-40c9-8bb0-911fee5cf876operationprovision_successtotal_duration_ms85"}
+{"level":"info","timestamp":"2026-07-08T18:35:03.550+0300","caller":"service/xray_provisioning_service_test.go:616","message":"Starting Xray provisioning for new useruser_ide2cc2b82-92e9-4854-9d99-f493122663b4emailtest@example.comip_address127.0.0.1operationprovision_start"}
+{"level":"info","timestamp":"2026-07-08T18:35:03.550+0300","caller":"service/xray_provisioning_service_test.go:616","message":"User already has Xray client, skipping provisioninguser_ide2cc2b82-92e9-4854-9d99-f493122663b4client_count1operationidempotency_skipduration_ms0"}
+{"level":"info","timestamp":"2026-07-08T18:35:03.550+0300","caller":"service/xray_provisioning_service_test.go:670","message":"Starting Xray provisioning for new useruser_id38708395-f6e1-4afa-8483-d7bbc59b7969emailtest@example.comip_address127.0.0.1operationprovision_start"}
+{"level":"info","timestamp":"2026-07-08T18:35:03.553+0300","caller":"service/xray_provisioning_service_test.go:670","message":"Client created successfullyclient_idf9cbabd2-b235-4bff-9af1-90e02f0f45c5user_id38708395-f6e1-4afa-8483-d7bbc59b7969instance_ide5fec9ad-362f-4a5f-b97a-63eb06168f40inbound_idd4679398-fc65-4049-90ad-6580a311c371uuid7ecc4ae8-18ae-4776-920a-6acbdc6d3558"}
+{"level":"info","timestamp":"2026-07-08T18:35:03.553+0300","caller":"service/xray_provisioning_service.go:537","message":"Regenerating Xray configurationinstance_ide5fec9ad-362f-4a5f-b97a-63eb06168f40user_id38708395-f6e1-4afa-8483-d7bbc59b7969operationconfig_reload"}
+{"level":"error","timestamp":"2026-07-08T18:35:03.554+0300","caller":"service/xray_provisioning_service.go:537","message":"Failed to generate configerrorgeneration failedinstance_ide5fec9ad-362f-4a5f-b97a-63eb06168f40user_id38708395-f6e1-4afa-8483-d7bbc59b7969operationconfig_generationduration_ms0"}
+{"level":"error","timestamp":"2026-07-08T18:35:03.554+0300","caller":"service/xray_provisioning_service_test.go:670","message":"Failed to regenerate and reload Xray config, rolling back clienterrorfailed to generate config: generation faileduser_id38708395-f6e1-4afa-8483-d7bbc59b7969client_idf9cbabd2-b235-4bff-9af1-90e02f0f45c5instance_ide5fec9ad-362f-4a5f-b97a-63eb06168f40"}
+{"level":"warn","timestamp":"2026-07-08T18:35:03.554+0300","caller":"service/xray_provisioning_service.go:290","message":"Rolling back clientclient_idf9cbabd2-b235-4bff-9af1-90e02f0f45c5user_id38708395-f6e1-4afa-8483-d7bbc59b7969"}
+{"level":"info","timestamp":"2026-07-08T18:35:03.554+0300","caller":"service/xray_provisioning_service.go:290","message":"Client rollback successfulclient_idf9cbabd2-b235-4bff-9af1-90e02f0f45c5user_id38708395-f6e1-4afa-8483-d7bbc59b7969"}
+{"level":"info","timestamp":"2026-07-08T18:35:03.554+0300","caller":"service/xray_provisioning_service_test.go:670","message":"Client successfully rolled back after config reload failureuser_id38708395-f6e1-4afa-8483-d7bbc59b7969client_idf9cbabd2-b235-4bff-9af1-90e02f0f45c5"}
+{"level":"info","timestamp":"2026-07-08T18:35:03.554+0300","caller":"service/xray_provisioning_service_test.go:722","message":"Regenerating Xray configurationinstance_id6f1baba8-113e-4817-a344-ab2bed54d4b5user_id701ba024-5c20-4fcc-a7bf-c0928a5f86ceoperationconfig_reload"}
+--- FAIL: TestRegenerateAndReload_ReloadError_ConfigRollbackSuccess (0.00s)
+panic: 
+	assert: mock: I don't know what to return because the method call was unexpected.
+		Either do Mock.On("IsRunning").Return(...) first, or remove the IsRunning() call.
+		This method was unexpected:
+			IsRunning(*context.timerCtx,uuid.UUID)
+			0: &context.timerCtx{cancelCtx:context.cancelCtx{Context:context.backgroundCtx{emptyCtx:context.emptyCtx{}}, mu:sync.Mutex{_:sync.noCopy{}, mu:sync.Mutex{state:0, sema:0x0}}, done:atomic.Value{v:interface {}(nil)}, children:map[context.canceler]struct {}(nil), err:atomic.Value{v:interface {}(nil)}, cause:error(nil)}, timer:(*time.Timer)(0x10c10fbce3f0), deadline:time.Time{wall:0xc28bb96b210c981c, ext:5099815601, loc:(*time.Location)(0x7ff6ff1c5b60)}}
+			1: uuid.UUID{0x6f, 0x1b, 0xab, 0xa8, 0x11, 0x3e, 0x48, 0x17, 0xa3, 0x44, 0xab, 0x2b, 0xed, 0x54, 0xd4, 0xb5}
+		at: [C:/Users/Tuncay/Desktop/suproxy-backend/internal/application/service/xray_provisioning_service_test.go:477 C:/Users/Tuncay/Desktop/suproxy-backend/internal/application/service/xray_provisioning_service.go:323 C:/Users/Tuncay/Desktop/suproxy-backend/internal/application/service/xray_provisioning_service.go:573 C:/Users/Tuncay/Desktop/suproxy-backend/internal/application/service/xray_provisioning_service_test.go:722] [recovered, repanicked]
+
+goroutine 20 [running]:
+testing.tRunner.func1.2({0x7ff6feecb8e0, 0x10c10fd06c30})
+	C:/Program Files/Go/src/testing/testing.go:1974 +0x239
+testing.tRunner.func1()
+	C:/Program Files/Go/src/testing/testing.go:1977 +0x349
+panic({0x7ff6feecb8e0?, 0x10c10fd06c30?})
+	C:/Program Files/Go/src/runtime/panic.go:860 +0x13a
+github.com/stretchr/testify/mock.(*Mock).fail(0x10c10fbfa500, {0x7ff6fef4e8cf?, 0x4?}, {0x10c10fb977c0?, 0x2?, 0x2?})
+	C:/Users/Tuncay/go/pkg/mod/github.com/stretchr/testify@v1.11.1/mock/mock.go:359 +0x125
+github.com/stretchr/testify/mock.(*Mock).MethodCalled(0x10c10fbfa500, {0x7ff6fefa9580, 0x9}, {0x10c10fbc8960, 0x2, 0x2})
+	C:/Users/Tuncay/go/pkg/mod/github.com/stretchr/testify@v1.11.1/mock/mock.go:527 +0x771
+github.com/stretchr/testify/mock.(*Mock).Called(0x10c10fbfa500, {0x10c10fbc8960, 0x2, 0x2})
+	C:/Users/Tuncay/go/pkg/mod/github.com/stretchr/testify@v1.11.1/mock/mock.go:491 +0x125
+github.com/suproxy/backend/internal/application/service.(*MockProcessManager).IsRunning(0x10c10fbfa500, {0x7ff6fef5acf8, 0x10c10fbce380}, {0x6f, 0x1b, 0xab, 0xa8, 0x11, 0x3e, 0x48, ...})
+	C:/Users/Tuncay/Desktop/suproxy-backend/internal/application/service/xray_provisioning_service_test.go:477 +0xbb
+github.com/suproxy/backend/internal/application/service.(*XrayProvisioningService).performHealthCheck(0x10c10fd23e50, {0x7ff6fef5aba8?, 0x7ff6ff20da00?}, {0x6f, 0x1b, 0xab, 0xa8, 0x11, 0x3e, 0x48, ...}, ...)
+	C:/Users/Tuncay/Desktop/suproxy-backend/internal/application/service/xray_provisioning_service.go:323 +0xa4
+github.com/suproxy/backend/internal/application/service.(*XrayProvisioningService).RegenerateAndReload(0x10c10fd23e50, {0x7ff6fef5aba8, 0x7ff6ff20da00}, {0x6f, 0x1b, 0xab, 0xa8, 0x11, 0x3e, 0x48, ...}, ...)
+	C:/Users/Tuncay/Desktop/suproxy-backend/internal/application/service/xray_provisioning_service.go:573 +0x21e
+github.com/suproxy/backend/internal/application/service.TestRegenerateAndReload_ReloadError_ConfigRollbackSuccess(0x10c10fbfc400)
+	C:/Users/Tuncay/Desktop/suproxy-backend/internal/application/service/xray_provisioning_service_test.go:722 +0xa9d
+testing.tRunner(0x10c10fbfc400, 0x7ff6fef53e10)
+	C:/Program Files/Go/src/testing/testing.go:2036 +0xc3
+created by testing.(*T).Run in goroutine 1
+	C:/Program Files/Go/src/testing/testing.go:2101 +0x4a9
+FAIL	github.com/suproxy/backend/internal/application/service	2.540s
+?   	github.com/suproxy/backend/internal/application/usecase/admin/audit	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/admin/client	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/admin/inbound	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/admin/system	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/admin/user	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/admin/xray_instance	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/auth	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/device	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/inbound	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/node	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/payment	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/plan	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/server	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/session	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/subscription	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/subscriptions	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/user	[no test files]
+?   	github.com/suproxy/backend/internal/application/usecase/xray_instance	[no test files]
+?   	github.com/suproxy/backend/internal/domain/audit	[no test files]
+?   	github.com/suproxy/backend/internal/domain/device	[no test files]
+?   	github.com/suproxy/backend/internal/domain/node	[no test files]
+?   	github.com/suproxy/backend/internal/domain/payment	[no test files]
+?   	github.com/suproxy/backend/internal/domain/server	[no test files]
+?   	github.com/suproxy/backend/internal/domain/session	[no test files]
+?   	github.com/suproxy/backend/internal/domain/subscription	[no test files]
+?   	github.com/suproxy/backend/internal/domain/traffic	[no test files]
+?   	github.com/suproxy/backend/internal/domain/user	[no test files]
+?   	github.com/suproxy/backend/internal/domain/xray	[no test files]
+?   	github.com/suproxy/backend/internal/infrastructure/bootstrap	[no test files]
+?   	github.com/suproxy/backend/internal/infrastructure/config	[no test files]
+?   	github.com/suproxy/backend/internal/infrastructure/database	[no test files]
+?   	github.com/suproxy/backend/internal/infrastructure/jwt	[no test files]
+?   	github.com/suproxy/backend/internal/infrastructure/logger	[no test files]
+?   	github.com/suproxy/backend/internal/infrastructure/metrics	[no test files]
+?   	github.com/suproxy/backend/internal/infrastructure/repository	[no test files]
+?   	github.com/suproxy/backend/internal/infrastructure/security	[no test files]
+?   	github.com/suproxy/backend/internal/infrastructure/server	[no test files]
+?   	github.com/suproxy/backend/internal/infrastructure/testutil	[no test files]
+?   	github.com/suproxy/backend/internal/infrastructure/vpn	[no test files]
+?   	github.com/suproxy/backend/internal/infrastructure/xray	[no test files]
+?   	github.com/suproxy/backend/internal/infrastructure/xray/binary	[no test files]
+ok  	github.com/suproxy/backend/internal/infrastructure/xray/config	(cached)
+?   	github.com/suproxy/backend/internal/infrastructure/xray/runtime	[no test files]
+?   	github.com/suproxy/backend/internal/interfaces/http/handler	[no test files]
+?   	github.com/suproxy/backend/internal/interfaces/http/middleware	[no test files]
+?   	github.com/suproxy/backend/internal/interfaces/http/response	[no test files]
+?   	github.com/suproxy/backend/internal/interfaces/http/router	[no test files]
+?   	github.com/suproxy/backend/internal/interfaces/http/validation	[no test files]
+FAIL	github.com/suproxy/backend/test/integration [build failed]
+FAIL

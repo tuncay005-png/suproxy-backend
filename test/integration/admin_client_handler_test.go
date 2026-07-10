@@ -19,50 +19,16 @@ func setupAdminClientHandler(t *testing.T, app *testutil.TestApp) *gin.Engine {
 	router := gin.New()
 
 	adminHandler := handler.NewAdminHandler(
-		app.Container.Logger,
-		app.Container.AdminListUsersQuery,
-		app.Container.AdminGetUserQuery,
-		app.Container.AdminUpdateUserStatusCommand,
-		app.Container.AdminUpdateUserRoleCommand,
-		app.Container.AdminListInstancesQuery,
-		app.Container.AdminGetInstanceQuery,
-		app.Container.AdminGetInstanceStatsQuery,
-		app.Container.AdminStartInstanceCommand,
-		app.Container.AdminStopInstanceCommand,
-		app.Container.AdminRestartInstanceCommand,
-		app.Container.AdminReloadInstanceCommand,
-		app.Container.AdminCheckInstanceHealthCommand,
-		app.Container.AdminListInboundsQuery,
-		app.Container.AdminGetInboundQuery,
-		app.Container.AdminCreateInboundCommand,
-		app.Container.AdminUpdateInboundCommand,
-		app.Container.AdminDeleteInboundCommand,
-		app.Container.AdminEnableInboundCommand,
-		app.Container.AdminDisableInboundCommand,
-		app.Container.AdminListClientsQuery,
-		app.Container.AdminGetClientQuery,
-		app.Container.AdminCreateClientCommand,
-		app.Container.AdminDeleteClientCommand,
-		app.Container.AdminEnableClientCommand,
-		app.Container.AdminDisableClientCommand,
-		app.Container.AdminRegenerateClientUUIDCommand,
-		app.Container.AdminReprovisionClientCommand,
-		app.Container.AdminListAuditLogsQuery,
-		app.Container.AdminGetAuditLogQuery,
-		app.Container.AdminGetAuditStatsQuery,
-		app.Container.AdminGetSystemHealthQuery,
-		app.Container.AdminGetSystemStatsQuery,
-		app.Container.AdminGetVersionQuery,
-		app.Container.AdminGetDatabaseStatusQuery,
-		app.Container.AdminGetXraySystemStatusQuery,
+		app.Logger,
+		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
+		nil, nil, nil, nil, nil, nil, nil,
+		nil, nil, nil, nil, nil, nil, nil, nil,
+		nil, nil, nil, nil, nil, nil, nil, nil,
 	)
 
-	authMiddleware := middleware.NewAuthMiddleware(app.JWT, app.Container.Logger)
-	adminMiddleware := middleware.NewAdminMiddleware(app.Container.Logger)
-
 	adminGroup := router.Group("/api/v1/admin/xray")
-	adminGroup.Use(authMiddleware.Authenticate())
-	adminGroup.Use(adminMiddleware.RequireAdmin())
+	adminGroup.Use(middleware.AuthMiddleware(app.JWT))
+	adminGroup.Use(middleware.AdminAuthorization(app.Logger))
 
 	adminGroup.GET("/clients", adminHandler.ListClients)
 	adminGroup.GET("/clients/:id", adminHandler.GetClient)

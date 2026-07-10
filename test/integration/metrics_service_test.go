@@ -337,7 +337,7 @@ func TestMetricsService_LabelValues(t *testing.T) {
 			"audit_logs",
 		}
 
-		for _, table := range tables {
+		for range tables {
 			require.NotPanics(t, func() {
 				metrics.RecordDatabaseQueryDuration("select", 0.01)
 			})

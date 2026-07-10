@@ -95,10 +95,11 @@ func TestConfigGenerator_Generate(t *testing.T) {
 	t.Run("Generate_Failure_InstanceNotFound", func(t *testing.T) {
 		defer app.CleanupTables()
 
-		nonExistentID := testutil.CreateTestXrayInstanceWithDefaults()
+		nonExistentID, err := testutil.CreateTestXrayInstanceWithDefaults()
+		require.NoError(t, err)
 		require.NotNil(t, nonExistentID)
 
-		_, err := generator.Generate(ctx, nonExistentID.ID)
+		_, err = generator.Generate(ctx, nonExistentID.ID)
 		assert.Error(t, err)
 	})
 }
@@ -251,8 +252,8 @@ func TestConfigGenerator_GenerateInbound(t *testing.T) {
 		assert.NotNil(t, inboundConfig)
 
 		// Verify settings contain both clients
-		settings, ok := inboundConfig.Settings.(map[string]interface{})
-		require.True(t, ok)
+		settings := inboundConfig.Settings
+		require.NotNil(t, settings)
 		assert.Contains(t, settings, "clients")
 	})
 }
@@ -329,7 +330,7 @@ func TestConfigGenerator_ConfigStructure(t *testing.T) {
 
 		for _, outbound := range config.Outbounds {
 			if outbound.Tag == "direct" {
-				hasDir := true
+				hasDirect = true
 				assert.Equal(t, "freedom", outbound.Protocol)
 			}
 			if outbound.Tag == "block" {

@@ -34,8 +34,8 @@ func TestXrayInstanceRepository_Create(t *testing.T) {
 		found, err := repo.FindByID(ctx, instance.ID)
 		require.NoError(t, err)
 		assert.Equal(t, instance.ID, found.ID)
-		assert.Equal(t, instance.Name, found.Name)
-		assert.Equal(t, instance.Protocol, found.Protocol)
+		assert.Equal(t, instance.NodeID, found.NodeID)
+		assert.Equal(t, instance.Version, found.Version)
 	})
 }
 
@@ -61,9 +61,9 @@ func TestXrayInstanceRepository_FindByID(t *testing.T) {
 		found, err := repo.FindByID(ctx, instance.ID)
 		require.NoError(t, err)
 		assert.Equal(t, instance.ID, found.ID)
-		assert.Equal(t, instance.Name, found.Name)
-		assert.Equal(t, instance.Protocol, found.Protocol)
-		assert.Equal(t, instance.APIPort, found.APIPort)
+		assert.Equal(t, instance.NodeID, found.NodeID)
+		assert.Equal(t, instance.Version, found.Version)
+		assert.Equal(t, instance.Status, found.Status)
 	})
 
 	t.Run("FindByID_NotFound", func(t *testing.T) {
@@ -140,7 +140,7 @@ func TestXrayInstanceRepository_FindRunning(t *testing.T) {
 		
 		// Verify all returned instances are running
 		for _, inst := range running {
-			assert.Equal(t, xray.InstanceStatusRunning, inst.Status)
+			assert.Equal(t, xray.StatusRunning, inst.Status)
 		}
 	})
 }
@@ -172,7 +172,7 @@ func TestXrayInstanceRepository_Update(t *testing.T) {
 		// Verify update
 		found, err := repo.FindByID(ctx, instance.ID)
 		require.NoError(t, err)
-		assert.Equal(t, xray.InstanceStatusRunning, found.Status)
+		assert.Equal(t, xray.StatusRunning, found.Status)
 	})
 
 	t.Run("Update_NotFound", func(t *testing.T) {
@@ -324,7 +324,7 @@ func TestXrayInstanceRepository_ListWithFilters(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("Filter_ByStatus", func(t *testing.T) {
-		runningStatus := xray.InstanceStatusRunning
+		runningStatus := xray.StatusRunning
 		filters := xray.XrayInstanceFilters{
 			Offset: 0,
 			Limit:  10,
@@ -337,7 +337,7 @@ func TestXrayInstanceRepository_ListWithFilters(t *testing.T) {
 		assert.GreaterOrEqual(t, len(instances), 1)
 
 		for _, inst := range instances {
-			assert.Equal(t, xray.InstanceStatusRunning, inst.Status)
+			assert.Equal(t, xray.StatusRunning, inst.Status)
 		}
 	})
 

@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/suproxy/backend/internal/application/dto"
+	authuc "github.com/suproxy/backend/internal/application/usecase/auth"
 	"github.com/suproxy/backend/internal/domain/user"
 	"github.com/suproxy/backend/internal/infrastructure/testutil"
 	"github.com/suproxy/backend/internal/interfaces/http/handler"
@@ -27,13 +28,22 @@ func TestAuthHandler_Register(t *testing.T) {
 	// Setup router
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
+	
+	// Create auth use-case instances
+	registerCmd := authuc.NewRegisterCommand(app.Container.UserRepository, app.Container.XrayProvisioningService, app.Logger)
+	loginCmd := authuc.NewLoginCommand(app.Container.UserRepository, app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.JWT, app.Logger)
+	refreshCmd := authuc.NewRefreshTokenCommand(app.Container.UserRepository, app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.JWT, app.Logger)
+	logoutCmd := authuc.NewLogoutCommand(app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.Logger)
+	getCurrentUserQuery := authuc.NewGetCurrentUserQuery(app.Container.UserRepository, app.Logger)
+	getSessionsQuery := authuc.NewGetSessionsQuery(app.Container.RefreshTokenRepository, app.Logger)
+	
 	authHandler := handler.NewAuthHandler(
-		app.Container.RegisterCommand,
-		app.Container.LoginCommand,
-		app.Container.RefreshTokenCommand,
-		app.Container.LogoutCommand,
-		app.Container.GetCurrentUserQuery,
-		app.Container.GetSessionsQuery,
+		registerCmd,
+		loginCmd,
+		refreshCmd,
+		logoutCmd,
+		getCurrentUserQuery,
+		getSessionsQuery,
 	)
 	router.POST("/api/v1/auth/register", authHandler.Register)
 
@@ -106,13 +116,22 @@ func TestAuthHandler_Login(t *testing.T) {
 	// Setup router
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
+	
+	// Create auth use-case instances
+	registerCmd := authuc.NewRegisterCommand(app.Container.UserRepository, app.Container.XrayProvisioningService, app.Logger)
+	loginCmd := authuc.NewLoginCommand(app.Container.UserRepository, app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.JWT, app.Logger)
+	refreshCmd := authuc.NewRefreshTokenCommand(app.Container.UserRepository, app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.JWT, app.Logger)
+	logoutCmd := authuc.NewLogoutCommand(app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.Logger)
+	getCurrentUserQuery := authuc.NewGetCurrentUserQuery(app.Container.UserRepository, app.Logger)
+	getSessionsQuery := authuc.NewGetSessionsQuery(app.Container.RefreshTokenRepository, app.Logger)
+	
 	authHandler := handler.NewAuthHandler(
-		app.Container.RegisterCommand,
-		app.Container.LoginCommand,
-		app.Container.RefreshTokenCommand,
-		app.Container.LogoutCommand,
-		app.Container.GetCurrentUserQuery,
-		app.Container.GetSessionsQuery,
+		registerCmd,
+		loginCmd,
+		refreshCmd,
+		logoutCmd,
+		getCurrentUserQuery,
+		getSessionsQuery,
 	)
 	router.POST("/api/v1/auth/login", authHandler.Login)
 
@@ -207,13 +226,22 @@ func TestAuthHandler_RefreshToken(t *testing.T) {
 	// Setup router
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
+	
+	// Create auth use-case instances
+	registerCmd := authuc.NewRegisterCommand(app.Container.UserRepository, app.Container.XrayProvisioningService, app.Logger)
+	loginCmd := authuc.NewLoginCommand(app.Container.UserRepository, app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.JWT, app.Logger)
+	refreshCmd := authuc.NewRefreshTokenCommand(app.Container.UserRepository, app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.JWT, app.Logger)
+	logoutCmd := authuc.NewLogoutCommand(app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.Logger)
+	getCurrentUserQuery := authuc.NewGetCurrentUserQuery(app.Container.UserRepository, app.Logger)
+	getSessionsQuery := authuc.NewGetSessionsQuery(app.Container.RefreshTokenRepository, app.Logger)
+	
 	authHandler := handler.NewAuthHandler(
-		app.Container.RegisterCommand,
-		app.Container.LoginCommand,
-		app.Container.RefreshTokenCommand,
-		app.Container.LogoutCommand,
-		app.Container.GetCurrentUserQuery,
-		app.Container.GetSessionsQuery,
+		registerCmd,
+		loginCmd,
+		refreshCmd,
+		logoutCmd,
+		getCurrentUserQuery,
+		getSessionsQuery,
 	)
 	router.POST("/api/v1/auth/refresh", authHandler.RefreshToken)
 
@@ -272,18 +300,26 @@ func TestAuthHandler_GetCurrentUser(t *testing.T) {
 	// Setup router
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
+	
+	// Create auth use-case instances
+	registerCmd := authuc.NewRegisterCommand(app.Container.UserRepository, app.Container.XrayProvisioningService, app.Logger)
+	loginCmd := authuc.NewLoginCommand(app.Container.UserRepository, app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.JWT, app.Logger)
+	refreshCmd := authuc.NewRefreshTokenCommand(app.Container.UserRepository, app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.JWT, app.Logger)
+	logoutCmd := authuc.NewLogoutCommand(app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.Logger)
+	getCurrentUserQuery := authuc.NewGetCurrentUserQuery(app.Container.UserRepository, app.Logger)
+	getSessionsQuery := authuc.NewGetSessionsQuery(app.Container.RefreshTokenRepository, app.Logger)
+	
 	authHandler := handler.NewAuthHandler(
-		app.Container.RegisterCommand,
-		app.Container.LoginCommand,
-		app.Container.RefreshTokenCommand,
-		app.Container.LogoutCommand,
-		app.Container.GetCurrentUserQuery,
-		app.Container.GetSessionsQuery,
+		registerCmd,
+		loginCmd,
+		refreshCmd,
+		logoutCmd,
+		getCurrentUserQuery,
+		getSessionsQuery,
 	)
 
 	// Add auth middleware
-	authMiddleware := middleware.NewAuthMiddleware(app.JWT, app.Container.Logger)
-	router.GET("/api/v1/auth/me", authMiddleware.Authenticate(), authHandler.GetCurrentUser)
+	router.GET("/api/v1/auth/me", middleware.AuthMiddleware(app.JWT), authHandler.GetCurrentUser)
 
 	t.Run("Success", func(t *testing.T) {
 		defer app.CleanupTables()
@@ -338,17 +374,25 @@ func TestAuthHandler_GetSessions(t *testing.T) {
 	// Setup router
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
+	
+	// Create auth use-case instances
+	registerCmd := authuc.NewRegisterCommand(app.Container.UserRepository, app.Container.XrayProvisioningService, app.Logger)
+	loginCmd := authuc.NewLoginCommand(app.Container.UserRepository, app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.JWT, app.Logger)
+	refreshCmd := authuc.NewRefreshTokenCommand(app.Container.UserRepository, app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.JWT, app.Logger)
+	logoutCmd := authuc.NewLogoutCommand(app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.Logger)
+	getCurrentUserQuery := authuc.NewGetCurrentUserQuery(app.Container.UserRepository, app.Logger)
+	getSessionsQuery := authuc.NewGetSessionsQuery(app.Container.RefreshTokenRepository, app.Logger)
+	
 	authHandler := handler.NewAuthHandler(
-		app.Container.RegisterCommand,
-		app.Container.LoginCommand,
-		app.Container.RefreshTokenCommand,
-		app.Container.LogoutCommand,
-		app.Container.GetCurrentUserQuery,
-		app.Container.GetSessionsQuery,
+		registerCmd,
+		loginCmd,
+		refreshCmd,
+		logoutCmd,
+		getCurrentUserQuery,
+		getSessionsQuery,
 	)
 
-	authMiddleware := middleware.NewAuthMiddleware(app.JWT, app.Container.Logger)
-	router.GET("/api/v1/auth/sessions", authMiddleware.Authenticate(), authHandler.GetSessions)
+	router.GET("/api/v1/auth/sessions", middleware.AuthMiddleware(app.JWT), authHandler.GetSessions)
 
 	t.Run("Success", func(t *testing.T) {
 		defer app.CleanupTables()
@@ -393,17 +437,25 @@ func TestAuthHandler_LogoutAll(t *testing.T) {
 	// Setup router
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
+	
+	// Create auth use-case instances
+	registerCmd := authuc.NewRegisterCommand(app.Container.UserRepository, app.Container.XrayProvisioningService, app.Logger)
+	loginCmd := authuc.NewLoginCommand(app.Container.UserRepository, app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.JWT, app.Logger)
+	refreshCmd := authuc.NewRefreshTokenCommand(app.Container.UserRepository, app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.JWT, app.Logger)
+	logoutCmd := authuc.NewLogoutCommand(app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.Logger)
+	getCurrentUserQuery := authuc.NewGetCurrentUserQuery(app.Container.UserRepository, app.Logger)
+	getSessionsQuery := authuc.NewGetSessionsQuery(app.Container.RefreshTokenRepository, app.Logger)
+	
 	authHandler := handler.NewAuthHandler(
-		app.Container.RegisterCommand,
-		app.Container.LoginCommand,
-		app.Container.RefreshTokenCommand,
-		app.Container.LogoutCommand,
-		app.Container.GetCurrentUserQuery,
-		app.Container.GetSessionsQuery,
+		registerCmd,
+		loginCmd,
+		refreshCmd,
+		logoutCmd,
+		getCurrentUserQuery,
+		getSessionsQuery,
 	)
 
-	authMiddleware := middleware.NewAuthMiddleware(app.JWT, app.Container.Logger)
-	router.POST("/api/v1/auth/logout-all", authMiddleware.Authenticate(), authHandler.LogoutAll)
+	router.POST("/api/v1/auth/logout-all", middleware.AuthMiddleware(app.JWT), authHandler.LogoutAll)
 
 	t.Run("Success", func(t *testing.T) {
 		defer app.CleanupTables()
@@ -444,17 +496,25 @@ func TestAuthHandler_LogoutSingle(t *testing.T) {
 	// Setup router
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
+	
+	// Create auth use-case instances
+	registerCmd := authuc.NewRegisterCommand(app.Container.UserRepository, app.Container.XrayProvisioningService, app.Logger)
+	loginCmd := authuc.NewLoginCommand(app.Container.UserRepository, app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.JWT, app.Logger)
+	refreshCmd := authuc.NewRefreshTokenCommand(app.Container.UserRepository, app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.JWT, app.Logger)
+	logoutCmd := authuc.NewLogoutCommand(app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.Logger)
+	getCurrentUserQuery := authuc.NewGetCurrentUserQuery(app.Container.UserRepository, app.Logger)
+	getSessionsQuery := authuc.NewGetSessionsQuery(app.Container.RefreshTokenRepository, app.Logger)
+	
 	authHandler := handler.NewAuthHandler(
-		app.Container.RegisterCommand,
-		app.Container.LoginCommand,
-		app.Container.RefreshTokenCommand,
-		app.Container.LogoutCommand,
-		app.Container.GetCurrentUserQuery,
-		app.Container.GetSessionsQuery,
+		registerCmd,
+		loginCmd,
+		refreshCmd,
+		logoutCmd,
+		getCurrentUserQuery,
+		getSessionsQuery,
 	)
 
-	authMiddleware := middleware.NewAuthMiddleware(app.JWT, app.Container.Logger)
-	router.DELETE("/api/v1/auth/sessions/:id", authMiddleware.Authenticate(), authHandler.LogoutSingle)
+	router.DELETE("/api/v1/auth/sessions/:id", middleware.AuthMiddleware(app.JWT), authHandler.LogoutSingle)
 
 	t.Run("Success", func(t *testing.T) {
 		defer app.CleanupTables()
