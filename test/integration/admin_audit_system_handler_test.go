@@ -7,6 +7,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	adminaudit "github.com/suproxy/backend/internal/application/usecase/admin/audit"
+	adminclient "github.com/suproxy/backend/internal/application/usecase/admin/client"
+	admininbound "github.com/suproxy/backend/internal/application/usecase/admin/inbound"
+	adminsystem "github.com/suproxy/backend/internal/application/usecase/admin/system"
+	adminuser "github.com/suproxy/backend/internal/application/usecase/admin/user"
+	adminxray "github.com/suproxy/backend/internal/application/usecase/admin/xray_instance"
 	"github.com/suproxy/backend/internal/domain/audit"
 	"github.com/suproxy/backend/internal/infrastructure/testutil"
 	"github.com/suproxy/backend/internal/interfaces/http/handler"
@@ -18,51 +24,85 @@ func setupAdminAuditSystemHandler(t *testing.T, app *testutil.TestApp) *gin.Engi
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
 
+	// Create use-case instances
+	listUsersQuery := adminuser.NewListUsersQuery(app.Container.UserRepository)
+	getUserQuery := adminuser.NewGetUserQuery(app.Container.UserRepository)
+	updateUserStatusCommand := adminuser.NewUpdateUserStatusCommand(app.Container.UserRepository, app.Container.AuditLogRepository)
+	updateUserRoleCommand := adminuser.NewUpdateUserRoleCommand(app.Container.UserRepository, app.Container.AuditLogRepository)
+	listInstancesQuery := adminxray.NewListInstancesQuery(app.Container.XrayInstanceRepository)
+	getInstanceQuery := adminxray.NewGetInstanceQuery(app.Container.XrayInstanceRepository)
+	getInstanceStatsQuery := adminxray.NewGetInstanceStatsQuery(app.Container.XrayInstanceRepository, app.Container.InboundRepository, app.Container.ClientRepository)
+	startInstanceCommand := adminxray.NewStartInstanceCommand(app.Container.XrayInstanceRepository, app.Container.XrayProcessManager, app.Container.AuditLogRepository)
+	stopInstanceCommand := adminxray.NewStopInstanceCommand(app.Container.XrayInstanceRepository, app.Container.XrayProcessManager, app.Container.AuditLogRepository)
+	restartInstanceCommand := adminxray.NewRestartInstanceCommand(app.Container.XrayInstanceRepository, app.Container.XrayProcessManager, app.Container.AuditLogRepository)
+	reloadInstanceCommand := adminxray.NewReloadInstanceCommand(app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
+	checkInstanceHealthCommand := adminxray.NewCheckInstanceHealthCommand(app.Container.XrayProcessManager)
+	listInboundsQuery := admininbound.NewListInboundsQuery(app.Container.InboundRepository)
+	getInboundQuery := admininbound.NewGetInboundQuery(app.Container.InboundRepository)
+	createInboundCommand := admininbound.NewCreateInboundCommand(app.Container.InboundRepository, app.Container.XrayInstanceRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
+	updateInboundCommand := admininbound.NewUpdateInboundCommand(app.Container.InboundRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
+	deleteInboundCommand := admininbound.NewDeleteInboundCommand(app.Container.InboundRepository, app.Container.ClientRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
+	enableInboundCommand := admininbound.NewEnableInboundCommand(app.Container.InboundRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
+	disableInboundCommand := admininbound.NewDisableInboundCommand(app.Container.InboundRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
+	listClientsQuery := adminclient.NewListClientsQuery(app.Container.ClientRepository)
+	getClientQuery := adminclient.NewGetClientQuery(app.Container.ClientRepository)
+	createClientCommand := adminclient.NewCreateClientCommand(app.Container.ClientRepository, app.Container.InboundRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
+	deleteClientCommand := adminclient.NewDeleteClientCommand(app.Container.ClientRepository, app.Container.InboundRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
+	enableClientCommand := adminclient.NewEnableClientCommand(app.Container.ClientRepository, app.Container.InboundRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
+	disableClientCommand := adminclient.NewDisableClientCommand(app.Container.ClientRepository, app.Container.InboundRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
+	regenerateClientUUIDCommand := adminclient.NewRegenerateClientUUIDCommand(app.Container.ClientRepository, app.Container.InboundRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
+	reprovisionClientCommand := adminclient.NewReprovisionClientCommand(app.Container.ClientRepository, app.Container.InboundRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
+	listAuditLogsQuery := adminaudit.NewListAuditLogsQuery(app.Container.AuditLogRepository)
+	getAuditLogQuery := adminaudit.NewGetAuditLogQuery(app.Container.AuditLogRepository)
+	getAuditStatsQuery := adminaudit.NewGetAuditStatsQuery(app.Container.AuditLogRepository)
+	getSystemHealthQuery := adminsystem.NewGetSystemHealthQuery(app.Database, app.Container.XrayInstanceRepository, app.Container.XrayProcessManager)
+	getSystemStatsQuery := adminsystem.NewGetSystemStatsQuery(app.Container.UserRepository, app.Container.XrayInstanceRepository, app.Container.InboundRepository, app.Container.ClientRepository, app.Container.AuditLogRepository)
+	getVersionQuery := adminsystem.NewGetVersionQuery()
+	getDatabaseStatusQuery := adminsystem.NewGetDatabaseStatusQuery(app.Database)
+	getXraySystemStatusQuery := adminsystem.NewGetXraySystemStatusQuery(app.Container.XrayInstanceRepository)
+
 	adminHandler := handler.NewAdminHandler(
-		app.Container.Logger,
-		app.Container.AdminListUsersQuery,
-		app.Container.AdminGetUserQuery,
-		app.Container.AdminUpdateUserStatusCommand,
-		app.Container.AdminUpdateUserRoleCommand,
-		app.Container.AdminListInstancesQuery,
-		app.Container.AdminGetInstanceQuery,
-		app.Container.AdminGetInstanceStatsQuery,
-		app.Container.AdminStartInstanceCommand,
-		app.Container.AdminStopInstanceCommand,
-		app.Container.AdminRestartInstanceCommand,
-		app.Container.AdminReloadInstanceCommand,
-		app.Container.AdminCheckInstanceHealthCommand,
-		app.Container.AdminListInboundsQuery,
-		app.Container.AdminGetInboundQuery,
-		app.Container.AdminCreateInboundCommand,
-		app.Container.AdminUpdateInboundCommand,
-		app.Container.AdminDeleteInboundCommand,
-		app.Container.AdminEnableInboundCommand,
-		app.Container.AdminDisableInboundCommand,
-		app.Container.AdminListClientsQuery,
-		app.Container.AdminGetClientQuery,
-		app.Container.AdminCreateClientCommand,
-		app.Container.AdminDeleteClientCommand,
-		app.Container.AdminEnableClientCommand,
-		app.Container.AdminDisableClientCommand,
-		app.Container.AdminRegenerateClientUUIDCommand,
-		app.Container.AdminReprovisionClientCommand,
-		app.Container.AdminListAuditLogsQuery,
-		app.Container.AdminGetAuditLogQuery,
-		app.Container.AdminGetAuditStatsQuery,
-		app.Container.AdminGetSystemHealthQuery,
-		app.Container.AdminGetSystemStatsQuery,
-		app.Container.AdminGetVersionQuery,
-		app.Container.AdminGetDatabaseStatusQuery,
-		app.Container.AdminGetXraySystemStatusQuery,
+		app.Logger,
+		listUsersQuery,
+		getUserQuery,
+		updateUserStatusCommand,
+		updateUserRoleCommand,
+		listInstancesQuery,
+		getInstanceQuery,
+		getInstanceStatsQuery,
+		startInstanceCommand,
+		stopInstanceCommand,
+		restartInstanceCommand,
+		reloadInstanceCommand,
+		checkInstanceHealthCommand,
+		listInboundsQuery,
+		getInboundQuery,
+		createInboundCommand,
+		updateInboundCommand,
+		deleteInboundCommand,
+		enableInboundCommand,
+		disableInboundCommand,
+		listClientsQuery,
+		getClientQuery,
+		createClientCommand,
+		deleteClientCommand,
+		enableClientCommand,
+		disableClientCommand,
+		regenerateClientUUIDCommand,
+		reprovisionClientCommand,
+		listAuditLogsQuery,
+		getAuditLogQuery,
+		getAuditStatsQuery,
+		getSystemHealthQuery,
+		getSystemStatsQuery,
+		getVersionQuery,
+		getDatabaseStatusQuery,
+		getXraySystemStatusQuery,
 	)
 
-	authMiddleware := middleware.NewAuthMiddleware(app.JWT, app.Container.Logger)
-	adminMiddleware := middleware.NewAdminMiddleware(app.Container.Logger)
-
 	adminGroup := router.Group("/api/v1/admin")
-	adminGroup.Use(authMiddleware.Authenticate())
-	adminGroup.Use(adminMiddleware.RequireAdmin())
+	adminGroup.Use(middleware.AuthMiddleware(app.JWT))
+	adminGroup.Use(middleware.RequireAdmin())
 
 	// Audit routes
 	adminGroup.GET("/audit", adminHandler.ListAuditLogs)
@@ -100,7 +140,7 @@ func TestAdminHandler_ListAuditLogs(t *testing.T) {
 
 		// Create audit logs
 		log := audit.NewLog(adminUser.ID, audit.ActionLogin, "user", adminUser.ID, "127.0.0.1", "TestAgent")
-		app.Container.AuditRepository.Create(ctx, log)
+		app.Container.AuditLogRepository.Create(ctx, log)
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router
@@ -157,7 +197,7 @@ func TestAdminHandler_GetAuditLog(t *testing.T) {
 		adminUser, adminToken, _ := authHelper.CreateAuthenticatedAdmin(app.Container.UserRepository)
 
 		log := audit.NewLog(adminUser.ID, audit.ActionLogin, "user", adminUser.ID, "127.0.0.1", "TestAgent")
-		app.Container.AuditRepository.Create(ctx, log)
+		app.Container.AuditLogRepository.Create(ctx, log)
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router
@@ -221,7 +261,7 @@ func TestAdminHandler_GetAuditStats(t *testing.T) {
 		// Create some audit logs
 		for i := 0; i < 5; i++ {
 			log := audit.NewLog(adminUser.ID, audit.ActionLogin, "user", adminUser.ID, "127.0.0.1", "TestAgent")
-			app.Container.AuditRepository.Create(ctx, log)
+			app.Container.AuditLogRepository.Create(ctx, log)
 		}
 
 		httpCtx := testutil.NewHTTPTestContext(t)
