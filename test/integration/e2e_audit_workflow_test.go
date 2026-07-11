@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"strconv"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -168,11 +169,13 @@ func TestE2E_AuditFlow(t *testing.T) {
 	ctx := context.Background()
 
 	// Setup: Create admin and users
-	adminUser, _ := testutil.CreateTestAdminUser()
-	app.Container.UserRepository.Create(ctx, adminUser)
+	adminUser, err := testutil.CreateTestAdminUser()
+	require.NoError(t, err)
+	require.NoError(t, app.Container.UserRepository.Create(ctx, adminUser))
 
-	regularUser, _ := testutil.CreateTestUserWithDefaults()
-	app.Container.UserRepository.Create(ctx, regularUser)
+	regularUser, err := testutil.CreateTestUserWithDefaults()
+	require.NoError(t, err)
+	require.NoError(t, app.Container.UserRepository.Create(ctx, regularUser))
 
 	// Step 1: Admin login (should create audit log)
 	t.Log("Step 1: Admin Login")
@@ -252,8 +255,9 @@ func TestE2E_AuditFilteringFlow(t *testing.T) {
 	ctx := context.Background()
 
 	// Setup: Create admin
-	adminUser, _ := testutil.CreateTestAdminUser()
-	app.Container.UserRepository.Create(ctx, adminUser)
+	adminUser, err := testutil.CreateTestAdminUser()
+	require.NoError(t, err)
+	require.NoError(t, app.Container.UserRepository.Create(ctx, adminUser))
 
 	// Create multiple audit logs with different actions
 	for i := 0; i < 3; i++ {
@@ -340,14 +344,17 @@ func TestE2E_FullAdminWorkflow(t *testing.T) {
 	ctx := context.Background()
 
 	// Setup: Create admin and multiple users
-	adminUser, _ := testutil.CreateTestAdminUser()
-	app.Container.UserRepository.Create(ctx, adminUser)
+	adminUser, err := testutil.CreateTestAdminUser()
+	require.NoError(t, err)
+	require.NoError(t, app.Container.UserRepository.Create(ctx, adminUser))
 
-	user1, _ := testutil.CreateTestUserWithDefaults()
-	app.Container.UserRepository.Create(ctx, user1)
+	user1, err := testutil.CreateTestUserWithDefaults()
+	require.NoError(t, err)
+	require.NoError(t, app.Container.UserRepository.Create(ctx, user1))
 
-	user2, _ := testutil.CreateTestUser("user2", "user2@example.com", "Test123!@#")
-	app.Container.UserRepository.Create(ctx, user2)
+	user2, err := testutil.CreateTestUser("user2", "user2@example.com", "Test123!@#")
+	require.NoError(t, err)
+	require.NoError(t, app.Container.UserRepository.Create(ctx, user2))
 
 	// Phase 1: Authentication
 	t.Log("=== Phase 1: Authentication ===")
@@ -458,8 +465,9 @@ func TestE2E_MetricsFlow(t *testing.T) {
 	ctx := context.Background()
 
 	// Setup
-	adminUser, _ := testutil.CreateTestAdminUser()
-	app.Container.UserRepository.Create(ctx, adminUser)
+	adminUser, err := testutil.CreateTestAdminUser()
+	require.NoError(t, err)
+	require.NoError(t, app.Container.UserRepository.Create(ctx, adminUser))
 
 	// Admin login
 	loginReq := dto.LoginRequest{
@@ -512,13 +520,15 @@ func TestE2E_ConcurrentAdminOperations(t *testing.T) {
 	ctx := context.Background()
 
 	// Setup: Create admin
-	adminUser, _ := testutil.CreateTestAdminUser()
-	app.Container.UserRepository.Create(ctx, adminUser)
+	adminUser, err := testutil.CreateTestAdminUser()
+	require.NoError(t, err)
+	require.NoError(t, app.Container.UserRepository.Create(ctx, adminUser))
 
 	// Create multiple users
 	for i := 0; i < 5; i++ {
-		user, _ := testutil.CreateTestUser("user"+string(rune(i)), "user"+string(rune(i))+"@example.com", "Test123!@#")
-		app.Container.UserRepository.Create(ctx, user)
+		user, err := testutil.CreateTestUser("user"+strconv.Itoa(i), "user"+strconv.Itoa(i)+"@example.com", "Test123!@#")
+		require.NoError(t, err)
+		require.NoError(t, app.Container.UserRepository.Create(ctx, user))
 	}
 
 	// Admin login
