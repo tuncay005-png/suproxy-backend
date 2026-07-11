@@ -258,10 +258,10 @@ func TestE2E_AuditFilteringFlow(t *testing.T) {
 	// Create multiple audit logs with different actions
 	for i := 0; i < 3; i++ {
 		log1 := audit.NewLog(adminUser.ID, audit.ActionLogin, "user", adminUser.ID, "127.0.0.1", "TestAgent")
-		app.Container.AuditRepository.Create(ctx, log1)
+		app.Container.AuditLogRepository.Create(ctx, log1)
 
 		log2 := audit.NewLog(adminUser.ID, audit.ActionLogout, "user", adminUser.ID, "127.0.0.1", "TestAgent")
-		app.Container.AuditRepository.Create(ctx, log2)
+		app.Container.AuditLogRepository.Create(ctx, log2)
 	}
 
 	// Admin login

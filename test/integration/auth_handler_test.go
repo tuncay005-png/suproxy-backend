@@ -6,10 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/suproxy/backend/internal/application/dto"
 	authuc "github.com/suproxy/backend/internal/application/usecase/auth"
-	"github.com/suproxy/backend/internal/domain/user"
 	"github.com/suproxy/backend/internal/infrastructure/testutil"
 	"github.com/suproxy/backend/internal/interfaces/http/handler"
 	"github.com/suproxy/backend/internal/interfaces/http/middleware"

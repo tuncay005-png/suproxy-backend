@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/suproxy/backend/internal/application/dto"
+	authuc "github.com/suproxy/backend/internal/application/usecase/auth"
 	"github.com/suproxy/backend/internal/infrastructure/testutil"
 	"github.com/suproxy/backend/internal/interfaces/http/handler"
 	"github.com/suproxy/backend/internal/interfaces/http/middleware"
@@ -18,18 +19,26 @@ func setupE2ERouter(t *testing.T, app *testutil.TestApp) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
 
+	// Instantiate use-case instances
+	registerCmd := authuc.NewRegisterCommand(app.Container.UserRepository, app.Container.XrayProvisioningService, app.Logger)
+	loginCmd := authuc.NewLoginCommand(app.Container.UserRepository, app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.JWT, app.Logger)
+	refreshTokenCmd := authuc.NewRefreshTokenCommand(app.Container.UserRepository, app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.JWT, app.Logger)
+	logoutCmd := authuc.NewLogoutCommand(app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.Logger)
+	getCurrentUserQuery := authuc.NewGetCurrentUserQuery(app.Container.UserRepository, app.Logger)
+	getSessionsQuery := authuc.NewGetSessionsQuery(app.Container.RefreshTokenRepository, app.Logger)
+
 	// Auth handler
 	authHandler := handler.NewAuthHandler(
-		app.Container.RegisterCommand,
-		app.Container.LoginCommand,
-		app.Container.RefreshTokenCommand,
-		app.Container.LogoutCommand,
-		app.Container.GetCurrentUserQuery,
-		app.Container.GetSessionsQuery,
+		registerCmd,
+		loginCmd,
+		refreshTokenCmd,
+		logoutCmd,
+		getCurrentUserQuery,
+		getSessionsQuery,
 	)
 
 	// Middleware
-	authMiddleware := middleware.NewAuthMiddleware(app.JWT, app.Container.Logger)
+	authMiddleware := middleware.AuthMiddleware(app.JWT)
 
 	// Auth routes
 	authGroup := router.Group("/api/v1/auth")
@@ -37,10 +46,10 @@ func setupE2ERouter(t *testing.T, app *testutil.TestApp) *gin.Engine {
 		authGroup.POST("/register", authHandler.Register)
 		authGroup.POST("/login", authHandler.Login)
 		authGroup.POST("/refresh", authHandler.RefreshToken)
-		authGroup.GET("/me", authMiddleware.Authenticate(), authHandler.GetCurrentUser)
-		authGroup.GET("/sessions", authMiddleware.Authenticate(), authHandler.GetSessions)
-		authGroup.POST("/logout-all", authMiddleware.Authenticate(), authHandler.LogoutAll)
-		authGroup.DELETE("/sessions/:id", authMiddleware.Authenticate(), authHandler.LogoutSingle)
+		authGroup.GET("/me", authMiddleware, authHandler.GetCurrentUser)
+		authGroup.GET("/sessions", authMiddleware, authHandler.GetSessions)
+		authGroup.POST("/logout-all", authMiddleware, authHandler.LogoutAll)
+		authGroup.DELETE("/sessions/:id", authMiddleware, authHandler.LogoutSingle)
 	}
 
 	return router
