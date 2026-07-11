@@ -8,6 +8,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+	"github.com/suproxy/backend/internal/domain/node"
+	"github.com/suproxy/backend/internal/domain/server"
 	"github.com/suproxy/backend/internal/domain/session"
 	"github.com/suproxy/backend/internal/domain/user"
 	"github.com/suproxy/backend/internal/domain/xray"
@@ -104,10 +106,10 @@ type XrayInstanceFixture struct {
 	Version string
 }
 
-// DefaultXrayInstanceFixture returns a default test xray instance
-func DefaultXrayInstanceFixture() XrayInstanceFixture {
+// DefaultXrayInstanceFixture returns a default test xray instance with given node ID
+func DefaultXrayInstanceFixture(nodeID uuid.UUID) XrayInstanceFixture {
 	return XrayInstanceFixture{
-		NodeID:  uuid.New(),
+		NodeID:  nodeID,
 		Version: "1.8.0",
 	}
 }
@@ -118,8 +120,9 @@ func CreateTestXrayInstance(fixture XrayInstanceFixture) (*xray.XrayInstance, er
 }
 
 // CreateTestXrayInstanceWithDefaults creates a test xray instance with default fixture
-func CreateTestXrayInstanceWithDefaults() (*xray.XrayInstance, error) {
-	fixture := DefaultXrayInstanceFixture()
+// Requires a valid node ID
+func CreateTestXrayInstanceWithDefaults(nodeID uuid.UUID) (*xray.XrayInstance, error) {
+	fixture := DefaultXrayInstanceFixture(nodeID)
 	return CreateTestXrayInstance(fixture)
 }
 
@@ -263,6 +266,83 @@ func TimePast(hours int) time.Time {
 // TimeFuture returns a future time (hours ahead)
 func TimeFuture(hours int) time.Time {
 	return time.Now().UTC().Add(time.Duration(hours) * time.Hour)
+}
+
+// ServerFixture provides test server data
+type ServerFixture struct {
+	Name     string
+	Country  string
+	City     string
+	Hostname string
+	Provider string
+	IPv4     string
+}
+
+// DefaultServerFixture returns a default test server
+func DefaultServerFixture() ServerFixture {
+	return ServerFixture{
+		Name:     "Test Server",
+		Country:  "US",
+		City:     "New York",
+		Hostname: "test.example.com",
+		Provider: "TestProvider",
+		IPv4:     "192.168.1.1",
+	}
+}
+
+// CreateTestServer creates a test server entity
+func CreateTestServer(fixture ServerFixture) (*server.Server, error) {
+	return server.NewServer(
+		fixture.Name,
+		fixture.Country,
+		fixture.City,
+		fixture.Hostname,
+		fixture.Provider,
+		fixture.IPv4,
+	)
+}
+
+// CreateTestServerWithDefaults creates a test server with default fixture
+func CreateTestServerWithDefaults() (*server.Server, error) {
+	fixture := DefaultServerFixture()
+	return CreateTestServer(fixture)
+}
+
+// NodeFixture provides test node data
+type NodeFixture struct {
+	ServerID         uuid.UUID
+	Protocol         node.Protocol
+	Port             int
+	MaxUsers         int
+	BandwidthLimitGB int64
+}
+
+// DefaultNodeFixture returns a default test node
+func DefaultNodeFixture(serverID uuid.UUID) NodeFixture {
+	return NodeFixture{
+		ServerID:         serverID,
+		Protocol:         node.ProtocolVLESS,
+		Port:             443,
+		MaxUsers:         100,
+		BandwidthLimitGB: 0, // Unlimited
+	}
+}
+
+// CreateTestNode creates a test node entity
+func CreateTestNode(fixture NodeFixture) (*node.Node, error) {
+	return node.NewNode(
+		fixture.ServerID,
+		fixture.Protocol,
+		fixture.Port,
+		fixture.MaxUsers,
+		fixture.BandwidthLimitGB,
+	)
+}
+
+// CreateTestNodeWithDefaults creates a test node with default fixture
+func CreateTestNodeWithDefaults(serverID uuid.UUID) (*node.Node, error) {
+	fixture := DefaultNodeFixture(serverID)
+	return CreateTestNode(fixture)
 }
 
 
