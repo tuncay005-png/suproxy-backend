@@ -58,7 +58,6 @@ func (td *TestDatabase) Cleanup() {
 		"reality_configs",
 		"inbounds",
 		"xray_instances",
-		"devices",
 		"subscriptions",
 		"users",
 		"nodes",
