@@ -7,19 +7,20 @@ import (
 	"github.com/google/uuid"
 	"github.com/suproxy/backend/internal/domain/audit"
 	"github.com/suproxy/backend/internal/infrastructure/metrics"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
 type AuditLogModel struct {
-	ID         uuid.UUID              `gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
-	UserID     uuid.UUID              `gorm:"type:uuid;index"`
-	Action     string                 `gorm:"type:varchar(50);not null;index"`
-	EntityType string                 `gorm:"type:varchar(50);not null"`
-	EntityID   uuid.UUID              `gorm:"type:uuid;index"`
-	IPAddress  string                 `gorm:"type:varchar(45)"`
-	UserAgent  string                 `gorm:"type:text"`
-	Metadata   map[string]interface{} `gorm:"type:jsonb"`
-	CreatedAt  time.Time              `gorm:"not null;default:CURRENT_TIMESTAMP;index"`
+	ID         uuid.UUID      `gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
+	UserID     uuid.UUID      `gorm:"type:uuid;index"`
+	Action     string         `gorm:"type:varchar(50);not null;index"`
+	EntityType string         `gorm:"type:varchar(50);not null"`
+	EntityID   uuid.UUID      `gorm:"type:uuid;index"`
+	IPAddress  string         `gorm:"type:varchar(45)"`
+	UserAgent  string         `gorm:"type:text"`
+	Metadata   datatypes.JSON `gorm:"type:jsonb"`
+	CreatedAt  time.Time      `gorm:"not null;default:CURRENT_TIMESTAMP;index"`
 }
 
 func (AuditLogModel) TableName() string {
@@ -35,6 +36,12 @@ func NewAuditLogRepository(db *gorm.DB) audit.Repository {
 }
 
 func (r *auditLogRepository) Create(ctx context.Context, log *audit.Log) error {
+	// Marshal metadata to JSON
+	metadataJSON, err := datatypes.NewJSONType(log.Metadata).MarshalJSON()
+	if err != nil {
+		return err
+	}
+	
 	model := &AuditLogModel{
 		ID:         log.ID,
 		UserID:     log.UserID,
@@ -43,7 +50,7 @@ func (r *auditLogRepository) Create(ctx context.Context, log *audit.Log) error {
 		EntityID:   log.EntityID,
 		IPAddress:  log.IPAddress,
 		UserAgent:  log.UserAgent,
-		Metadata:   log.Metadata,
+		Metadata:   metadataJSON,
 		CreatedAt:  log.CreatedAt,
 	}
 	
@@ -282,6 +289,12 @@ func (r *auditLogRepository) DeleteOlderThan(ctx context.Context, date time.Time
 }
 
 func toDomainAuditLog(m *AuditLogModel) *audit.Log {
+	// Unmarshal metadata from JSON
+	var metadata map[string]interface{}
+	if len(m.Metadata) > 0 {
+		_ = m.Metadata.UnmarshalJSON(m.Metadata) // Ignore error, metadata is optional
+	}
+	
 	return &audit.Log{
 		ID:         m.ID,
 		UserID:     m.UserID,
@@ -290,7 +303,7 @@ func toDomainAuditLog(m *AuditLogModel) *audit.Log {
 		EntityID:   m.EntityID,
 		IPAddress:  m.IPAddress,
 		UserAgent:  m.UserAgent,
-		Metadata:   m.Metadata,
+		Metadata:   metadata,
 		CreatedAt:  m.CreatedAt,
 	}
 }
