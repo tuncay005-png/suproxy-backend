@@ -52,7 +52,7 @@ func (td *TestDatabase) Cleanup() {
 	td.t.Helper()
 
 	tables := []string{
-		"sessions",
+		"refresh_tokens",
 		"audit_logs",
 		"clients",
 		"reality_configs",
