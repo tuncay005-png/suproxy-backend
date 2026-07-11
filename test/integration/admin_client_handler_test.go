@@ -144,17 +144,36 @@ func TestAdminHandler_GetClient(t *testing.T) {
 		authHelper := testutil.NewAuthHelper(app.JWT, t)
 		_, adminToken, _ := authHelper.CreateAuthenticatedAdmin(app.Container.UserRepository)
 
-		user, _ := testutil.CreateTestUserWithDefaults()
-		app.Container.UserRepository.Create(ctx, user)
+		// Create dependencies - start with server and node
+		testServer, err := testutil.CreateTestServerWithDefaults()
+		require.NoError(t, err)
+		err = app.Container.ServerRepository.Create(ctx, testServer)
+		require.NoError(t, err)
 
-		instance, _ := testutil.CreateTestXrayInstanceWithDefaults()
-		app.Container.XrayInstanceRepository.Create(ctx, instance)
+		testNode, err := testutil.CreateTestNodeWithDefaults(testServer.ID)
+		require.NoError(t, err)
+		err = app.Container.NodeRepository.Create(ctx, testNode)
+		require.NoError(t, err)
 
-		inbound, _ := testutil.CreateTestInboundWithDefaults(instance.ID)
-		app.Container.InboundRepository.Create(ctx, inbound)
+		user, err := testutil.CreateTestUserWithDefaults()
+		require.NoError(t, err)
+		err = app.Container.UserRepository.Create(ctx, user)
+		require.NoError(t, err)
 
-		client, _ := testutil.CreateTestClientWithDefaults(inbound.ID, user.ID)
-		app.Container.ClientRepository.Create(ctx, client)
+		instance, err := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
+		require.NoError(t, err)
+		err = app.Container.XrayInstanceRepository.Create(ctx, instance)
+		require.NoError(t, err)
+
+		inbound, err := testutil.CreateTestInboundWithDefaults(instance.ID)
+		require.NoError(t, err)
+		err = app.Container.InboundRepository.Create(ctx, inbound)
+		require.NoError(t, err)
+
+		client, err := testutil.CreateTestClientWithDefaults(inbound.ID, user.ID)
+		require.NoError(t, err)
+		err = app.Container.ClientRepository.Create(ctx, client)
+		require.NoError(t, err)
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router

@@ -27,6 +27,17 @@ func TestClientRepository_Create(t *testing.T) {
 	clientRepo := app.Container.ClientRepository
 
 	t.Run("Create_Success", func(t *testing.T) {
+		// Create dependencies - server and node first
+		testServer, err := testutil.CreateTestServerWithDefaults()
+		require.NoError(t, err)
+		err = app.Container.ServerRepository.Create(ctx, testServer)
+		require.NoError(t, err)
+
+		testNode, err := testutil.CreateTestNodeWithDefaults(testServer.ID)
+		require.NoError(t, err)
+		err = app.Container.NodeRepository.Create(ctx, testNode)
+		require.NoError(t, err)
+
 		// Create user
 		user, err := testutil.CreateTestUserWithDefaults()
 		require.NoError(t, err)
@@ -34,7 +45,7 @@ func TestClientRepository_Create(t *testing.T) {
 		require.NoError(t, err)
 
 		// Create instance and inbound
-		instance, err := testutil.CreateTestXrayInstanceWithDefaults()
+		instance, err := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 		require.NoError(t, err)
 		err = instanceRepo.Create(ctx, instance)
 		require.NoError(t, err)
