@@ -3,6 +3,8 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"path/filepath"
+	"runtime"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
@@ -102,8 +104,14 @@ func (m *Migrator) getInstance() (*migrate.Migrate, error) {
 		return nil, fmt.Errorf("failed to create migration driver: %w", err)
 	}
 
+	// Get absolute path to migrations directory
+	_, filename, _, _ := runtime.Caller(0)
+	projectRoot := filepath.Join(filepath.Dir(filename), "..", "..", "..")
+	migrationsPath := filepath.Join(projectRoot, "migrations")
+	migrationsURL := fmt.Sprintf("file://%s", migrationsPath)
+
 	mig, err := migrate.NewWithDatabaseInstance(
-		"file://./migrations",
+		migrationsURL,
 		"postgres",
 		driver,
 	)
