@@ -3,8 +3,8 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"os"
 	"path/filepath"
-	"runtime"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
@@ -105,10 +105,26 @@ func (m *Migrator) getInstance() (*migrate.Migrate, error) {
 	}
 
 	// Get absolute path to migrations directory
-	_, filename, _, _ := runtime.Caller(0)
-	projectRoot := filepath.Join(filepath.Dir(filename), "..", "..", "..")
-	migrationsPath := filepath.Join(projectRoot, "migrations")
-	migrationsURL := fmt.Sprintf("file://%s", migrationsPath)
+	// First try from working directory
+	migrationsPath, err := filepath.Abs("migrations")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get absolute path for migrations: %w", err)
+	}
+	
+	// Check if migrations directory exists
+	if _, err := os.Stat(migrationsPath); os.IsNotExist(err) {
+		// If not found, try from executable location (for when running tests from different directory)
+		execPath, err := os.Executable()
+		if err == nil {
+			execDir := filepath.Dir(execPath)
+			altPath := filepath.Join(execDir, "migrations")
+			if _, err := os.Stat(altPath); err == nil {
+				migrationsPath = altPath
+			}
+		}
+	}
+
+	migrationsURL := fmt.Sprintf("file://%s", filepath.ToSlash(migrationsPath))
 
 	mig, err := migrate.NewWithDatabaseInstance(
 		migrationsURL,
