@@ -269,7 +269,11 @@ func TestAuditService_UserAgentTracking(t *testing.T) {
 	userID := uuid.New()
 
 	for _, ua := range userAgents {
-		t.Run(ua[:20], func(t *testing.T) { // Truncate name for readability
+		testName := ua
+		if len(ua) > 20 {
+			testName = ua[:20]
+		}
+		t.Run(testName, func(t *testing.T) {
 			log := audit.NewLog(
 				userID,
 				audit.Action("user.action"),
