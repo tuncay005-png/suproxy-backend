@@ -608,7 +608,18 @@ func TestClientRepository_Count(t *testing.T) {
 		err = userRepo.Create(ctx, user)
 		require.NoError(t, err)
 
-		instance, err := testutil.CreateTestXrayInstanceWithDefaults()
+		// Create dependencies - server and node first
+		testServer, err := testutil.CreateTestServerWithDefaults()
+		require.NoError(t, err)
+		err = app.Container.ServerRepository.Create(ctx, testServer)
+		require.NoError(t, err)
+
+		testNode, err := testutil.CreateTestNodeWithDefaults(testServer.ID)
+		require.NoError(t, err)
+		err = app.Container.NodeRepository.Create(ctx, testNode)
+		require.NoError(t, err)
+
+		instance, err := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 		require.NoError(t, err)
 		err = instanceRepo.Create(ctx, instance)
 		require.NoError(t, err)
