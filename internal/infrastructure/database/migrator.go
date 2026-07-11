@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
@@ -105,7 +106,8 @@ func (m *Migrator) getInstance() (*migrate.Migrate, error) {
 	}
 
 	// Get absolute path to migrations directory
-	// First try from working directory
+	// When running tests with "go test ./...", working directory is the package directory
+	// We need to find migrations relative to the project root
 	migrationsPath, err := filepath.Abs("migrations")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get absolute path for migrations: %w", err)
@@ -113,13 +115,16 @@ func (m *Migrator) getInstance() (*migrate.Migrate, error) {
 	
 	// Check if migrations directory exists
 	if _, err := os.Stat(migrationsPath); os.IsNotExist(err) {
-		// If not found, try from executable location (for when running tests from different directory)
-		execPath, err := os.Executable()
-		if err == nil {
-			execDir := filepath.Dir(execPath)
-			altPath := filepath.Join(execDir, "migrations")
-			if _, err := os.Stat(altPath); err == nil {
-				migrationsPath = altPath
+		// Try going up directories to find migrations (for when running from test/integration)
+		for i := 0; i < 3; i++ {
+			wd, _ := os.Getwd()
+			parentMigrations := filepath.Join(wd, strings.Repeat("../", i+1), "migrations")
+			absPath, err := filepath.Abs(parentMigrations)
+			if err == nil {
+				if _, err := os.Stat(absPath); err == nil {
+					migrationsPath = absPath
+					break
+				}
 			}
 		}
 	}
