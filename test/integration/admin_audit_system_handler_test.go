@@ -135,8 +135,16 @@ func TestAdminHandler_ListAuditLogs(t *testing.T) {
 		defer app.CleanupTables()
 
 		ctx := context.Background()
-		authHelper := testutil.NewAuthHelper(app.JWT, t)
-		adminUser, adminToken, _ := authHelper.CreateAuthenticatedAdmin(app.Container.UserRepository)
+		
+		// Create admin user
+		adminUser, err := testutil.CreateTestAdminUser()
+		assert.NoError(t, err)
+		err = app.Container.UserRepository.Create(ctx, adminUser)
+		assert.NoError(t, err)
+		
+		// Generate admin token
+		adminToken, err := app.JWT.GenerateAccessToken(adminUser.ID.String(), adminUser.Email.String(), string(adminUser.Role))
+		assert.NoError(t, err)
 
 		// Create audit logs
 		log := audit.NewLog(adminUser.ID, audit.ActionLogin, "user", adminUser.ID, "127.0.0.1", "TestAgent")
@@ -167,8 +175,17 @@ func TestAdminHandler_ListAuditLogs(t *testing.T) {
 	t.Run("Forbidden_NotAdmin", func(t *testing.T) {
 		defer app.CleanupTables()
 
-		authHelper := testutil.NewAuthHelper(app.JWT, t)
-		_, userToken, _ := authHelper.CreateAuthenticatedUser(app.Container.UserRepository)
+		ctx := context.Background()
+		
+		// Create regular user
+		regularUser, err := testutil.CreateTestUserWithDefaults()
+		assert.NoError(t, err)
+		err = app.Container.UserRepository.Create(ctx, regularUser)
+		assert.NoError(t, err)
+		
+		// Generate user token
+		userToken, err := app.JWT.GenerateAccessToken(regularUser.ID.String(), regularUser.Email.String(), string(regularUser.Role))
+		assert.NoError(t, err)
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router
@@ -193,8 +210,16 @@ func TestAdminHandler_GetAuditLog(t *testing.T) {
 		defer app.CleanupTables()
 
 		ctx := context.Background()
-		authHelper := testutil.NewAuthHelper(app.JWT, t)
-		adminUser, adminToken, _ := authHelper.CreateAuthenticatedAdmin(app.Container.UserRepository)
+		
+		// Create admin user
+		adminUser, err := testutil.CreateTestAdminUser()
+		assert.NoError(t, err)
+		err = app.Container.UserRepository.Create(ctx, adminUser)
+		assert.NoError(t, err)
+		
+		// Generate admin token
+		adminToken, err := app.JWT.GenerateAccessToken(adminUser.ID.String(), adminUser.Email.String(), string(adminUser.Role))
+		assert.NoError(t, err)
 
 		log := audit.NewLog(adminUser.ID, audit.ActionLogin, "user", adminUser.ID, "127.0.0.1", "TestAgent")
 		app.Container.AuditLogRepository.Create(ctx, log)
@@ -214,8 +239,17 @@ func TestAdminHandler_GetAuditLog(t *testing.T) {
 	t.Run("NotFound_LogDoesNotExist", func(t *testing.T) {
 		defer app.CleanupTables()
 
-		authHelper := testutil.NewAuthHelper(app.JWT, t)
-		_, adminToken, _ := authHelper.CreateAuthenticatedAdmin(app.Container.UserRepository)
+		ctx := context.Background()
+		
+		// Create admin user
+		adminUser, err := testutil.CreateTestAdminUser()
+		assert.NoError(t, err)
+		err = app.Container.UserRepository.Create(ctx, adminUser)
+		assert.NoError(t, err)
+		
+		// Generate admin token
+		adminToken, err := app.JWT.GenerateAccessToken(adminUser.ID.String(), adminUser.Email.String(), string(adminUser.Role))
+		assert.NoError(t, err)
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router
@@ -229,8 +263,17 @@ func TestAdminHandler_GetAuditLog(t *testing.T) {
 	t.Run("BadRequest_InvalidUUID", func(t *testing.T) {
 		defer app.CleanupTables()
 
-		authHelper := testutil.NewAuthHelper(app.JWT, t)
-		_, adminToken, _ := authHelper.CreateAuthenticatedAdmin(app.Container.UserRepository)
+		ctx := context.Background()
+		
+		// Create admin user
+		adminUser, err := testutil.CreateTestAdminUser()
+		assert.NoError(t, err)
+		err = app.Container.UserRepository.Create(ctx, adminUser)
+		assert.NoError(t, err)
+		
+		// Generate admin token
+		adminToken, err := app.JWT.GenerateAccessToken(adminUser.ID.String(), adminUser.Email.String(), string(adminUser.Role))
+		assert.NoError(t, err)
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router
@@ -255,8 +298,16 @@ func TestAdminHandler_GetAuditStats(t *testing.T) {
 		defer app.CleanupTables()
 
 		ctx := context.Background()
-		authHelper := testutil.NewAuthHelper(app.JWT, t)
-		adminUser, adminToken, _ := authHelper.CreateAuthenticatedAdmin(app.Container.UserRepository)
+		
+		// Create admin user
+		adminUser, err := testutil.CreateTestAdminUser()
+		assert.NoError(t, err)
+		err = app.Container.UserRepository.Create(ctx, adminUser)
+		assert.NoError(t, err)
+		
+		// Generate admin token
+		adminToken, err := app.JWT.GenerateAccessToken(adminUser.ID.String(), adminUser.Email.String(), string(adminUser.Role))
+		assert.NoError(t, err)
 
 		// Create some audit logs
 		for i := 0; i < 5; i++ {
@@ -291,8 +342,17 @@ func TestAdminHandler_HealthCheck(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		defer app.CleanupTables()
 
-		authHelper := testutil.NewAuthHelper(app.JWT, t)
-		_, adminToken, _ := authHelper.CreateAuthenticatedAdmin(app.Container.UserRepository)
+		ctx := context.Background()
+		
+		// Create admin user
+		adminUser, err := testutil.CreateTestAdminUser()
+		assert.NoError(t, err)
+		err = app.Container.UserRepository.Create(ctx, adminUser)
+		assert.NoError(t, err)
+		
+		// Generate admin token
+		adminToken, err := app.JWT.GenerateAccessToken(adminUser.ID.String(), adminUser.Email.String(), string(adminUser.Role))
+		assert.NoError(t, err)
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router
@@ -319,8 +379,17 @@ func TestAdminHandler_HealthCheck(t *testing.T) {
 	t.Run("Forbidden_NotAdmin", func(t *testing.T) {
 		defer app.CleanupTables()
 
-		authHelper := testutil.NewAuthHelper(app.JWT, t)
-		_, userToken, _ := authHelper.CreateAuthenticatedUser(app.Container.UserRepository)
+		ctx := context.Background()
+		
+		// Create regular user
+		regularUser, err := testutil.CreateTestUserWithDefaults()
+		assert.NoError(t, err)
+		err = app.Container.UserRepository.Create(ctx, regularUser)
+		assert.NoError(t, err)
+		
+		// Generate user token
+		userToken, err := app.JWT.GenerateAccessToken(regularUser.ID.String(), regularUser.Email.String(), string(regularUser.Role))
+		assert.NoError(t, err)
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router
@@ -344,8 +413,17 @@ func TestAdminHandler_GetSystemHealth(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		defer app.CleanupTables()
 
-		authHelper := testutil.NewAuthHelper(app.JWT, t)
-		_, adminToken, _ := authHelper.CreateAuthenticatedAdmin(app.Container.UserRepository)
+		ctx := context.Background()
+		
+		// Create admin user
+		adminUser, err := testutil.CreateTestAdminUser()
+		assert.NoError(t, err)
+		err = app.Container.UserRepository.Create(ctx, adminUser)
+		assert.NoError(t, err)
+		
+		// Generate admin token
+		adminToken, err := app.JWT.GenerateAccessToken(adminUser.ID.String(), adminUser.Email.String(), string(adminUser.Role))
+		assert.NoError(t, err)
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router
@@ -374,8 +452,17 @@ func TestAdminHandler_GetSystemStats(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		defer app.CleanupTables()
 
-		authHelper := testutil.NewAuthHelper(app.JWT, t)
-		_, adminToken, _ := authHelper.CreateAuthenticatedAdmin(app.Container.UserRepository)
+		ctx := context.Background()
+		
+		// Create admin user
+		adminUser, err := testutil.CreateTestAdminUser()
+		assert.NoError(t, err)
+		err = app.Container.UserRepository.Create(ctx, adminUser)
+		assert.NoError(t, err)
+		
+		// Generate admin token
+		adminToken, err := app.JWT.GenerateAccessToken(adminUser.ID.String(), adminUser.Email.String(), string(adminUser.Role))
+		assert.NoError(t, err)
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router
@@ -404,8 +491,17 @@ func TestAdminHandler_GetVersion(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		defer app.CleanupTables()
 
-		authHelper := testutil.NewAuthHelper(app.JWT, t)
-		_, adminToken, _ := authHelper.CreateAuthenticatedAdmin(app.Container.UserRepository)
+		ctx := context.Background()
+		
+		// Create admin user
+		adminUser, err := testutil.CreateTestAdminUser()
+		assert.NoError(t, err)
+		err = app.Container.UserRepository.Create(ctx, adminUser)
+		assert.NoError(t, err)
+		
+		// Generate admin token
+		adminToken, err := app.JWT.GenerateAccessToken(adminUser.ID.String(), adminUser.Email.String(), string(adminUser.Role))
+		assert.NoError(t, err)
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router
@@ -434,8 +530,17 @@ func TestAdminHandler_GetDatabaseStatus(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		defer app.CleanupTables()
 
-		authHelper := testutil.NewAuthHelper(app.JWT, t)
-		_, adminToken, _ := authHelper.CreateAuthenticatedAdmin(app.Container.UserRepository)
+		ctx := context.Background()
+		
+		// Create admin user
+		adminUser, err := testutil.CreateTestAdminUser()
+		assert.NoError(t, err)
+		err = app.Container.UserRepository.Create(ctx, adminUser)
+		assert.NoError(t, err)
+		
+		// Generate admin token
+		adminToken, err := app.JWT.GenerateAccessToken(adminUser.ID.String(), adminUser.Email.String(), string(adminUser.Role))
+		assert.NoError(t, err)
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router
