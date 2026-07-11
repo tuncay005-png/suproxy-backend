@@ -20,20 +20,24 @@ type UserFixture struct {
 	Password string
 }
 
-// DefaultUserFixture returns a default test user
+// DefaultUserFixture returns a default test user with unique email
 func DefaultUserFixture() UserFixture {
+	// Use UUID to make email unique for each test
+	uniqueID := uuid.New().String()[:8]
 	return UserFixture{
-		Username: "testuser",
-		Email:    "test@example.com",
+		Username: "testuser_" + uniqueID,
+		Email:    "test_" + uniqueID + "@example.com",
 		Password: "Test123!@#",
 	}
 }
 
-// AdminUserFixture returns an admin test user
+// AdminUserFixture returns an admin test user with unique email
 func AdminUserFixture() UserFixture {
+	// Use UUID to make email unique for each test
+	uniqueID := uuid.New().String()[:8]
 	return UserFixture{
-		Username: "adminuser",
-		Email:    "admin@example.com",
+		Username: "adminuser_" + uniqueID,
+		Email:    "admin_" + uniqueID + "@example.com",
 		Password: "Admin123!@#",
 	}
 }
@@ -71,12 +75,26 @@ func CreateTestUserWithDefaults() (*user.User, error) {
 // CreateTestAdminUser creates an admin user with default fixture
 func CreateTestAdminUser() (*user.User, error) {
 	fixture := AdminUserFixture()
-	u, err := CreateTestUser(fixture.Username, fixture.Email, fixture.Password)
+	emailVO, err := user.NewEmail(fixture.Email)
 	if err != nil {
 		return nil, err
 	}
-	// Set role to admin directly (no PromoteToAdmin method)
-	// This is a test helper, we can set fields directly if needed
+
+	passwordVO, err := user.NewPassword(fixture.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	profile := user.NewProfile("Admin", "User", "", "")
+
+	u, err := user.NewUser(emailVO, passwordVO, profile)
+	if err != nil {
+		return nil, err
+	}
+	
+	// Set role to admin - access private field for test purposes
+	u.Role = user.RoleAdmin
+	
 	return u, nil
 }
 

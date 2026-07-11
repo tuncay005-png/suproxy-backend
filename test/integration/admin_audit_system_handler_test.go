@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	adminaudit "github.com/suproxy/backend/internal/application/usecase/admin/audit"
 	adminclient "github.com/suproxy/backend/internal/application/usecase/admin/client"
 	admininbound "github.com/suproxy/backend/internal/application/usecase/admin/inbound"
@@ -138,13 +139,13 @@ func TestAdminHandler_ListAuditLogs(t *testing.T) {
 		
 		// Create admin user
 		adminUser, err := testutil.CreateTestAdminUser()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		err = app.Container.UserRepository.Create(ctx, adminUser)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		
 		// Generate admin token
 		adminToken, err := app.JWT.GenerateAccessToken(adminUser.ID.String(), adminUser.Email.String(), string(adminUser.Role))
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		// Create audit logs
 		log := audit.NewLog(adminUser.ID, audit.ActionLogin, "user", adminUser.ID, "127.0.0.1", "TestAgent")
