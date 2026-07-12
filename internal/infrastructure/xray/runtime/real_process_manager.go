@@ -101,15 +101,17 @@ func (m *RealProcessManager) Start(ctx context.Context, instanceID uuid.UUID) er
 
 	if err := m.registry.Register(processInfo); err != nil {
 		// Kill the process if registration fails
-		cmd.Process.Kill()
+		if killErr := cmd.Process.Kill(); killErr != nil {
+			m.logger.Error("Failed to kill process after registration failure", "error", killErr, "pid", cmd.Process.Pid)
+		}
 		logFile.Close()
 		errorFile.Close()
 		delete(m.commands, instanceID)
 		return err
 	}
 
-	m.logger.Info("Xray process started successfully", 
-		"instance_id", instanceID, 
+	m.logger.Info("Xray process started successfully",
+		"instance_id", instanceID,
 		"pid", cmd.Process.Pid,
 		"config", configPath)
 

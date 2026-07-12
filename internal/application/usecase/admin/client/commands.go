@@ -65,16 +65,24 @@ func (c *CreateClientCommand) Execute(
 	auditLog.AddMetadata("inbound_id", inboundID.String())
 	auditLog.AddMetadata("user_id", userID.String())
 	auditLog.AddMetadata("uuid", clientUUID)
-	c.auditRepo.Create(ctx, auditLog)
+	if err := c.auditRepo.Create(ctx, auditLog); err != nil {
+		// Non-critical: audit log failure doesn't stop the operation
+		_ = err
+	}
 
 	// Reload config (REUSES XrayProvisioningService)
 	if err := c.provisioningService.RegenerateAndReload(ctx, inbound.XrayInstanceID, adminID, ip, userAgent); err != nil {
 		// Rollback: Delete the created client
-		c.clientRepo.Delete(ctx, client.ID)
+		if delErr := c.clientRepo.Delete(ctx, client.ID); delErr != nil {
+			return nil, fmt.Errorf("config reload failed and rollback also failed - reload error: %w, delete error: %v", err, delErr)
+		}
 		
 		auditLog := audit.NewLog(adminID, audit.ActionDelete, "xray_client", client.ID, ip, userAgent)
 		auditLog.AddMetadata("event", "client_rollback_after_reload_failed")
-		c.auditRepo.Create(ctx, auditLog)
+		if auditErr := c.auditRepo.Create(ctx, auditLog); auditErr != nil {
+			// Non-critical: audit log failure during rollback
+			_ = auditErr
+		}
 		
 		return nil, fmt.Errorf("config reload failed, client rolled back: %w", err)
 	}
@@ -126,7 +134,10 @@ func (c *DeleteClientCommand) Execute(ctx context.Context, clientID, adminID uui
 	auditLog := audit.NewLog(adminID, audit.ActionDelete, "xray_client", clientID, ip, userAgent)
 	auditLog.AddMetadata("event", "client_deleted_manually")
 	auditLog.AddMetadata("user_id", client.UserID.String())
-	c.auditRepo.Create(ctx, auditLog)
+	if err := c.auditRepo.Create(ctx, auditLog); err != nil {
+		// Non-critical: audit log failure doesn't stop the operation
+		_ = err
+	}
 
 	// Reload config (REUSES XrayProvisioningService)
 	if err := c.provisioningService.RegenerateAndReload(ctx, inbound.XrayInstanceID, adminID, ip, userAgent); err != nil {
@@ -184,17 +195,27 @@ func (c *EnableClientCommand) Execute(ctx context.Context, clientID, adminID uui
 	// Audit: Client enabled
 	auditLog := audit.NewLog(adminID, audit.ActionUpdate, "xray_client", clientID, ip, userAgent)
 	auditLog.AddMetadata("event", "client_enabled")
-	c.auditRepo.Create(ctx, auditLog)
+	if err := c.auditRepo.Create(ctx, auditLog); err != nil {
+		// Non-critical: audit log failure doesn't stop the operation
+		_ = err
+	}
 
 	// Reload config (REUSES XrayProvisioningService)
 	if err := c.provisioningService.RegenerateAndReload(ctx, inbound.XrayInstanceID, adminID, ip, userAgent); err != nil {
 		// Rollback: Disable again
-		client.Disable()
-		c.clientRepo.Update(ctx, client)
+		if disableErr := client.Disable(); disableErr != nil {
+			return fmt.Errorf("config reload failed and rollback also failed - reload error: %w, disable error: %v", err, disableErr)
+		}
+		if updateErr := c.clientRepo.Update(ctx, client); updateErr != nil {
+			return fmt.Errorf("config reload failed and rollback save failed - reload error: %w, update error: %v", err, updateErr)
+		}
 		
 		auditLog := audit.NewLog(adminID, audit.ActionUpdate, "xray_client", clientID, ip, userAgent)
 		auditLog.AddMetadata("event", "client_rollback_after_reload_failed")
-		c.auditRepo.Create(ctx, auditLog)
+		if auditErr := c.auditRepo.Create(ctx, auditLog); auditErr != nil {
+			// Non-critical: audit log failure during rollback
+			_ = auditErr
+		}
 		
 		return fmt.Errorf("config reload failed, client rolled back: %w", err)
 	}
@@ -250,17 +271,27 @@ func (c *DisableClientCommand) Execute(ctx context.Context, clientID, adminID uu
 	// Audit: Client disabled
 	auditLog := audit.NewLog(adminID, audit.ActionUpdate, "xray_client", clientID, ip, userAgent)
 	auditLog.AddMetadata("event", "client_disabled")
-	c.auditRepo.Create(ctx, auditLog)
+	if err := c.auditRepo.Create(ctx, auditLog); err != nil {
+		// Non-critical: audit log failure doesn't stop the operation
+		_ = err
+	}
 
 	// Reload config (REUSES XrayProvisioningService)
 	if err := c.provisioningService.RegenerateAndReload(ctx, inbound.XrayInstanceID, adminID, ip, userAgent); err != nil {
 		// Rollback: Enable again
-		client.Enable()
-		c.clientRepo.Update(ctx, client)
+		if enableErr := client.Enable(); enableErr != nil {
+			return fmt.Errorf("config reload failed and rollback also failed - reload error: %w, enable error: %v", err, enableErr)
+		}
+		if updateErr := c.clientRepo.Update(ctx, client); updateErr != nil {
+			return fmt.Errorf("config reload failed and rollback save failed - reload error: %w, update error: %v", err, updateErr)
+		}
 		
 		auditLog := audit.NewLog(adminID, audit.ActionUpdate, "xray_client", clientID, ip, userAgent)
 		auditLog.AddMetadata("event", "client_rollback_after_reload_failed")
-		c.auditRepo.Create(ctx, auditLog)
+		if auditErr := c.auditRepo.Create(ctx, auditLog); auditErr != nil {
+			// Non-critical: audit log failure during rollback
+			_ = auditErr
+		}
 		
 		return fmt.Errorf("config reload failed, client rolled back: %w", err)
 	}
@@ -321,17 +352,27 @@ func (c *RegenerateClientUUIDCommand) Execute(ctx context.Context, clientID, adm
 	auditLog.AddMetadata("event", "client_uuid_regenerated")
 	auditLog.AddMetadata("old_uuid", oldUUID)
 	auditLog.AddMetadata("new_uuid", newUUID)
-	c.auditRepo.Create(ctx, auditLog)
+	if err := c.auditRepo.Create(ctx, auditLog); err != nil {
+		// Non-critical: audit log failure doesn't stop the operation
+		_ = err
+	}
 
 	// Reload config (REUSES XrayProvisioningService)
 	if err := c.provisioningService.RegenerateAndReload(ctx, inbound.XrayInstanceID, adminID, ip, userAgent); err != nil {
 		// Rollback: Restore old UUID
-		client.RegenerateUUID(oldUUID)
-		c.clientRepo.Update(ctx, client)
+		if uuidErr := client.RegenerateUUID(oldUUID); uuidErr != nil {
+			return nil, fmt.Errorf("config reload failed and rollback also failed - reload error: %w, uuid error: %v", err, uuidErr)
+		}
+		if updateErr := c.clientRepo.Update(ctx, client); updateErr != nil {
+			return nil, fmt.Errorf("config reload failed and rollback save failed - reload error: %w, update error: %v", err, updateErr)
+		}
 		
 		auditLog := audit.NewLog(adminID, audit.ActionUpdate, "xray_client", clientID, ip, userAgent)
 		auditLog.AddMetadata("event", "client_rollback_after_reload_failed")
-		c.auditRepo.Create(ctx, auditLog)
+		if auditErr := c.auditRepo.Create(ctx, auditLog); auditErr != nil {
+			// Non-critical: audit log failure during rollback
+			_ = auditErr
+		}
 		
 		return nil, fmt.Errorf("config reload failed, client rolled back: %w", err)
 	}
@@ -397,19 +438,29 @@ func (c *ReprovisionClientCommand) Execute(ctx context.Context, clientID, adminI
 		auditLog.AddMetadata("old_uuid", oldUUID)
 		auditLog.AddMetadata("new_uuid", client.UUID)
 	}
-	c.auditRepo.Create(ctx, auditLog)
+	if err := c.auditRepo.Create(ctx, auditLog); err != nil {
+		// Non-critical: audit log failure doesn't stop the operation
+		_ = err
+	}
 
 	// Reload config (REUSES XrayProvisioningService)
 	if err := c.provisioningService.RegenerateAndReload(ctx, inbound.XrayInstanceID, adminID, ip, userAgent); err != nil {
 		// Rollback: Restore old UUID if changed
 		if regenerateUUID {
-			client.RegenerateUUID(oldUUID)
-			c.clientRepo.Update(ctx, client)
+			if uuidErr := client.RegenerateUUID(oldUUID); uuidErr != nil {
+				return nil, fmt.Errorf("config reload failed and rollback also failed - reload error: %w, uuid error: %v", err, uuidErr)
+			}
+			if updateErr := c.clientRepo.Update(ctx, client); updateErr != nil {
+				return nil, fmt.Errorf("config reload failed and rollback save failed - reload error: %w, update error: %v", err, updateErr)
+			}
 		}
 		
 		auditLog := audit.NewLog(adminID, audit.ActionUpdate, "xray_client", clientID, ip, userAgent)
 		auditLog.AddMetadata("event", "client_rollback_after_reload_failed")
-		c.auditRepo.Create(ctx, auditLog)
+		if auditErr := c.auditRepo.Create(ctx, auditLog); auditErr != nil {
+			// Non-critical: audit log failure during rollback
+			_ = auditErr
+		}
 		
 		return nil, fmt.Errorf("config reload failed, client rolled back: %w", err)
 	}
