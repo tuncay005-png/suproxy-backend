@@ -329,7 +329,7 @@ func TestMetricsService_LabelValues(t *testing.T) {
 	})
 
 	t.Run("Database_DifferentTables", func(t *testing.T) {
-		tables := []string{
+		_ = []string{
 			"users",
 			"xray_instances",
 			"inbounds",
@@ -337,11 +337,10 @@ func TestMetricsService_LabelValues(t *testing.T) {
 			"audit_logs",
 		}
 
-		for range tables {
-			require.NotPanics(t, func() {
-				metrics.RecordDatabaseQueryDuration("select", 0.01)
-			})
-		}
+		// Test database query recording
+		require.NotPanics(t, func() {
+			metrics.RecordDatabaseQueryDuration("select", 0.01)
+		})
 	})
 }
 
