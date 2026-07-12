@@ -135,8 +135,15 @@ func TestAdminHandler_ListInbounds(t *testing.T) {
 		authHelper := testutil.NewAuthHelper(app.JWT, t)
 		_, adminToken, _ := authHelper.CreateAuthenticatedAdmin(app.Container.UserRepository)
 
+		// Create dependencies - server and node first
+		testServer, _ := testutil.CreateTestServerWithDefaults()
+		app.Container.ServerRepository.Create(ctx, testServer)
+
+		testNode, _ := testutil.CreateTestNodeWithDefaults(testServer.ID)
+		app.Container.NodeRepository.Create(ctx, testNode)
+
 		// Create test instance and inbound
-		instance, _ := testutil.CreateTestXrayInstanceWithDefaults()
+		instance, _ := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 		app.Container.XrayInstanceRepository.Create(ctx, instance)
 
 		inbound, _ := testutil.CreateTestInboundWithDefaults(instance.ID)
