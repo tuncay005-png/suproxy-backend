@@ -320,7 +320,14 @@ func TestE2E_XrayProvisioningFlow(t *testing.T) {
 
 	// Step 1: Create Xray Instance (via repository)
 	t.Log("Step 1: Create Xray Instance")
-	instance, _ := testutil.CreateTestXrayInstanceWithDefaults()
+	// Create dependencies - server and node first
+	testServer, _ := testutil.CreateTestServerWithDefaults()
+	app.Container.ServerRepository.Create(ctx, testServer)
+
+	testNode, _ := testutil.CreateTestNodeWithDefaults(testServer.ID)
+	app.Container.NodeRepository.Create(ctx, testNode)
+
+	instance, _ := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 	app.Container.XrayInstanceRepository.Create(ctx, instance)
 
 	// Step 2: List instances
@@ -421,7 +428,14 @@ func TestE2E_ClientLifecycleFlow(t *testing.T) {
 	testUser, _ := testutil.CreateTestUserWithDefaults()
 	app.Container.UserRepository.Create(ctx, testUser)
 
-	instance, _ := testutil.CreateTestXrayInstanceWithDefaults()
+	// Create dependencies - server and node first
+	testServer, _ := testutil.CreateTestServerWithDefaults()
+	app.Container.ServerRepository.Create(ctx, testServer)
+
+	testNode, _ := testutil.CreateTestNodeWithDefaults(testServer.ID)
+	app.Container.NodeRepository.Create(ctx, testNode)
+
+	instance, _ := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 	app.Container.XrayInstanceRepository.Create(ctx, instance)
 
 	inbound, _ := testutil.CreateTestInboundWithDefaults(instance.ID)
@@ -523,7 +537,14 @@ func TestE2E_InboundLifecycleFlow(t *testing.T) {
 	adminUser, _ := testutil.CreateTestAdminUser()
 	app.Container.UserRepository.Create(ctx, adminUser)
 
-	instance, _ := testutil.CreateTestXrayInstanceWithDefaults()
+	// Create dependencies - server and node first
+	testServer, _ := testutil.CreateTestServerWithDefaults()
+	app.Container.ServerRepository.Create(ctx, testServer)
+
+	testNode, _ := testutil.CreateTestNodeWithDefaults(testServer.ID)
+	app.Container.NodeRepository.Create(ctx, testNode)
+
+	instance, _ := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 	app.Container.XrayInstanceRepository.Create(ctx, instance)
 
 	// Admin login
