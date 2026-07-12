@@ -320,7 +320,14 @@ func TestAdminHandler_DeleteClient(t *testing.T) {
 		user, _ := testutil.CreateTestUserWithDefaults()
 		app.Container.UserRepository.Create(ctx, user)
 
-		instance, _ := testutil.CreateTestXrayInstanceWithDefaults()
+		// Create dependencies - server and node first
+		testServer, _ := testutil.CreateTestServerWithDefaults()
+		app.Container.ServerRepository.Create(ctx, testServer)
+
+		testNode, _ := testutil.CreateTestNodeWithDefaults(testServer.ID)
+		app.Container.NodeRepository.Create(ctx, testNode)
+
+		instance, _ := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 		app.Container.XrayInstanceRepository.Create(ctx, instance)
 
 		inbound, _ := testutil.CreateTestInboundWithDefaults(instance.ID)
