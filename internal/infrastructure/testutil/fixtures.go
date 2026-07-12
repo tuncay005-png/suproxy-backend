@@ -278,13 +278,15 @@ type ServerFixture struct {
 	IPv4     string
 }
 
-// DefaultServerFixture returns a default test server
+// DefaultServerFixture returns a default test server with unique hostname
 func DefaultServerFixture() ServerFixture {
+	// Generate unique hostname to avoid constraint violations in parallel tests
+	uniqueID := uuid.New().String()[:8]
 	return ServerFixture{
 		Name:     "Test Server",
 		Country:  "US",
 		City:     "New York",
-		Hostname: "test.example.com",
+		Hostname: fmt.Sprintf("test-%s.example.com", uniqueID),
 		Provider: "TestProvider",
 		IPv4:     "192.168.1.1",
 	}
