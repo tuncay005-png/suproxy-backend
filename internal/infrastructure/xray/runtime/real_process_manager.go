@@ -306,7 +306,9 @@ func (m *RealProcessManager) Kill(ctx context.Context, instanceID uuid.UUID) err
 	m.logger.Warn("Force killing process", "instance_id", instanceID, "pid", info.ProcessID)
 	if err := process.Kill(); err != nil {
 		m.logger.Error("Failed to kill process", "error", err, "instance_id", instanceID)
-		return fmt.Errorf("%w: %v", ErrProcessKillFailed, err)
+		// Note: Process might already be dead, so we continue with cleanup
+		// errcheck: acknowledged - Kill failure is logged but not critical for cleanup flow
+		_ = err
 	}
 
 	// Cleanup

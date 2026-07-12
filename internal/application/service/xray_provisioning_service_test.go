@@ -515,7 +515,7 @@ func createTestInstance() *xray.XrayInstance {
 // Helper function to create test inbound
 func createTestInbound(instanceID uuid.UUID) *xray.Inbound {
 	inbound, _ := xray.NewInbound(instanceID, xray.ProtocolVLESS, 443, xray.TransportTCP, xray.SecurityREALITY)
-	inbound.Enable()
+	_ = inbound.Enable() // errcheck: test helper, error is intentionally ignored
 	return inbound
 }
 

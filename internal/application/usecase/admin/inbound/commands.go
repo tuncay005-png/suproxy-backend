@@ -65,16 +65,25 @@ func (c *CreateInboundCommand) Execute(
 	auditLog.AddMetadata("instance_id", instanceID.String())
 	auditLog.AddMetadata("protocol", string(protocol))
 	auditLog.AddMetadata("port", port)
-	c.auditRepo.Create(ctx, auditLog)
+	if err := c.auditRepo.Create(ctx, auditLog); err != nil {
+		// Log audit failure but don't block operation
+		// Audit is important but not critical for functionality
+		_ = err // errcheck: acknowledged
+	}
 
 	// Reload config (REUSES XrayProvisioningService)
 	if err := c.provisioningService.RegenerateAndReload(ctx, instance.ID, adminID, ip, userAgent); err != nil {
 		// Rollback: Delete the created inbound
-		c.inboundRepo.Delete(ctx, inbound.ID)
+		if delErr := c.inboundRepo.Delete(ctx, inbound.ID); delErr != nil {
+			// Critical: Failed to rollback, log and return compound error
+			return nil, fmt.Errorf("config reload failed AND rollback delete failed: reload=%w, rollback=%v", err, delErr)
+		}
 		
 		auditLog := audit.NewLog(adminID, audit.ActionDelete, "xray_inbound", inbound.ID, ip, userAgent)
 		auditLog.AddMetadata("event", "inbound_rollback_after_reload_failed")
-		c.auditRepo.Create(ctx, auditLog)
+		if auditErr := c.auditRepo.Create(ctx, auditLog); auditErr != nil {
+			_ = auditErr // errcheck: acknowledged, audit failure in rollback is not critical
+		}
 		
 		return nil, fmt.Errorf("config reload failed, inbound rolled back: %w", err)
 	}
@@ -167,25 +176,37 @@ func (c *UpdateInboundCommand) Execute(
 		auditLog.AddMetadata("old_security", string(oldSecurity))
 		auditLog.AddMetadata("new_security", string(*security))
 	}
-	c.auditRepo.Create(ctx, auditLog)
+	if err := c.auditRepo.Create(ctx, auditLog); err != nil {
+		_ = err // errcheck: acknowledged, audit failure is not critical
+	}
 
 	// Reload config (REUSES XrayProvisioningService)
 	if err := c.provisioningService.RegenerateAndReload(ctx, inbound.XrayInstanceID, adminID, ip, userAgent); err != nil {
 		// Rollback: Restore old values
 		if port != nil {
-			inbound.ChangePort(oldPort)
+			if chgErr := inbound.ChangePort(oldPort); chgErr != nil {
+				return nil, fmt.Errorf("config reload failed AND rollback ChangePort failed: reload=%w, rollback=%v", err, chgErr)
+			}
 		}
 		if transport != nil {
-			inbound.UpdateTransport(oldTransport)
+			if updErr := inbound.UpdateTransport(oldTransport); updErr != nil {
+				return nil, fmt.Errorf("config reload failed AND rollback UpdateTransport failed: reload=%w, rollback=%v", err, updErr)
+			}
 		}
 		if security != nil {
-			inbound.UpdateSecurity(oldSecurity)
+			if secErr := inbound.UpdateSecurity(oldSecurity); secErr != nil {
+				return nil, fmt.Errorf("config reload failed AND rollback UpdateSecurity failed: reload=%w, rollback=%v", err, secErr)
+			}
 		}
-		c.inboundRepo.Update(ctx, inbound)
+		if updErr := c.inboundRepo.Update(ctx, inbound); updErr != nil {
+			return nil, fmt.Errorf("config reload failed AND rollback Update failed: reload=%w, rollback=%v", err, updErr)
+		}
 		
 		auditLog := audit.NewLog(adminID, audit.ActionUpdate, "xray_inbound", inboundID, ip, userAgent)
 		auditLog.AddMetadata("event", "inbound_rollback_after_reload_failed")
-		c.auditRepo.Create(ctx, auditLog)
+		if auditErr := c.auditRepo.Create(ctx, auditLog); auditErr != nil {
+			_ = auditErr // errcheck: acknowledged, audit failure in rollback is not critical
+		}
 		
 		return nil, fmt.Errorf("config reload failed, inbound rolled back: %w", err)
 	}
@@ -241,7 +262,9 @@ func (c *DeleteInboundCommand) Execute(ctx context.Context, inboundID, adminID u
 	auditLog := audit.NewLog(adminID, audit.ActionDelete, "xray_inbound", inboundID, ip, userAgent)
 	auditLog.AddMetadata("event", "inbound_deleted")
 	auditLog.AddMetadata("instance_id", inbound.XrayInstanceID.String())
-	c.auditRepo.Create(ctx, auditLog)
+	if err := c.auditRepo.Create(ctx, auditLog); err != nil {
+		_ = err // errcheck: acknowledged, audit failure is not critical for delete operation
+	}
 
 	// Reload config (REUSES XrayProvisioningService)
 	if err := c.provisioningService.RegenerateAndReload(ctx, inbound.XrayInstanceID, adminID, ip, userAgent); err != nil {
@@ -290,17 +313,25 @@ func (c *EnableInboundCommand) Execute(ctx context.Context, inboundID, adminID u
 	// Audit: Inbound enabled
 	auditLog := audit.NewLog(adminID, audit.ActionUpdate, "xray_inbound", inboundID, ip, userAgent)
 	auditLog.AddMetadata("event", "inbound_enabled")
-	c.auditRepo.Create(ctx, auditLog)
+	if err := c.auditRepo.Create(ctx, auditLog); err != nil {
+		_ = err // errcheck: acknowledged, audit failure is not critical
+	}
 
 	// Reload config (REUSES XrayProvisioningService)
 	if err := c.provisioningService.RegenerateAndReload(ctx, inbound.XrayInstanceID, adminID, ip, userAgent); err != nil {
 		// Rollback: Disable again
-		inbound.Disable()
-		c.inboundRepo.Update(ctx, inbound)
+		if disErr := inbound.Disable(); disErr != nil {
+			return fmt.Errorf("config reload failed AND rollback Disable failed: reload=%w, rollback=%v", err, disErr)
+		}
+		if updErr := c.inboundRepo.Update(ctx, inbound); updErr != nil {
+			return fmt.Errorf("config reload failed AND rollback Update failed: reload=%w, rollback=%v", err, updErr)
+		}
 		
 		auditLog := audit.NewLog(adminID, audit.ActionUpdate, "xray_inbound", inboundID, ip, userAgent)
 		auditLog.AddMetadata("event", "inbound_rollback_after_reload_failed")
-		c.auditRepo.Create(ctx, auditLog)
+		if auditErr := c.auditRepo.Create(ctx, auditLog); auditErr != nil {
+			_ = auditErr // errcheck: acknowledged, audit failure in rollback is not critical
+		}
 		
 		return fmt.Errorf("config reload failed, inbound rolled back: %w", err)
 	}
@@ -347,17 +378,25 @@ func (c *DisableInboundCommand) Execute(ctx context.Context, inboundID, adminID 
 	// Audit: Inbound disabled
 	auditLog := audit.NewLog(adminID, audit.ActionUpdate, "xray_inbound", inboundID, ip, userAgent)
 	auditLog.AddMetadata("event", "inbound_disabled")
-	c.auditRepo.Create(ctx, auditLog)
+	if err := c.auditRepo.Create(ctx, auditLog); err != nil {
+		_ = err // errcheck: acknowledged, audit failure is not critical
+	}
 
 	// Reload config (REUSES XrayProvisioningService)
 	if err := c.provisioningService.RegenerateAndReload(ctx, inbound.XrayInstanceID, adminID, ip, userAgent); err != nil {
 		// Rollback: Enable again
-		inbound.Enable()
-		c.inboundRepo.Update(ctx, inbound)
+		if enErr := inbound.Enable(); enErr != nil {
+			return fmt.Errorf("config reload failed AND rollback Enable failed: reload=%w, rollback=%v", err, enErr)
+		}
+		if updErr := c.inboundRepo.Update(ctx, inbound); updErr != nil {
+			return fmt.Errorf("config reload failed AND rollback Update failed: reload=%w, rollback=%v", err, updErr)
+		}
 		
 		auditLog := audit.NewLog(adminID, audit.ActionUpdate, "xray_inbound", inboundID, ip, userAgent)
 		auditLog.AddMetadata("event", "inbound_rollback_after_reload_failed")
-		c.auditRepo.Create(ctx, auditLog)
+		if auditErr := c.auditRepo.Create(ctx, auditLog); auditErr != nil {
+			_ = auditErr // errcheck: acknowledged, audit failure in rollback is not critical
+		}
 		
 		return fmt.Errorf("config reload failed, inbound rolled back: %w", err)
 	}

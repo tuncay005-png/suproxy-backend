@@ -54,7 +54,10 @@ func (c *CreateInboundCommand) Execute(ctx context.Context, req *dto.CreateInbou
 
 	// Increment config version to trigger reload
 	instance.IncrementConfigVersion()
-	c.instanceRepo.Update(ctx, instance)
+	if err := c.instanceRepo.Update(ctx, instance); err != nil {
+		c.logger.Error("Failed to update instance config version", "error", err, "instance_id", instance.ID)
+		return nil, fmt.Errorf("failed to update instance: %w", err)
+	}
 
 	c.logger.Info("Inbound created successfully", "inbound_id", inbound.ID, "instance_id", req.XrayInstanceID)
 
