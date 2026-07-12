@@ -27,6 +27,7 @@ func setupAdminUserHandler(t *testing.T, app *testutil.TestApp) (*gin.Engine, *h
 
 	// Create use-case instances for admin handler
 	// Note: These are created directly as Container doesn't hold them
+	// All dependencies are accessed via app.Container and app helpers
 	listUsersQuery := adminuser.NewListUsersQuery(app.Container.UserRepository)
 	getUserQuery := adminuser.NewGetUserQuery(app.Container.UserRepository)
 	updateUserStatusCommand := adminuser.NewUpdateUserStatusCommand(app.Container.UserRepository, app.Container.AuditLogRepository)
