@@ -37,7 +37,18 @@ func TestConfigGenerator_Generate(t *testing.T) {
 		err = userRepo.Create(ctx, user)
 		require.NoError(t, err)
 
-		instance, err := testutil.CreateTestXrayInstanceWithDefaults()
+		// Create dependencies - server and node first
+		testServer, err := testutil.CreateTestServerWithDefaults()
+		require.NoError(t, err)
+		err = app.Container.ServerRepository.Create(ctx, testServer)
+		require.NoError(t, err)
+
+		testNode, err := testutil.CreateTestNodeWithDefaults(testServer.ID)
+		require.NoError(t, err)
+		err = app.Container.NodeRepository.Create(ctx, testNode)
+		require.NoError(t, err)
+
+		instance, err := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 		require.NoError(t, err)
 		err = instanceRepo.Create(ctx, instance)
 		require.NoError(t, err)
@@ -72,7 +83,18 @@ func TestConfigGenerator_Generate(t *testing.T) {
 	t.Run("Generate_Success_NoClients", func(t *testing.T) {
 		defer app.CleanupTables()
 
-		instance, err := testutil.CreateTestXrayInstanceWithDefaults()
+		// Create dependencies - server and node first
+		testServer, err := testutil.CreateTestServerWithDefaults()
+		require.NoError(t, err)
+		err = app.Container.ServerRepository.Create(ctx, testServer)
+		require.NoError(t, err)
+
+		testNode, err := testutil.CreateTestNodeWithDefaults(testServer.ID)
+		require.NoError(t, err)
+		err = app.Container.NodeRepository.Create(ctx, testNode)
+		require.NoError(t, err)
+
+		instance, err := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 		require.NoError(t, err)
 		err = instanceRepo.Create(ctx, instance)
 		require.NoError(t, err)
@@ -95,7 +117,14 @@ func TestConfigGenerator_Generate(t *testing.T) {
 	t.Run("Generate_Failure_InstanceNotFound", func(t *testing.T) {
 		defer app.CleanupTables()
 
-		nonExistentID, err := testutil.CreateTestXrayInstanceWithDefaults()
+		// Create dependencies - server and node first
+		testServer, err := testutil.CreateTestServerWithDefaults()
+		require.NoError(t, err)
+
+		testNode, err := testutil.CreateTestNodeWithDefaults(testServer.ID)
+		require.NoError(t, err)
+
+		nonExistentID, err := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 		require.NoError(t, err)
 		require.NotNil(t, nonExistentID)
 
@@ -129,7 +158,18 @@ func TestConfigGenerator_GenerateJSON(t *testing.T) {
 		err = userRepo.Create(ctx, user)
 		require.NoError(t, err)
 
-		instance, err := testutil.CreateTestXrayInstanceWithDefaults()
+		// Create dependencies - server and node first
+		testServer, err := testutil.CreateTestServerWithDefaults()
+		require.NoError(t, err)
+		err = app.Container.ServerRepository.Create(ctx, testServer)
+		require.NoError(t, err)
+
+		testNode, err := testutil.CreateTestNodeWithDefaults(testServer.ID)
+		require.NoError(t, err)
+		err = app.Container.NodeRepository.Create(ctx, testNode)
+		require.NoError(t, err)
+
+		instance, err := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 		require.NoError(t, err)
 		err = instanceRepo.Create(ctx, instance)
 		require.NoError(t, err)
@@ -189,7 +229,18 @@ func TestConfigGenerator_GenerateInbound(t *testing.T) {
 		err = userRepo.Create(ctx, user)
 		require.NoError(t, err)
 
-		instance, err := testutil.CreateTestXrayInstanceWithDefaults()
+		// Create dependencies - server and node first
+		testServer, err := testutil.CreateTestServerWithDefaults()
+		require.NoError(t, err)
+		err = app.Container.ServerRepository.Create(ctx, testServer)
+		require.NoError(t, err)
+
+		testNode, err := testutil.CreateTestNodeWithDefaults(testServer.ID)
+		require.NoError(t, err)
+		err = app.Container.NodeRepository.Create(ctx, testNode)
+		require.NoError(t, err)
+
+		instance, err := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 		require.NoError(t, err)
 		err = instanceRepo.Create(ctx, instance)
 		require.NoError(t, err)
@@ -231,7 +282,18 @@ func TestConfigGenerator_GenerateInbound(t *testing.T) {
 		err = userRepo.Create(ctx, user2)
 		require.NoError(t, err)
 
-		instance, err := testutil.CreateTestXrayInstanceWithDefaults()
+		// Create dependencies - server and node first
+		testServer, err := testutil.CreateTestServerWithDefaults()
+		require.NoError(t, err)
+		err = app.Container.ServerRepository.Create(ctx, testServer)
+		require.NoError(t, err)
+
+		testNode, err := testutil.CreateTestNodeWithDefaults(testServer.ID)
+		require.NoError(t, err)
+		err = app.Container.NodeRepository.Create(ctx, testNode)
+		require.NoError(t, err)
+
+		instance, err := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 		require.NoError(t, err)
 		err = instanceRepo.Create(ctx, instance)
 		require.NoError(t, err)
@@ -276,7 +338,18 @@ func TestConfigGenerator_ConfigStructure(t *testing.T) {
 	generator := xrayConfig.NewGenerator(instanceRepo, inboundRepo, clientRepo, realityRepo)
 
 	t.Run("Config_HasRequiredFields", func(t *testing.T) {
-		instance, err := testutil.CreateTestXrayInstanceWithDefaults()
+		// Create dependencies - server and node first
+		testServer, err := testutil.CreateTestServerWithDefaults()
+		require.NoError(t, err)
+		err = app.Container.ServerRepository.Create(ctx, testServer)
+		require.NoError(t, err)
+
+		testNode, err := testutil.CreateTestNodeWithDefaults(testServer.ID)
+		require.NoError(t, err)
+		err = app.Container.NodeRepository.Create(ctx, testNode)
+		require.NoError(t, err)
+
+		instance, err := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 		require.NoError(t, err)
 		err = instanceRepo.Create(ctx, instance)
 		require.NoError(t, err)
@@ -316,7 +389,18 @@ func TestConfigGenerator_ConfigStructure(t *testing.T) {
 	t.Run("Config_OutboundsContainDirectAndBlock", func(t *testing.T) {
 		defer app.CleanupTables()
 
-		instance, err := testutil.CreateTestXrayInstanceWithDefaults()
+		// Create dependencies - server and node first
+		testServer, err := testutil.CreateTestServerWithDefaults()
+		require.NoError(t, err)
+		err = app.Container.ServerRepository.Create(ctx, testServer)
+		require.NoError(t, err)
+
+		testNode, err := testutil.CreateTestNodeWithDefaults(testServer.ID)
+		require.NoError(t, err)
+		err = app.Container.NodeRepository.Create(ctx, testNode)
+		require.NoError(t, err)
+
+		instance, err := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 		require.NoError(t, err)
 		err = instanceRepo.Create(ctx, instance)
 		require.NoError(t, err)
@@ -346,7 +430,18 @@ func TestConfigGenerator_ConfigStructure(t *testing.T) {
 	t.Run("Config_APIInboundPresent", func(t *testing.T) {
 		defer app.CleanupTables()
 
-		instance, err := testutil.CreateTestXrayInstanceWithDefaults()
+		// Create dependencies - server and node first
+		testServer, err := testutil.CreateTestServerWithDefaults()
+		require.NoError(t, err)
+		err = app.Container.ServerRepository.Create(ctx, testServer)
+		require.NoError(t, err)
+
+		testNode, err := testutil.CreateTestNodeWithDefaults(testServer.ID)
+		require.NoError(t, err)
+		err = app.Container.NodeRepository.Create(ctx, testNode)
+		require.NoError(t, err)
+
+		instance, err := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 		require.NoError(t, err)
 		err = instanceRepo.Create(ctx, instance)
 		require.NoError(t, err)
@@ -386,7 +481,18 @@ func TestConfigGenerator_JSONSerialization(t *testing.T) {
 	generator := xrayConfig.NewGenerator(instanceRepo, inboundRepo, clientRepo, realityRepo)
 
 	t.Run("JSON_ValidFormat", func(t *testing.T) {
-		instance, err := testutil.CreateTestXrayInstanceWithDefaults()
+		// Create dependencies - server and node first
+		testServer, err := testutil.CreateTestServerWithDefaults()
+		require.NoError(t, err)
+		err = app.Container.ServerRepository.Create(ctx, testServer)
+		require.NoError(t, err)
+
+		testNode, err := testutil.CreateTestNodeWithDefaults(testServer.ID)
+		require.NoError(t, err)
+		err = app.Container.NodeRepository.Create(ctx, testNode)
+		require.NoError(t, err)
+
+		instance, err := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 		require.NoError(t, err)
 		err = instanceRepo.Create(ctx, instance)
 		require.NoError(t, err)
