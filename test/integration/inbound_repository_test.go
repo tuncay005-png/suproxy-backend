@@ -25,8 +25,19 @@ func TestInboundRepository_Create(t *testing.T) {
 	inboundRepo := app.Container.InboundRepository
 
 	t.Run("Create_Success", func(t *testing.T) {
+		// Create dependencies - server and node first
+		testServer, err := testutil.CreateTestServerWithDefaults()
+		require.NoError(t, err)
+		err = app.Container.ServerRepository.Create(ctx, testServer)
+		require.NoError(t, err)
+
+		testNode, err := testutil.CreateTestNodeWithDefaults(testServer.ID)
+		require.NoError(t, err)
+		err = app.Container.NodeRepository.Create(ctx, testNode)
+		require.NoError(t, err)
+
 		// Create instance first
-		instance, err := testutil.CreateTestXrayInstanceWithDefaults()
+		instance, err := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 		require.NoError(t, err)
 		err = instanceRepo.Create(ctx, instance)
 		require.NoError(t, err)
@@ -61,7 +72,18 @@ func TestInboundRepository_FindByID(t *testing.T) {
 	inboundRepo := app.Container.InboundRepository
 
 	t.Run("FindByID_Success", func(t *testing.T) {
-		instance, err := testutil.CreateTestXrayInstanceWithDefaults()
+		// Create dependencies - server and node first
+		testServer, err := testutil.CreateTestServerWithDefaults()
+		require.NoError(t, err)
+		err = app.Container.ServerRepository.Create(ctx, testServer)
+		require.NoError(t, err)
+
+		testNode, err := testutil.CreateTestNodeWithDefaults(testServer.ID)
+		require.NoError(t, err)
+		err = app.Container.NodeRepository.Create(ctx, testNode)
+		require.NoError(t, err)
+
+		instance, err := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 		require.NoError(t, err)
 		err = instanceRepo.Create(ctx, instance)
 		require.NoError(t, err)
@@ -100,7 +122,18 @@ func TestInboundRepository_FindByInstanceID(t *testing.T) {
 	inboundRepo := app.Container.InboundRepository
 
 	t.Run("FindByInstanceID_MultipleInbounds", func(t *testing.T) {
-		instance, err := testutil.CreateTestXrayInstanceWithDefaults()
+		// Create dependencies - server and node first
+		testServer, err := testutil.CreateTestServerWithDefaults()
+		require.NoError(t, err)
+		err = app.Container.ServerRepository.Create(ctx, testServer)
+		require.NoError(t, err)
+
+		testNode, err := testutil.CreateTestNodeWithDefaults(testServer.ID)
+		require.NoError(t, err)
+		err = app.Container.NodeRepository.Create(ctx, testNode)
+		require.NoError(t, err)
+
+		instance, err := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 		require.NoError(t, err)
 		err = instanceRepo.Create(ctx, instance)
 		require.NoError(t, err)
@@ -145,7 +178,18 @@ func TestInboundRepository_FindEnabledByInstanceID(t *testing.T) {
 	inboundRepo := app.Container.InboundRepository
 
 	t.Run("FindEnabledByInstanceID_FilterDisabled", func(t *testing.T) {
-		instance, err := testutil.CreateTestXrayInstanceWithDefaults()
+		// Create dependencies - server and node first
+		testServer, err := testutil.CreateTestServerWithDefaults()
+		require.NoError(t, err)
+		err = app.Container.ServerRepository.Create(ctx, testServer)
+		require.NoError(t, err)
+
+		testNode, err := testutil.CreateTestNodeWithDefaults(testServer.ID)
+		require.NoError(t, err)
+		err = app.Container.NodeRepository.Create(ctx, testNode)
+		require.NoError(t, err)
+
+		instance, err := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 		require.NoError(t, err)
 		err = instanceRepo.Create(ctx, instance)
 		require.NoError(t, err)
@@ -188,7 +232,18 @@ func TestInboundRepository_Update(t *testing.T) {
 	inboundRepo := app.Container.InboundRepository
 
 	t.Run("Update_Success", func(t *testing.T) {
-		instance, err := testutil.CreateTestXrayInstanceWithDefaults()
+		// Create dependencies - server and node first
+		testServer, err := testutil.CreateTestServerWithDefaults()
+		require.NoError(t, err)
+		err = app.Container.ServerRepository.Create(ctx, testServer)
+		require.NoError(t, err)
+
+		testNode, err := testutil.CreateTestNodeWithDefaults(testServer.ID)
+		require.NoError(t, err)
+		err = app.Container.NodeRepository.Create(ctx, testNode)
+		require.NoError(t, err)
+
+		instance, err := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 		require.NoError(t, err)
 		err = instanceRepo.Create(ctx, instance)
 		require.NoError(t, err)
@@ -210,7 +265,14 @@ func TestInboundRepository_Update(t *testing.T) {
 	})
 
 	t.Run("Update_NotFound", func(t *testing.T) {
-		instance, err := testutil.CreateTestXrayInstanceWithDefaults()
+		// Create dependencies - server and node first
+		testServer, err := testutil.CreateTestServerWithDefaults()
+		require.NoError(t, err)
+
+		testNode, err := testutil.CreateTestNodeWithDefaults(testServer.ID)
+		require.NoError(t, err)
+
+		instance, err := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 		require.NoError(t, err)
 
 		inbound, err := testutil.CreateTestInboundWithDefaults(instance.ID)
@@ -236,7 +298,18 @@ func TestInboundRepository_Delete(t *testing.T) {
 	inboundRepo := app.Container.InboundRepository
 
 	t.Run("Delete_Success", func(t *testing.T) {
-		instance, err := testutil.CreateTestXrayInstanceWithDefaults()
+		// Create dependencies - server and node first
+		testServer, err := testutil.CreateTestServerWithDefaults()
+		require.NoError(t, err)
+		err = app.Container.ServerRepository.Create(ctx, testServer)
+		require.NoError(t, err)
+
+		testNode, err := testutil.CreateTestNodeWithDefaults(testServer.ID)
+		require.NoError(t, err)
+		err = app.Container.NodeRepository.Create(ctx, testNode)
+		require.NoError(t, err)
+
+		instance, err := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 		require.NoError(t, err)
 		err = instanceRepo.Create(ctx, instance)
 		require.NoError(t, err)
@@ -291,7 +364,18 @@ func TestInboundRepository_List(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			defer app.CleanupTables()
 
-			instance, err := testutil.CreateTestXrayInstanceWithDefaults()
+			// Create dependencies - server and node first
+			testServer, err := testutil.CreateTestServerWithDefaults()
+			require.NoError(t, err)
+			err = app.Container.ServerRepository.Create(ctx, testServer)
+			require.NoError(t, err)
+
+			testNode, err := testutil.CreateTestNodeWithDefaults(testServer.ID)
+			require.NoError(t, err)
+			err = app.Container.NodeRepository.Create(ctx, testNode)
+			require.NoError(t, err)
+
+			instance, err := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 			require.NoError(t, err)
 			err = instanceRepo.Create(ctx, instance)
 			require.NoError(t, err)
@@ -326,7 +410,18 @@ func TestInboundRepository_Count(t *testing.T) {
 	inboundRepo := app.Container.InboundRepository
 
 	t.Run("Count_WithInbounds", func(t *testing.T) {
-		instance, err := testutil.CreateTestXrayInstanceWithDefaults()
+		// Create dependencies - server and node first
+		testServer, err := testutil.CreateTestServerWithDefaults()
+		require.NoError(t, err)
+		err = app.Container.ServerRepository.Create(ctx, testServer)
+		require.NoError(t, err)
+
+		testNode, err := testutil.CreateTestNodeWithDefaults(testServer.ID)
+		require.NoError(t, err)
+		err = app.Container.NodeRepository.Create(ctx, testNode)
+		require.NoError(t, err)
+
+		instance, err := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 		require.NoError(t, err)
 		err = instanceRepo.Create(ctx, instance)
 		require.NoError(t, err)
@@ -357,7 +452,18 @@ func TestInboundRepository_ListWithFilters(t *testing.T) {
 	instanceRepo := app.Container.XrayInstanceRepository
 	inboundRepo := app.Container.InboundRepository
 
-	instance, err := testutil.CreateTestXrayInstanceWithDefaults()
+	// Create dependencies - server and node first
+	testServer, err := testutil.CreateTestServerWithDefaults()
+	require.NoError(t, err)
+	err = app.Container.ServerRepository.Create(ctx, testServer)
+	require.NoError(t, err)
+
+	testNode, err := testutil.CreateTestNodeWithDefaults(testServer.ID)
+	require.NoError(t, err)
+	err = app.Container.NodeRepository.Create(ctx, testNode)
+	require.NoError(t, err)
+
+	instance, err := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 	require.NoError(t, err)
 	err = instanceRepo.Create(ctx, instance)
 	require.NoError(t, err)
