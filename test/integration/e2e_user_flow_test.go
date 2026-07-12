@@ -151,7 +151,7 @@ func TestE2E_UserSessionFlow(t *testing.T) {
 
 	// Setup: Create user
 	testUser, _ := testutil.CreateTestUserWithDefaults()
-	app.Container.UserRepository.Create(ctx, testUser)
+	_ = app.Container.UserRepository.Create(ctx, testUser)
 
 	// Step 1: Login to create session
 	t.Log("Step 1: Login")
@@ -228,7 +228,7 @@ func TestE2E_MultipleUserSessions(t *testing.T) {
 
 	// Setup: Create user
 	testUser, _ := testutil.CreateTestUserWithDefaults()
-	app.Container.UserRepository.Create(ctx, testUser)
+	_ = app.Container.UserRepository.Create(ctx, testUser)
 
 	// Step 1: Login from device 1
 	t.Log("Step 1: Login from Device 1")
@@ -307,7 +307,7 @@ func TestE2E_InvalidCredentialsFlow(t *testing.T) {
 
 	// Setup: Create user
 	testUser, _ := testutil.CreateTestUserWithDefaults()
-	app.Container.UserRepository.Create(ctx, testUser)
+	_ = app.Container.UserRepository.Create(ctx, testUser)
 
 	// Step 1: Try login with wrong password
 	t.Log("Step 1: Login with Wrong Password")
