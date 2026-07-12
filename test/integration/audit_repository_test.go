@@ -607,4 +607,3 @@ func TestAuditRepository_DeleteOlderThan(t *testing.T) {
 		assert.Equal(t, int64(0), finalCount)
 	})
 }
-

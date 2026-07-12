@@ -138,7 +138,7 @@ func TestAdminHandler_ListUsers(t *testing.T) {
 		// Create some test users
 		for i := 0; i < 3; i++ {
 			testUser, _ := testutil.CreateTestUserWithDefaults()
-			app.Container.UserRepository.Create(ctx, testUser)
+			_ = app.Container.UserRepository.Create(ctx, testUser) // Test setup
 		}
 
 		httpCtx := testutil.NewHTTPTestContext(t)
@@ -165,7 +165,7 @@ func TestAdminHandler_ListUsers(t *testing.T) {
 		// Create users with different roles
 		for i := 0; i < 2; i++ {
 			testUser, _ := testutil.CreateTestUserWithDefaults()
-			app.Container.UserRepository.Create(ctx, testUser)
+			_ = app.Container.UserRepository.Create(ctx, testUser) // Test setup
 		}
 
 		httpCtx := testutil.NewHTTPTestContext(t)
@@ -221,7 +221,7 @@ func TestAdminHandler_GetUser(t *testing.T) {
 		_, adminToken, _ := authHelper.CreateAuthenticatedAdmin(app.Container.UserRepository)
 
 		testUser, _ := testutil.CreateTestUserWithDefaults()
-		app.Container.UserRepository.Create(ctx, testUser)
+		_ = app.Container.UserRepository.Create(ctx, testUser) // Test setup
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router
@@ -271,7 +271,7 @@ func TestAdminHandler_GetUser(t *testing.T) {
 		_, userToken, _ := authHelper.CreateAuthenticatedUser(app.Container.UserRepository)
 
 		testUser, _ := testutil.CreateTestUserWithDefaults()
-		app.Container.UserRepository.Create(ctx, testUser)
+		_ = app.Container.UserRepository.Create(ctx, testUser) // Test setup
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router
@@ -300,7 +300,7 @@ func TestAdminHandler_UpdateUserStatus(t *testing.T) {
 		_, adminToken, _ := authHelper.CreateAuthenticatedAdmin(app.Container.UserRepository)
 
 		testUser, _ := testutil.CreateTestUserWithDefaults()
-		app.Container.UserRepository.Create(ctx, testUser)
+		_ = app.Container.UserRepository.Create(ctx, testUser) // Test setup
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router
@@ -326,7 +326,7 @@ func TestAdminHandler_UpdateUserStatus(t *testing.T) {
 		_, adminToken, _ := authHelper.CreateAuthenticatedAdmin(app.Container.UserRepository)
 
 		testUser, _ := testutil.CreateTestUserWithDefaults()
-		app.Container.UserRepository.Create(ctx, testUser)
+		_ = app.Container.UserRepository.Create(ctx, testUser) // Test setup
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router
@@ -367,7 +367,7 @@ func TestAdminHandler_UpdateUserStatus(t *testing.T) {
 		_, adminToken, _ := authHelper.CreateAuthenticatedAdmin(app.Container.UserRepository)
 
 		testUser, _ := testutil.CreateTestUserWithDefaults()
-		app.Container.UserRepository.Create(ctx, testUser)
+		_ = app.Container.UserRepository.Create(ctx, testUser) // Test setup
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router
@@ -389,7 +389,7 @@ func TestAdminHandler_UpdateUserStatus(t *testing.T) {
 		_, userToken, _ := authHelper.CreateAuthenticatedUser(app.Container.UserRepository)
 
 		testUser, _ := testutil.CreateTestUserWithDefaults()
-		app.Container.UserRepository.Create(ctx, testUser)
+		_ = app.Container.UserRepository.Create(ctx, testUser) // Test setup
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router
@@ -422,7 +422,7 @@ func TestAdminHandler_UpdateUserRole(t *testing.T) {
 		_, adminToken, _ := authHelper.CreateAuthenticatedAdmin(app.Container.UserRepository)
 
 		testUser, _ := testutil.CreateTestUserWithDefaults()
-		app.Container.UserRepository.Create(ctx, testUser)
+		_ = app.Container.UserRepository.Create(ctx, testUser) // Test setup
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router
@@ -467,7 +467,7 @@ func TestAdminHandler_UpdateUserRole(t *testing.T) {
 		_, adminToken, _ := authHelper.CreateAuthenticatedAdmin(app.Container.UserRepository)
 
 		testUser, _ := testutil.CreateTestUserWithDefaults()
-		app.Container.UserRepository.Create(ctx, testUser)
+		_ = app.Container.UserRepository.Create(ctx, testUser) // Test setup
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router
@@ -489,7 +489,7 @@ func TestAdminHandler_UpdateUserRole(t *testing.T) {
 		_, userToken, _ := authHelper.CreateAuthenticatedUser(app.Container.UserRepository)
 
 		testUser, _ := testutil.CreateTestUserWithDefaults()
-		app.Container.UserRepository.Create(ctx, testUser)
+		_ = app.Container.UserRepository.Create(ctx, testUser) // Test setup
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router

@@ -356,7 +356,7 @@ func TestAdminHandler_CreateClient(t *testing.T) {
 		_, adminToken, _ := authHelper.CreateAuthenticatedAdmin(app.Container.UserRepository)
 
 		user, _ := testutil.CreateTestUserWithDefaults()
-		app.Container.UserRepository.Create(ctx, user)
+		_ = app.Container.UserRepository.Create(ctx, user) // Test setup
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router
@@ -392,23 +392,23 @@ func TestAdminHandler_DeleteClient(t *testing.T) {
 		_, adminToken, _ := authHelper.CreateAuthenticatedAdmin(app.Container.UserRepository)
 
 		user, _ := testutil.CreateTestUserWithDefaults()
-		app.Container.UserRepository.Create(ctx, user)
+		_ = app.Container.UserRepository.Create(ctx, user) // Test setup
 
 		// Create dependencies - server and node first
 		testServer, _ := testutil.CreateTestServerWithDefaults()
-		app.Container.ServerRepository.Create(ctx, testServer)
+		_ = app.Container.ServerRepository.Create(ctx, testServer) // Test setup
 
 		testNode, _ := testutil.CreateTestNodeWithDefaults(testServer.ID)
-		app.Container.NodeRepository.Create(ctx, testNode)
+		_ = app.Container.NodeRepository.Create(ctx, testNode) // Test setup
 
 		instance, _ := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
-		app.Container.XrayInstanceRepository.Create(ctx, instance)
+		_ = app.Container.XrayInstanceRepository.Create(ctx, instance) // Test setup
 
 		inbound, _ := testutil.CreateTestInboundWithDefaults(instance.ID)
-		app.Container.InboundRepository.Create(ctx, inbound)
+		_ = app.Container.InboundRepository.Create(ctx, inbound) // Test setup
 
 		client, _ := testutil.CreateTestClientWithDefaults(inbound.ID, user.ID)
-		app.Container.ClientRepository.Create(ctx, client)
+		_ = app.Container.ClientRepository.Create(ctx, client) // Test setup
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router

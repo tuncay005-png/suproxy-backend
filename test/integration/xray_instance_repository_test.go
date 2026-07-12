@@ -172,7 +172,7 @@ func TestXrayInstanceRepository_FindRunning(t *testing.T) {
 		// Create running instance
 		runningInstance, err := testutil.CreateTestXrayInstanceWithDefaults(testNode1.ID)
 		require.NoError(t, err)
-		runningInstance.Start()
+		_ = runningInstance.Start() // Test setup: intentionally ignoring error
 		err = repo.Create(ctx, runningInstance)
 		require.NoError(t, err)
 
@@ -186,7 +186,7 @@ func TestXrayInstanceRepository_FindRunning(t *testing.T) {
 		running, err := repo.FindRunning(ctx)
 		require.NoError(t, err)
 		assert.GreaterOrEqual(t, len(running), 1)
-		
+
 		// Verify all returned instances are running
 		for _, inst := range running {
 			assert.Equal(t, xray.StatusRunning, inst.Status)
@@ -225,7 +225,7 @@ func TestXrayInstanceRepository_Update(t *testing.T) {
 		require.NoError(t, err)
 
 		// Update instance
-		instance.Start()
+		_ = instance.Start() // Test setup: intentionally ignoring error
 		err = repo.Update(ctx, instance)
 		require.NoError(t, err)
 
@@ -430,7 +430,7 @@ func TestXrayInstanceRepository_ListWithFilters(t *testing.T) {
 	// Create test instances
 	runningInstance, err := testutil.CreateTestXrayInstanceWithDefaults(testNode1.ID)
 	require.NoError(t, err)
-	runningInstance.Start()
+	_ = runningInstance.Start() // Test setup: intentionally ignoring error
 	err = repo.Create(ctx, runningInstance)
 	require.NoError(t, err)
 
@@ -469,4 +469,3 @@ func TestXrayInstanceRepository_ListWithFilters(t *testing.T) {
 		assert.Len(t, instances, 1)
 	})
 }
-

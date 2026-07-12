@@ -137,17 +137,17 @@ func TestAdminHandler_ListInbounds(t *testing.T) {
 
 		// Create dependencies - server and node first
 		testServer, _ := testutil.CreateTestServerWithDefaults()
-		app.Container.ServerRepository.Create(ctx, testServer)
+		_ = app.Container.ServerRepository.Create(ctx, testServer) // Test setup
 
 		testNode, _ := testutil.CreateTestNodeWithDefaults(testServer.ID)
-		app.Container.NodeRepository.Create(ctx, testNode)
+		_ = app.Container.NodeRepository.Create(ctx, testNode) // Test setup
 
 		// Create test instance and inbound
 		instance, _ := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
-		app.Container.XrayInstanceRepository.Create(ctx, instance)
+		_ = app.Container.XrayInstanceRepository.Create(ctx, instance) // Test setup
 
 		inbound, _ := testutil.CreateTestInboundWithDefaults(instance.ID)
-		app.Container.InboundRepository.Create(ctx, inbound)
+		_ = app.Container.InboundRepository.Create(ctx, inbound) // Test setup
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router
@@ -205,16 +205,16 @@ func TestAdminHandler_GetInbound(t *testing.T) {
 
 		// Create dependencies - server and node first
 		testServer, _ := testutil.CreateTestServerWithDefaults()
-		app.Container.ServerRepository.Create(ctx, testServer)
+		_ = app.Container.ServerRepository.Create(ctx, testServer) // Test setup
 
 		testNode, _ := testutil.CreateTestNodeWithDefaults(testServer.ID)
-		app.Container.NodeRepository.Create(ctx, testNode)
+		_ = app.Container.NodeRepository.Create(ctx, testNode) // Test setup
 
 		instance, _ := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
-		app.Container.XrayInstanceRepository.Create(ctx, instance)
+		_ = app.Container.XrayInstanceRepository.Create(ctx, instance) // Test setup
 
 		inbound, _ := testutil.CreateTestInboundWithDefaults(instance.ID)
-		app.Container.InboundRepository.Create(ctx, inbound)
+		_ = app.Container.InboundRepository.Create(ctx, inbound) // Test setup
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router
@@ -277,13 +277,13 @@ func TestAdminHandler_CreateInbound(t *testing.T) {
 
 		// Create dependencies - server and node first
 		testServer, _ := testutil.CreateTestServerWithDefaults()
-		app.Container.ServerRepository.Create(ctx, testServer)
+		_ = app.Container.ServerRepository.Create(ctx, testServer) // Test setup
 
 		testNode, _ := testutil.CreateTestNodeWithDefaults(testServer.ID)
-		app.Container.NodeRepository.Create(ctx, testNode)
+		_ = app.Container.NodeRepository.Create(ctx, testNode) // Test setup
 
 		instance, _ := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
-		app.Container.XrayInstanceRepository.Create(ctx, instance)
+		_ = app.Container.XrayInstanceRepository.Create(ctx, instance) // Test setup
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router
@@ -332,13 +332,13 @@ func TestAdminHandler_CreateInbound(t *testing.T) {
 
 		// Create dependencies - server and node first
 		testServer, _ := testutil.CreateTestServerWithDefaults()
-		app.Container.ServerRepository.Create(ctx, testServer)
+		_ = app.Container.ServerRepository.Create(ctx, testServer) // Test setup
 
 		testNode, _ := testutil.CreateTestNodeWithDefaults(testServer.ID)
-		app.Container.NodeRepository.Create(ctx, testNode)
+		_ = app.Container.NodeRepository.Create(ctx, testNode) // Test setup
 
 		instance, _ := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
-		app.Container.XrayInstanceRepository.Create(ctx, instance)
+		_ = app.Container.XrayInstanceRepository.Create(ctx, instance) // Test setup
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router
@@ -377,16 +377,16 @@ func TestAdminHandler_DeleteInbound(t *testing.T) {
 
 		// Create dependencies - server and node first
 		testServer, _ := testutil.CreateTestServerWithDefaults()
-		app.Container.ServerRepository.Create(ctx, testServer)
+		_ = app.Container.ServerRepository.Create(ctx, testServer) // Test setup
 
 		testNode, _ := testutil.CreateTestNodeWithDefaults(testServer.ID)
-		app.Container.NodeRepository.Create(ctx, testNode)
+		_ = app.Container.NodeRepository.Create(ctx, testNode) // Test setup
 
 		instance, _ := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
-		app.Container.XrayInstanceRepository.Create(ctx, instance)
+		_ = app.Container.XrayInstanceRepository.Create(ctx, instance) // Test setup
 
 		inbound, _ := testutil.CreateTestInboundWithDefaults(instance.ID)
-		app.Container.InboundRepository.Create(ctx, inbound)
+		_ = app.Container.InboundRepository.Create(ctx, inbound) // Test setup
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router
@@ -411,4 +411,3 @@ func TestAdminHandler_DeleteInbound(t *testing.T) {
 		assert.Equal(t, 404, resp.Code)
 	})
 }
-

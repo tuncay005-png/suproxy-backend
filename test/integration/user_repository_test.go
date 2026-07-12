@@ -369,4 +369,3 @@ func TestUserRepository_ListWithFilters(t *testing.T) {
 		assert.Len(t, users, 1)
 	})
 }
-

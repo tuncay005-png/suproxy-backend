@@ -26,7 +26,7 @@ func TestAuthHandler_Register(t *testing.T) {
 	// Setup router
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
-	
+
 	// Create auth use-case instances
 	registerCmd := authuc.NewRegisterCommand(app.Container.UserRepository, app.Container.XrayProvisioningService, app.Logger)
 	loginCmd := authuc.NewLoginCommand(app.Container.UserRepository, app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.JWT, app.Logger)
@@ -34,7 +34,7 @@ func TestAuthHandler_Register(t *testing.T) {
 	logoutCmd := authuc.NewLogoutCommand(app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.Logger)
 	getCurrentUserQuery := authuc.NewGetCurrentUserQuery(app.Container.UserRepository, app.Logger)
 	getSessionsQuery := authuc.NewGetSessionsQuery(app.Container.RefreshTokenRepository, app.Logger)
-	
+
 	authHandler := handler.NewAuthHandler(
 		registerCmd,
 		loginCmd,
@@ -87,7 +87,7 @@ func TestAuthHandler_Register(t *testing.T) {
 		// Create existing user
 		ctx := context.Background()
 		existingUser, _ := testutil.CreateTestUserWithDefaults()
-		app.Container.UserRepository.Create(ctx, existingUser)
+		_ = app.Container.UserRepository.Create(ctx, existingUser) // Test setup // Test setup: intentionally ignoring error
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router
@@ -114,7 +114,7 @@ func TestAuthHandler_Login(t *testing.T) {
 	// Setup router
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
-	
+
 	// Create auth use-case instances
 	registerCmd := authuc.NewRegisterCommand(app.Container.UserRepository, app.Container.XrayProvisioningService, app.Logger)
 	loginCmd := authuc.NewLoginCommand(app.Container.UserRepository, app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.JWT, app.Logger)
@@ -122,7 +122,7 @@ func TestAuthHandler_Login(t *testing.T) {
 	logoutCmd := authuc.NewLogoutCommand(app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.Logger)
 	getCurrentUserQuery := authuc.NewGetCurrentUserQuery(app.Container.UserRepository, app.Logger)
 	getSessionsQuery := authuc.NewGetSessionsQuery(app.Container.RefreshTokenRepository, app.Logger)
-	
+
 	authHandler := handler.NewAuthHandler(
 		registerCmd,
 		loginCmd,
@@ -138,7 +138,7 @@ func TestAuthHandler_Login(t *testing.T) {
 
 		ctx := context.Background()
 		testUser, _ := testutil.CreateTestUserWithDefaults()
-		app.Container.UserRepository.Create(ctx, testUser)
+		_ = app.Container.UserRepository.Create(ctx, testUser) // Test setup
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router
@@ -177,7 +177,7 @@ func TestAuthHandler_Login(t *testing.T) {
 
 		ctx := context.Background()
 		testUser, _ := testutil.CreateTestUserWithDefaults()
-		app.Container.UserRepository.Create(ctx, testUser)
+		_ = app.Container.UserRepository.Create(ctx, testUser) // Test setup
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router
@@ -196,8 +196,8 @@ func TestAuthHandler_Login(t *testing.T) {
 
 		ctx := context.Background()
 		testUser, _ := testutil.CreateTestUserWithDefaults()
-		testUser.Deactivate()
-		app.Container.UserRepository.Create(ctx, testUser)
+		_ = testUser.Deactivate()                              // Test setup
+		_ = app.Container.UserRepository.Create(ctx, testUser) // Test setup
 
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router
@@ -224,7 +224,7 @@ func TestAuthHandler_RefreshToken(t *testing.T) {
 	// Setup router
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
-	
+
 	// Create auth use-case instances
 	registerCmd := authuc.NewRegisterCommand(app.Container.UserRepository, app.Container.XrayProvisioningService, app.Logger)
 	loginCmd := authuc.NewLoginCommand(app.Container.UserRepository, app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.JWT, app.Logger)
@@ -232,7 +232,7 @@ func TestAuthHandler_RefreshToken(t *testing.T) {
 	logoutCmd := authuc.NewLogoutCommand(app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.Logger)
 	getCurrentUserQuery := authuc.NewGetCurrentUserQuery(app.Container.UserRepository, app.Logger)
 	getSessionsQuery := authuc.NewGetSessionsQuery(app.Container.RefreshTokenRepository, app.Logger)
-	
+
 	authHandler := handler.NewAuthHandler(
 		registerCmd,
 		loginCmd,
@@ -298,7 +298,7 @@ func TestAuthHandler_GetCurrentUser(t *testing.T) {
 	// Setup router
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
-	
+
 	// Create auth use-case instances
 	registerCmd := authuc.NewRegisterCommand(app.Container.UserRepository, app.Container.XrayProvisioningService, app.Logger)
 	loginCmd := authuc.NewLoginCommand(app.Container.UserRepository, app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.JWT, app.Logger)
@@ -306,7 +306,7 @@ func TestAuthHandler_GetCurrentUser(t *testing.T) {
 	logoutCmd := authuc.NewLogoutCommand(app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.Logger)
 	getCurrentUserQuery := authuc.NewGetCurrentUserQuery(app.Container.UserRepository, app.Logger)
 	getSessionsQuery := authuc.NewGetSessionsQuery(app.Container.RefreshTokenRepository, app.Logger)
-	
+
 	authHandler := handler.NewAuthHandler(
 		registerCmd,
 		loginCmd,
@@ -372,7 +372,7 @@ func TestAuthHandler_GetSessions(t *testing.T) {
 	// Setup router
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
-	
+
 	// Create auth use-case instances
 	registerCmd := authuc.NewRegisterCommand(app.Container.UserRepository, app.Container.XrayProvisioningService, app.Logger)
 	loginCmd := authuc.NewLoginCommand(app.Container.UserRepository, app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.JWT, app.Logger)
@@ -380,7 +380,7 @@ func TestAuthHandler_GetSessions(t *testing.T) {
 	logoutCmd := authuc.NewLogoutCommand(app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.Logger)
 	getCurrentUserQuery := authuc.NewGetCurrentUserQuery(app.Container.UserRepository, app.Logger)
 	getSessionsQuery := authuc.NewGetSessionsQuery(app.Container.RefreshTokenRepository, app.Logger)
-	
+
 	authHandler := handler.NewAuthHandler(
 		registerCmd,
 		loginCmd,
@@ -435,7 +435,7 @@ func TestAuthHandler_LogoutAll(t *testing.T) {
 	// Setup router
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
-	
+
 	// Create auth use-case instances
 	registerCmd := authuc.NewRegisterCommand(app.Container.UserRepository, app.Container.XrayProvisioningService, app.Logger)
 	loginCmd := authuc.NewLoginCommand(app.Container.UserRepository, app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.JWT, app.Logger)
@@ -443,7 +443,7 @@ func TestAuthHandler_LogoutAll(t *testing.T) {
 	logoutCmd := authuc.NewLogoutCommand(app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.Logger)
 	getCurrentUserQuery := authuc.NewGetCurrentUserQuery(app.Container.UserRepository, app.Logger)
 	getSessionsQuery := authuc.NewGetSessionsQuery(app.Container.RefreshTokenRepository, app.Logger)
-	
+
 	authHandler := handler.NewAuthHandler(
 		registerCmd,
 		loginCmd,
@@ -494,7 +494,7 @@ func TestAuthHandler_LogoutSingle(t *testing.T) {
 	// Setup router
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
-	
+
 	// Create auth use-case instances
 	registerCmd := authuc.NewRegisterCommand(app.Container.UserRepository, app.Container.XrayProvisioningService, app.Logger)
 	loginCmd := authuc.NewLoginCommand(app.Container.UserRepository, app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.JWT, app.Logger)
@@ -502,7 +502,7 @@ func TestAuthHandler_LogoutSingle(t *testing.T) {
 	logoutCmd := authuc.NewLogoutCommand(app.Container.RefreshTokenRepository, app.Container.AuditLogRepository, app.Logger)
 	getCurrentUserQuery := authuc.NewGetCurrentUserQuery(app.Container.UserRepository, app.Logger)
 	getSessionsQuery := authuc.NewGetSessionsQuery(app.Container.RefreshTokenRepository, app.Logger)
-	
+
 	authHandler := handler.NewAuthHandler(
 		registerCmd,
 		loginCmd,

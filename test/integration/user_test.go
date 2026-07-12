@@ -201,4 +201,3 @@ func TestUserAuthentication_Integration(t *testing.T) {
 		assert.Error(t, err)
 	})
 }
-

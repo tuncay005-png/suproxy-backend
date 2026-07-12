@@ -380,4 +380,3 @@ func TestJWTService_TokenClaims(t *testing.T) {
 		assert.NotNil(t, claims.NotBefore)
 	})
 }
-

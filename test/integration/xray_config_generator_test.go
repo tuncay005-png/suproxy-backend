@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/suproxy/backend/internal/domain/xray"
-	xrayConfig "github.com/suproxy/backend/internal/infrastructure/xray/config"
 	"github.com/suproxy/backend/internal/infrastructure/testutil"
+	xrayConfig "github.com/suproxy/backend/internal/infrastructure/xray/config"
 )
 
 func TestConfigGenerator_Generate(t *testing.T) {
@@ -510,4 +510,3 @@ func TestConfigGenerator_JSONSerialization(t *testing.T) {
 		assert.Contains(t, string(jsonData), "  ")
 	})
 }
-

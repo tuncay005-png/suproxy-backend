@@ -50,7 +50,7 @@ func setupE2EAuditRouter(t *testing.T, app *testutil.TestApp) *gin.Engine {
 	getUserQuery := adminuser.NewGetUserQuery(app.Container.UserRepository)
 	updateUserStatusCmd := adminuser.NewUpdateUserStatusCommand(app.Container.UserRepository, app.Container.AuditLogRepository)
 	updateUserRoleCmd := adminuser.NewUpdateUserRoleCommand(app.Container.UserRepository, app.Container.AuditLogRepository)
-	
+
 	listInstancesQuery := adminxray.NewListInstancesQuery(app.Container.XrayInstanceRepository)
 	getInstanceQuery := adminxray.NewGetInstanceQuery(app.Container.XrayInstanceRepository)
 	getInstanceStatsQuery := adminxray.NewGetInstanceStatsQuery(app.Container.XrayInstanceRepository, app.Container.InboundRepository, app.Container.ClientRepository)
@@ -59,7 +59,7 @@ func setupE2EAuditRouter(t *testing.T, app *testutil.TestApp) *gin.Engine {
 	restartInstanceCmd := adminxray.NewRestartInstanceCommand(app.Container.XrayInstanceRepository, app.Container.XrayProcessManager, app.Container.AuditLogRepository)
 	reloadInstanceCmd := adminxray.NewReloadInstanceCommand(app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
 	checkInstanceHealthCmd := adminxray.NewCheckInstanceHealthCommand(app.Container.XrayProcessManager)
-	
+
 	listInboundsQuery := admininbound.NewListInboundsQuery(app.Container.InboundRepository)
 	getInboundQuery := admininbound.NewGetInboundQuery(app.Container.InboundRepository)
 	createInboundCmd := admininbound.NewCreateInboundCommand(app.Container.InboundRepository, app.Container.XrayInstanceRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
@@ -67,7 +67,7 @@ func setupE2EAuditRouter(t *testing.T, app *testutil.TestApp) *gin.Engine {
 	deleteInboundCmd := admininbound.NewDeleteInboundCommand(app.Container.InboundRepository, app.Container.ClientRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
 	enableInboundCmd := admininbound.NewEnableInboundCommand(app.Container.InboundRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
 	disableInboundCmd := admininbound.NewDisableInboundCommand(app.Container.InboundRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
-	
+
 	listClientsQuery := adminclient.NewListClientsQuery(app.Container.ClientRepository)
 	getClientQuery := adminclient.NewGetClientQuery(app.Container.ClientRepository)
 	createClientCmd := adminclient.NewCreateClientCommand(app.Container.ClientRepository, app.Container.InboundRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
@@ -76,11 +76,11 @@ func setupE2EAuditRouter(t *testing.T, app *testutil.TestApp) *gin.Engine {
 	disableClientCmd := adminclient.NewDisableClientCommand(app.Container.ClientRepository, app.Container.InboundRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
 	regenerateClientUUIDCmd := adminclient.NewRegenerateClientUUIDCommand(app.Container.ClientRepository, app.Container.InboundRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
 	reprovisionClientCmd := adminclient.NewReprovisionClientCommand(app.Container.ClientRepository, app.Container.InboundRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
-	
+
 	listAuditLogsQuery := adminaudit.NewListAuditLogsQuery(app.Container.AuditLogRepository)
 	getAuditLogQuery := adminaudit.NewGetAuditLogQuery(app.Container.AuditLogRepository)
 	getAuditStatsQuery := adminaudit.NewGetAuditStatsQuery(app.Container.AuditLogRepository)
-	
+
 	getSystemHealthQuery := adminsystem.NewGetSystemHealthQuery(app.Database, app.Container.XrayInstanceRepository, app.Container.XrayProcessManager)
 	getSystemStatsQuery := adminsystem.NewGetSystemStatsQuery(app.Container.UserRepository, app.Container.XrayInstanceRepository, app.Container.InboundRepository, app.Container.ClientRepository, app.Container.AuditLogRepository)
 	getVersionQuery := adminsystem.NewGetVersionQuery()
@@ -262,10 +262,10 @@ func TestE2E_AuditFilteringFlow(t *testing.T) {
 	// Create multiple audit logs with different actions
 	for i := 0; i < 3; i++ {
 		log1 := audit.NewLog(adminUser.ID, audit.ActionLogin, "user", adminUser.ID, "127.0.0.1", "TestAgent")
-		app.Container.AuditLogRepository.Create(ctx, log1)
+		_ = app.Container.AuditLogRepository.Create(ctx, log1) // Test setup
 
 		log2 := audit.NewLog(adminUser.ID, audit.ActionLogout, "user", adminUser.ID, "127.0.0.1", "TestAgent")
-		app.Container.AuditLogRepository.Create(ctx, log2)
+		_ = app.Container.AuditLogRepository.Create(ctx, log2) // Test setup
 	}
 
 	// Admin login
@@ -358,7 +358,7 @@ func TestE2E_FullAdminWorkflow(t *testing.T) {
 
 	// Phase 1: Authentication
 	t.Log("=== Phase 1: Authentication ===")
-	
+
 	t.Log("Step 1.1: Admin Login")
 	loginReq := dto.LoginRequest{
 		Email:    adminUser.Email.String(),
@@ -483,7 +483,7 @@ func TestE2E_MetricsFlow(t *testing.T) {
 
 	// Step 1: Perform multiple operations (should increment counters)
 	t.Log("Step 1: Perform Multiple Operations")
-	
+
 	// Multiple health checks
 	for i := 0; i < 3; i++ {
 		resp = httpCtx.GET("/api/v1/admin/system/health", testutil.AuthHeader(adminToken))

@@ -99,7 +99,7 @@ func (c *UpdateUserRoleCommand) Execute(ctx context.Context, userID uuid.UUID, n
 
 	// Update role
 	u.Role = user.Role(newRole)
-	u.UpdatedAt = u.UpdatedAt // trigger UpdatedAt update
+	// UpdatedAt will be automatically set by the repository
 
 	// Save user
 	if err := c.userRepo.Update(ctx, u); err != nil {

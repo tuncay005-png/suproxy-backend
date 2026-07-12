@@ -365,7 +365,7 @@ func TestClientRepository_FindEnabledByInboundID(t *testing.T) {
 		// Create disabled client
 		disabledClient, err := testutil.CreateTestClientWithDefaults(inbound.ID, user.ID)
 		require.NoError(t, err)
-		disabledClient.Disable()
+		_ = disabledClient.Disable() // Test setup: intentionally ignoring error
 		err = clientRepo.Create(ctx, disabledClient)
 		require.NoError(t, err)
 
@@ -428,7 +428,7 @@ func TestClientRepository_Update(t *testing.T) {
 		require.NoError(t, err)
 
 		// Update client
-		client.Disable()
+		_ = client.Disable() // Test setup: intentionally ignoring error
 		err = clientRepo.Update(ctx, client)
 		require.NoError(t, err)
 
@@ -692,7 +692,7 @@ func TestClientRepository_ListWithFilters(t *testing.T) {
 	// Create disabled client
 	disabledClient, err := testutil.CreateTestClientWithDefaults(inbound.ID, user.ID)
 	require.NoError(t, err)
-	disabledClient.Disable()
+	_ = disabledClient.Disable() // Test setup: intentionally ignoring error
 	err = clientRepo.Create(ctx, disabledClient)
 	require.NoError(t, err)
 
@@ -745,4 +745,3 @@ func TestClientRepository_ListWithFilters(t *testing.T) {
 		}
 	})
 }
-

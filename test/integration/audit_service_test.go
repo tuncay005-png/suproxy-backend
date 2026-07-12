@@ -218,8 +218,8 @@ func TestAuditService_IPAddressTracking(t *testing.T) {
 		"10.0.0.1",
 		"172.16.0.1",
 		"2001:0db8:85a3:0000:0000:8a2e:0370:7334", // IPv6
-		"127.0.0.1",                                 // Localhost
-		"8.8.8.8",                                   // Public IP
+		"127.0.0.1", // Localhost
+		"8.8.8.8",   // Public IP
 	}
 
 	userID := uuid.New()
@@ -454,4 +454,3 @@ func TestAuditService_SecurityAudit(t *testing.T) {
 		assert.GreaterOrEqual(t, len(logs), len(securityEvents))
 	})
 }
-

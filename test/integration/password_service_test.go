@@ -198,11 +198,11 @@ func TestPasswordService_SpecialCharacters(t *testing.T) {
 
 	specialPasswords := []string{
 		"Pass123!@#$%^&*()",
-		"Пароль123",          // Cyrillic
-		"密码Password123",    // Chinese
-		"パスワード123",        // Japanese
-		"🔒Password123🔑",    // Emoji
-		"Tab\tPass\n123",     // Whitespace chars
+		"Пароль123",      // Cyrillic
+		"密码Password123",  // Chinese
+		"パスワード123",       // Japanese
+		"🔒Password123🔑",  // Emoji
+		"Tab\tPass\n123", // Whitespace chars
 	}
 
 	for _, password := range specialPasswords {
@@ -247,4 +247,3 @@ func TestPasswordService_LongPasswords(t *testing.T) {
 		})
 	}
 }
-

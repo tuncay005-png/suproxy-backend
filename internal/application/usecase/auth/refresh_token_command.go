@@ -102,14 +102,16 @@ func (c *RefreshTokenCommand) Execute(ctx context.Context, req *dto.RefreshToken
 	}
 
 	// Audit log
-	c.auditRepo.Create(ctx, audit.NewLog(
+	if err := c.auditRepo.Create(ctx, audit.NewLog(
 		foundUser.ID,
 		audit.ActionAccess,
 		"refresh_token",
 		newTokenEntity.ID,
 		storedToken.IPAddress,
 		storedToken.UserAgent,
-	))
+	)); err != nil {
+		c.logger.Warn("Failed to create audit log for token refresh", "error", err)
+	}
 
 	c.logger.Info("Token refreshed successfully", "user_id", foundUser.ID)
 

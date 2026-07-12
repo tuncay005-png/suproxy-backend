@@ -203,7 +203,7 @@ func TestInboundRepository_FindEnabledByInstanceID(t *testing.T) {
 		// Create disabled inbound
 		disabledInbound, err := testutil.CreateTestInboundWithDefaults(instance.ID)
 		require.NoError(t, err)
-		disabledInbound.Disable()
+		_ = disabledInbound.Disable() // Test setup: intentionally ignoring error
 		err = inboundRepo.Create(ctx, disabledInbound)
 		require.NoError(t, err)
 
@@ -254,7 +254,7 @@ func TestInboundRepository_Update(t *testing.T) {
 		require.NoError(t, err)
 
 		// Update inbound
-		inbound.Disable()
+		_ = inbound.Disable() // Test setup: intentionally ignoring error
 		err = inboundRepo.Update(ctx, inbound)
 		require.NoError(t, err)
 
@@ -477,7 +477,7 @@ func TestInboundRepository_ListWithFilters(t *testing.T) {
 	// Create disabled inbound
 	disabledInbound, err := testutil.CreateTestInboundWithDefaults(instance.ID)
 	require.NoError(t, err)
-	disabledInbound.Disable()
+	_ = disabledInbound.Disable() // Test setup: intentionally ignoring error
 	err = inboundRepo.Create(ctx, disabledInbound)
 	require.NoError(t, err)
 
@@ -514,4 +514,3 @@ func TestInboundRepository_ListWithFilters(t *testing.T) {
 		}
 	})
 }
-

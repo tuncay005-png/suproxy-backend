@@ -37,7 +37,9 @@ func (c *LogoutCommand) ExecuteSingle(ctx context.Context, userID uuid.UUID, tok
 	// Audit log
 	auditLog := audit.NewLog(userID, audit.ActionLogout, "refresh_token", tokenID, ipAddress, userAgent)
 	auditLog.AddMetadata("type", "single")
-	c.auditRepo.Create(ctx, auditLog)
+	if err := c.auditRepo.Create(ctx, auditLog); err != nil {
+		c.logger.Warn("Failed to create audit log for single logout", "error", err)
+	}
 
 	c.logger.Info("User logged out from single device", "user_id", userID)
 	return nil
@@ -53,7 +55,9 @@ func (c *LogoutCommand) ExecuteAll(ctx context.Context, userID uuid.UUID, ipAddr
 	// Audit log
 	auditLog := audit.NewLog(userID, audit.ActionLogout, "user", userID, ipAddress, userAgent)
 	auditLog.AddMetadata("type", "all")
-	c.auditRepo.Create(ctx, auditLog)
+	if err := c.auditRepo.Create(ctx, auditLog); err != nil {
+		c.logger.Warn("Failed to create audit log for logout all", "error", err)
+	}
 
 	c.logger.Info("User logged out from all devices", "user_id", userID)
 	return nil

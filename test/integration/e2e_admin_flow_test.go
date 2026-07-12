@@ -49,7 +49,7 @@ func setupE2EAdminRouter(t *testing.T, app *testutil.TestApp) *gin.Engine {
 	getUserQuery := adminuser.NewGetUserQuery(app.Container.UserRepository)
 	updateUserStatusCmd := adminuser.NewUpdateUserStatusCommand(app.Container.UserRepository, app.Container.AuditLogRepository)
 	updateUserRoleCmd := adminuser.NewUpdateUserRoleCommand(app.Container.UserRepository, app.Container.AuditLogRepository)
-	
+
 	listInstancesQuery := adminxray.NewListInstancesQuery(app.Container.XrayInstanceRepository)
 	getInstanceQuery := adminxray.NewGetInstanceQuery(app.Container.XrayInstanceRepository)
 	getInstanceStatsQuery := adminxray.NewGetInstanceStatsQuery(app.Container.XrayInstanceRepository, app.Container.InboundRepository, app.Container.ClientRepository)
@@ -58,7 +58,7 @@ func setupE2EAdminRouter(t *testing.T, app *testutil.TestApp) *gin.Engine {
 	restartInstanceCmd := adminxray.NewRestartInstanceCommand(app.Container.XrayInstanceRepository, app.Container.XrayProcessManager, app.Container.AuditLogRepository)
 	reloadInstanceCmd := adminxray.NewReloadInstanceCommand(app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
 	checkInstanceHealthCmd := adminxray.NewCheckInstanceHealthCommand(app.Container.XrayProcessManager)
-	
+
 	listInboundsQuery := admininbound.NewListInboundsQuery(app.Container.InboundRepository)
 	getInboundQuery := admininbound.NewGetInboundQuery(app.Container.InboundRepository)
 	createInboundCmd := admininbound.NewCreateInboundCommand(app.Container.InboundRepository, app.Container.XrayInstanceRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
@@ -66,7 +66,7 @@ func setupE2EAdminRouter(t *testing.T, app *testutil.TestApp) *gin.Engine {
 	deleteInboundCmd := admininbound.NewDeleteInboundCommand(app.Container.InboundRepository, app.Container.ClientRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
 	enableInboundCmd := admininbound.NewEnableInboundCommand(app.Container.InboundRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
 	disableInboundCmd := admininbound.NewDisableInboundCommand(app.Container.InboundRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
-	
+
 	listClientsQuery := adminclient.NewListClientsQuery(app.Container.ClientRepository)
 	getClientQuery := adminclient.NewGetClientQuery(app.Container.ClientRepository)
 	createClientCmd := adminclient.NewCreateClientCommand(app.Container.ClientRepository, app.Container.InboundRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
@@ -75,11 +75,11 @@ func setupE2EAdminRouter(t *testing.T, app *testutil.TestApp) *gin.Engine {
 	disableClientCmd := adminclient.NewDisableClientCommand(app.Container.ClientRepository, app.Container.InboundRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
 	regenerateClientUUIDCmd := adminclient.NewRegenerateClientUUIDCommand(app.Container.ClientRepository, app.Container.InboundRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
 	reprovisionClientCmd := adminclient.NewReprovisionClientCommand(app.Container.ClientRepository, app.Container.InboundRepository, app.Container.XrayProvisioningService, app.Container.AuditLogRepository)
-	
+
 	listAuditLogsQuery := adminaudit.NewListAuditLogsQuery(app.Container.AuditLogRepository)
 	getAuditLogQuery := adminaudit.NewGetAuditLogQuery(app.Container.AuditLogRepository)
 	getAuditStatsQuery := adminaudit.NewGetAuditStatsQuery(app.Container.AuditLogRepository)
-	
+
 	getSystemHealthQuery := adminsystem.NewGetSystemHealthQuery(app.Database, app.Container.XrayInstanceRepository, app.Container.XrayProcessManager)
 	getSystemStatsQuery := adminsystem.NewGetSystemStatsQuery(app.Container.UserRepository, app.Container.XrayInstanceRepository, app.Container.InboundRepository, app.Container.ClientRepository, app.Container.AuditLogRepository)
 	getVersionQuery := adminsystem.NewGetVersionQuery()
@@ -203,10 +203,10 @@ func TestE2E_AdminUserManagementFlow(t *testing.T) {
 
 	// Setup: Create admin user and regular users
 	adminUser, _ := testutil.CreateTestAdminUser()
-	app.Container.UserRepository.Create(ctx, adminUser)
+	_ = app.Container.UserRepository.Create(ctx, adminUser) // Test setup
 
 	regularUser, _ := testutil.CreateTestUserWithDefaults()
-	app.Container.UserRepository.Create(ctx, regularUser)
+	_ = app.Container.UserRepository.Create(ctx, regularUser) // Test setup
 
 	// Step 1: Admin login
 	t.Log("Step 1: Admin Login")
@@ -261,7 +261,7 @@ func TestE2E_AdminUserManagementFlow(t *testing.T) {
 
 	// Step 6: Promote user to admin
 	t.Log("Step 6: Promote User to Admin")
-	
+
 	// First reactivate
 	statusReq.Status = string(user.StatusActive)
 	resp = httpCtx.PUT("/api/v1/admin/users/"+regularUser.ID.String()+"/status", statusReq, testutil.AuthHeader(adminToken))
@@ -304,7 +304,7 @@ func TestE2E_XrayProvisioningFlow(t *testing.T) {
 
 	// Setup: Create admin user
 	adminUser, _ := testutil.CreateTestAdminUser()
-	app.Container.UserRepository.Create(ctx, adminUser)
+	_ = app.Container.UserRepository.Create(ctx, adminUser) // Test setup
 
 	// Admin login
 	loginReq := dto.LoginRequest{
@@ -322,13 +322,13 @@ func TestE2E_XrayProvisioningFlow(t *testing.T) {
 	t.Log("Step 1: Create Xray Instance")
 	// Create dependencies - server and node first
 	testServer, _ := testutil.CreateTestServerWithDefaults()
-	app.Container.ServerRepository.Create(ctx, testServer)
+	_ = app.Container.ServerRepository.Create(ctx, testServer) // Test setup
 
 	testNode, _ := testutil.CreateTestNodeWithDefaults(testServer.ID)
-	app.Container.NodeRepository.Create(ctx, testNode)
+	_ = app.Container.NodeRepository.Create(ctx, testNode) // Test setup
 
 	instance, _ := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
-	app.Container.XrayInstanceRepository.Create(ctx, instance)
+	_ = app.Container.XrayInstanceRepository.Create(ctx, instance) // Test setup
 
 	// Step 2: List instances
 	t.Log("Step 2: List Xray Instances")
@@ -373,7 +373,7 @@ func TestE2E_XrayProvisioningFlow(t *testing.T) {
 	// Step 6: Create Client
 	t.Log("Step 6: Create Client")
 	testUser, _ := testutil.CreateTestUserWithDefaults()
-	app.Container.UserRepository.Create(ctx, testUser)
+	_ = app.Container.UserRepository.Create(ctx, testUser) // Test setup
 
 	createClientReq := dto.AdminCreateClientRequest{
 		InboundID: inboundID,
@@ -423,23 +423,23 @@ func TestE2E_ClientLifecycleFlow(t *testing.T) {
 
 	// Setup: Create admin, user, instance, inbound
 	adminUser, _ := testutil.CreateTestAdminUser()
-	app.Container.UserRepository.Create(ctx, adminUser)
+	_ = app.Container.UserRepository.Create(ctx, adminUser) // Test setup
 
 	testUser, _ := testutil.CreateTestUserWithDefaults()
-	app.Container.UserRepository.Create(ctx, testUser)
+	_ = app.Container.UserRepository.Create(ctx, testUser) // Test setup
 
 	// Create dependencies - server and node first
 	testServer, _ := testutil.CreateTestServerWithDefaults()
-	app.Container.ServerRepository.Create(ctx, testServer)
+	_ = app.Container.ServerRepository.Create(ctx, testServer) // Test setup
 
 	testNode, _ := testutil.CreateTestNodeWithDefaults(testServer.ID)
-	app.Container.NodeRepository.Create(ctx, testNode)
+	_ = app.Container.NodeRepository.Create(ctx, testNode) // Test setup
 
 	instance, _ := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
-	app.Container.XrayInstanceRepository.Create(ctx, instance)
+	_ = app.Container.XrayInstanceRepository.Create(ctx, instance) // Test setup
 
 	inbound, _ := testutil.CreateTestInboundWithDefaults(instance.ID)
-	app.Container.InboundRepository.Create(ctx, inbound)
+	_ = app.Container.InboundRepository.Create(ctx, inbound) // Test setup
 
 	// Admin login
 	loginReq := dto.LoginRequest{
@@ -535,17 +535,17 @@ func TestE2E_InboundLifecycleFlow(t *testing.T) {
 
 	// Setup
 	adminUser, _ := testutil.CreateTestAdminUser()
-	app.Container.UserRepository.Create(ctx, adminUser)
+	_ = app.Container.UserRepository.Create(ctx, adminUser) // Test setup
 
 	// Create dependencies - server and node first
 	testServer, _ := testutil.CreateTestServerWithDefaults()
-	app.Container.ServerRepository.Create(ctx, testServer)
+	_ = app.Container.ServerRepository.Create(ctx, testServer) // Test setup
 
 	testNode, _ := testutil.CreateTestNodeWithDefaults(testServer.ID)
-	app.Container.NodeRepository.Create(ctx, testNode)
+	_ = app.Container.NodeRepository.Create(ctx, testNode) // Test setup
 
 	instance, _ := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
-	app.Container.XrayInstanceRepository.Create(ctx, instance)
+	_ = app.Container.XrayInstanceRepository.Create(ctx, instance) // Test setup
 
 	// Admin login
 	loginReq := dto.LoginRequest{

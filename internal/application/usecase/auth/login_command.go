@@ -55,14 +55,16 @@ func (c *LoginCommand) Execute(ctx context.Context, req *dto.LoginRequest) (*dto
 		c.logger.Warn("User not found", "email", email.String())
 
 		// Audit log for failed login
-		c.auditRepo.Create(ctx, audit.NewLog(
+		if auditErr := c.auditRepo.Create(ctx, audit.NewLog(
 			uuid.Nil,
 			audit.ActionLogin,
 			"user",
 			uuid.Nil,
 			req.IPAddress,
 			req.UserAgent,
-		))
+		)); auditErr != nil {
+			c.logger.Warn("Failed to create audit log for failed login", "error", auditErr)
+		}
 
 		// Record failed login metric
 		metrics.IncUserLoginFailures()
@@ -75,14 +77,16 @@ func (c *LoginCommand) Execute(ctx context.Context, req *dto.LoginRequest) (*dto
 		c.logger.Warn("Locked account attempted login", "user_id", foundUser.ID)
 
 		// Audit log
-		c.auditRepo.Create(ctx, audit.NewLog(
+		if auditErr := c.auditRepo.Create(ctx, audit.NewLog(
 			foundUser.ID,
 			audit.ActionLogin,
 			"user",
 			foundUser.ID,
 			req.IPAddress,
 			req.UserAgent,
-		))
+		)); auditErr != nil {
+			c.logger.Warn("Failed to create audit log for locked account", "error", auditErr)
+		}
 
 		return nil, user.ErrUserLocked
 	}
@@ -99,17 +103,21 @@ func (c *LoginCommand) Execute(ctx context.Context, req *dto.LoginRequest) (*dto
 
 		// Record failed login
 		foundUser.RecordFailedLogin()
-		c.userRepo.Update(ctx, foundUser)
+		if updateErr := c.userRepo.Update(ctx, foundUser); updateErr != nil {
+			c.logger.Error("Failed to record failed login attempt", "error", updateErr, "user_id", foundUser.ID)
+		}
 
 		// Audit log
-		c.auditRepo.Create(ctx, audit.NewLog(
+		if auditErr := c.auditRepo.Create(ctx, audit.NewLog(
 			foundUser.ID,
 			audit.ActionLogin,
 			"user",
 			foundUser.ID,
 			req.IPAddress,
 			req.UserAgent,
-		))
+		)); auditErr != nil {
+			c.logger.Warn("Failed to create audit log for invalid password", "error", auditErr)
+		}
 
 		// Record failed login metric
 		metrics.IncUserLoginFailures()
@@ -161,8 +169,10 @@ func (c *LoginCommand) Execute(ctx context.Context, req *dto.LoginRequest) (*dto
 		req.UserAgent,
 	)
 	auditLog.AddMetadata("status", "success")
-	c.auditRepo.Create(ctx, auditLog)
-	
+	if err := c.auditRepo.Create(ctx, auditLog); err != nil {
+		c.logger.Warn("Failed to create audit log for successful login", "error", err)
+	}
+
 	// Record successful login metric
 	metrics.IncUserLogins()
 

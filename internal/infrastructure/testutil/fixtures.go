@@ -93,10 +93,10 @@ func CreateTestAdminUser() (*user.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Set role to admin - access private field for test purposes
 	u.Role = user.RoleAdmin
-	
+
 	return u, nil
 }
 
@@ -158,7 +158,9 @@ func CreateTestInbound(fixture InboundFixture) (*xray.Inbound, error) {
 	if err != nil {
 		return nil, err
 	}
-	inbound.Enable()
+	if err := inbound.Enable(); err != nil {
+		return nil, err
+	}
 	return inbound, nil
 }
 
@@ -200,7 +202,9 @@ func CreateTestClient(fixture ClientFixture) (*xray.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	client.Enable()
+	if err := client.Enable(); err != nil {
+		return nil, err
+	}
 	return client, nil
 }
 
@@ -347,14 +351,13 @@ func CreateTestNodeWithDefaults(serverID uuid.UUID) (*node.Node, error) {
 	return CreateTestNode(fixture)
 }
 
-
 // CreateTestRefreshToken creates a test refresh token in the database
 func CreateTestRefreshToken(ctx context.Context, t *testing.T, repo session.RefreshTokenRepository, userID uuid.UUID, token string) *session.RefreshToken {
 	t.Helper()
-	
+
 	// Use a simple hash for testing
 	tokenHash := fmt.Sprintf("%x", token)
-	
+
 	refreshToken := session.NewRefreshToken(
 		userID,
 		tokenHash,
@@ -364,9 +367,9 @@ func CreateTestRefreshToken(ctx context.Context, t *testing.T, repo session.Refr
 		"Test Agent",
 		TimeFuture(24),
 	)
-	
+
 	err := repo.Create(ctx, refreshToken)
 	require.NoError(t, err, "Failed to create refresh token")
-	
+
 	return refreshToken
 }

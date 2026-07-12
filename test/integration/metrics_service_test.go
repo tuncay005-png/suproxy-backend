@@ -180,7 +180,7 @@ func TestMetricsService_SystemMetrics(t *testing.T) {
 
 	// RecordMemoryUsage and RecordGoroutines are not implemented in metrics package
 	// These tests are skipped
-	
+
 	t.Run("SetHealthCheckStatus_Success", func(t *testing.T) {
 		require.NotPanics(t, func() {
 			metrics.SetHealthCheckStatus("database", true)
@@ -343,4 +343,3 @@ func TestMetricsService_LabelValues(t *testing.T) {
 		})
 	})
 }
-
