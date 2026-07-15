@@ -58,9 +58,10 @@ func (td *TestDatabase) Cleanup() {
 		"reality_configs",
 		"inbounds",
 		"xray_instances",
+		"nodes",
 		"subscriptions",
 		"users",
-		"nodes",
+		"servers", // Parent table for nodes - must be truncated for complete cleanup
 	}
 
 	for _, table := range tables {

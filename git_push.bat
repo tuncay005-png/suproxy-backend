@@ -14,7 +14,12 @@ echo.
 echo ======================================
 echo Creating commit...
 echo ======================================
-git commit -m "fix: add nil checks to repositories and improve test error handling"
+git commit -m "fix: resolve test port conflicts with atomic counter
+
+- Add atomic counter for unique test port generation
+- Fix idx_nodes_server_port duplicate key violation
+- Add servers table to cleanup for proper test isolation
+- Affects only test infrastructure, no production code changes"
 
 echo.
 echo ======================================

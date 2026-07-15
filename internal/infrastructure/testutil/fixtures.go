@@ -3,6 +3,7 @@ package testutil
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -14,6 +15,16 @@ import (
 	"github.com/suproxy/backend/internal/domain/user"
 	"github.com/suproxy/backend/internal/domain/xray"
 )
+
+// Atomic counter for unique port generation in tests
+// Starts at 10000 to avoid system ports and provide deterministic, unique ports
+var testPortCounter uint32 = 10000
+
+// getNextTestPort returns a unique port for testing using atomic counter
+// Thread-safe and deterministic: 10001, 10002, 10003...
+func getNextTestPort() int {
+	return int(atomic.AddUint32(&testPortCounter, 1))
+}
 
 // UserFixture provides test user data
 type UserFixture struct {
@@ -140,7 +151,7 @@ func DefaultInboundFixture(instanceID uuid.UUID) InboundFixture {
 	return InboundFixture{
 		InstanceID: instanceID,
 		Protocol:   xray.ProtocolVLESS,
-		Port:       443,
+		Port:       getNextTestPort(), // Unique port per test
 		Transport:  xray.TransportTCP,
 		Security:   xray.SecurityREALITY,
 	}
@@ -326,7 +337,7 @@ func DefaultNodeFixture(serverID uuid.UUID) NodeFixture {
 	return NodeFixture{
 		ServerID:         serverID,
 		Protocol:         node.ProtocolVLESS,
-		Port:             443,
+		Port:             getNextTestPort(), // Unique port per test to avoid idx_nodes_server_port constraint violation
 		MaxUsers:         100,
 		BandwidthLimitGB: 0, // Unlimited
 	}
