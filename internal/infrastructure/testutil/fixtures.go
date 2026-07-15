@@ -158,9 +158,7 @@ func CreateTestInbound(fixture InboundFixture) (*xray.Inbound, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := inbound.Enable(); err != nil {
-		return nil, err
-	}
+	// NewInbound already creates inbound with Enabled: true, no need to call Enable()
 	return inbound, nil
 }
 
