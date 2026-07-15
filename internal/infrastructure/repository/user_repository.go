@@ -18,6 +18,10 @@ func NewUserRepository(db *gorm.DB) user.Repository {
 }
 
 func (r *userRepository) Create(ctx context.Context, u *user.User) error {
+	if u == nil {
+		return errors.New("user cannot be nil")
+	}
+
 	userModel := toUserModel(u)
 	if err := r.db.WithContext(ctx).Create(userModel).Error; err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) {

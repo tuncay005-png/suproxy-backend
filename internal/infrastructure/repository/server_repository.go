@@ -18,6 +18,10 @@ func NewServerRepository(db *gorm.DB) server.Repository {
 }
 
 func (r *serverRepository) Create(ctx context.Context, srv *server.Server) error {
+	if srv == nil {
+		return errors.New("server cannot be nil")
+	}
+
 	model := toServerModel(srv)
 	if err := r.db.WithContext(ctx).Create(model).Error; err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) {

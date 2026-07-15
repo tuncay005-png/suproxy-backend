@@ -18,10 +18,17 @@ func NewXrayInstanceRepository(db *gorm.DB) xray.XrayInstanceRepository {
 }
 
 func (r *xrayInstanceRepository) Create(ctx context.Context, instance *xray.XrayInstance) error {
+	if instance == nil {
+		return errors.New("xray instance cannot be nil")
+	}
+
 	model := toXrayInstanceModel(instance)
 	if err := r.db.WithContext(ctx).Create(model).Error; err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			return xray.ErrInstanceAlreadyExists
+		}
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("node not found")
 		}
 		return err
 	}

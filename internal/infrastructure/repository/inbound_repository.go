@@ -18,10 +18,17 @@ func NewInboundRepository(db *gorm.DB) xray.InboundRepository {
 }
 
 func (r *inboundRepository) Create(ctx context.Context, inbound *xray.Inbound) error {
+	if inbound == nil {
+		return errors.New("inbound cannot be nil")
+	}
+
 	model := toInboundModel(inbound)
 	if err := r.db.WithContext(ctx).Create(model).Error; err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			return xray.ErrInboundAlreadyExists
+		}
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("xray instance not found")
 		}
 		return err
 	}
@@ -69,6 +76,10 @@ func (r *inboundRepository) FindEnabledByInstanceID(ctx context.Context, instanc
 }
 
 func (r *inboundRepository) Update(ctx context.Context, inbound *xray.Inbound) error {
+	if inbound == nil {
+		return errors.New("inbound cannot be nil")
+	}
+
 	model := toInboundModel(inbound)
 	if err := r.db.WithContext(ctx).Save(model).Error; err != nil {
 		return err

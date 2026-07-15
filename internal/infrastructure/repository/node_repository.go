@@ -18,8 +18,15 @@ func NewNodeRepository(db *gorm.DB) node.Repository {
 }
 
 func (r *nodeRepository) Create(ctx context.Context, n *node.Node) error {
+	if n == nil {
+		return errors.New("node cannot be nil")
+	}
+
 	model := toNodeModel(n)
 	if err := r.db.WithContext(ctx).Create(model).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("server not found")
+		}
 		return err
 	}
 	return nil

@@ -18,10 +18,17 @@ func NewClientRepository(db *gorm.DB) xray.ClientRepository {
 }
 
 func (r *clientRepository) Create(ctx context.Context, client *xray.Client) error {
+	if client == nil {
+		return errors.New("client cannot be nil")
+	}
+
 	model := toClientModel(client)
 	if err := r.db.WithContext(ctx).Create(model).Error; err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			return xray.ErrClientAlreadyExists
+		}
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("inbound or user not found")
 		}
 		return err
 	}
