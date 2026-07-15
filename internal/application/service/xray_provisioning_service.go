@@ -102,12 +102,12 @@ type XrayProvisioningService struct {
 	processManager   runtime.Manager
 	binaryManager    xrayBinary.Manager
 	logger           *logger.Logger
-	
+
 	// Configuration
 	reloadTimeout      time.Duration
 	healthCheckTimeout time.Duration
 	maxBackupRetention int
-	
+
 	// Concurrency control - prevents parallel provisioning for same user
 	provisioningLocks map[uuid.UUID]*sync.Mutex
 	locksMutex        sync.Mutex
@@ -228,12 +228,12 @@ func (s *XrayProvisioningService) ProvisionUserToXray(ctx context.Context, newUs
 			"instance_id", instance.ID,
 			"user_id", newUser.ID,
 			"operation", "health_check_provision")
-		
+
 		s.auditEvent(ctx, newUser.ID, "xray_instance", instance.ID, "xray_health_check_failed", ipAddress, userAgent, map[string]interface{}{
 			"error": err.Error(),
 			"stage": "provision",
 		})
-		
+
 		return &ProvisioningError{Err: err, Class: ErrorClassRetryable}
 	}
 
@@ -300,7 +300,7 @@ func (s *XrayProvisioningService) ProvisionUserToXray(ctx context.Context, newUs
 		s.logger.Info("Client successfully rolled back after config reload failure",
 			"user_id", newUser.ID,
 			"client_id", client.ID)
-		
+
 		// Return error to caller, but user is still created (client was rolled back)
 		return fmt.Errorf("config reload failed, client rolled back: %w", err)
 	}
@@ -389,7 +389,7 @@ func (s *XrayProvisioningService) backupWithRetention(ctx context.Context, insta
 		// Backups are sorted by timestamp, delete oldest ones
 		for i := 0; i < excessCount; i++ {
 			oldBackup := backups[i]
-			
+
 			// Actually delete the backup file
 			if err := s.configWriter.DeleteBackup(ctx, instanceID, oldBackup.Timestamp.Unix()); err != nil {
 				s.logger.Warn("Failed to delete old backup",
@@ -400,7 +400,7 @@ func (s *XrayProvisioningService) backupWithRetention(ctx context.Context, insta
 				// Continue with other backups even if one fails
 				continue
 			}
-			
+
 			s.logger.Debug("Deleted old backup",
 				"instance_id", instanceID,
 				"backup_timestamp", oldBackup.Timestamp,
@@ -430,7 +430,7 @@ func (s *XrayProvisioningService) findRunningInstance(ctx context.Context, userI
 	s.logger.Debug("Found running Xray instance",
 		"instance_id", instance.ID,
 		"user_id", userID)
-	
+
 	return instance, nil
 }
 
@@ -467,14 +467,14 @@ func (s *XrayProvisioningService) findTargetInbound(ctx context.Context, instanc
 		"protocol", inbound.Protocol,
 		"instance_id", instanceID,
 		"user_id", userID)
-	
+
 	return inbound, nil
 }
 
 // createClientEntity creates a new Xray client entity
 func (s *XrayProvisioningService) createClientEntity(inbound *xray.Inbound, newUser *user.User) (*xray.Client, string, error) {
 	clientUUID := uuid.New().String()
-	
+
 	// Determine flow based on protocol
 	flow := ""
 	if inbound.Protocol == xray.ProtocolVLESS {
@@ -528,7 +528,7 @@ func (s *XrayProvisioningService) rollbackClient(ctx context.Context, clientID, 
 	s.logger.Info("Client rollback successful",
 		"client_id", clientID,
 		"user_id", userID)
-	
+
 	return nil
 }
 
@@ -544,14 +544,12 @@ func (s *XrayProvisioningService) regenerateAndReloadWithRollback(ctx context.Co
 func (s *XrayProvisioningService) auditEvent(ctx context.Context, userID uuid.UUID, entityType string, entityID uuid.UUID, event string, ipAddress, userAgent string, metadata map[string]interface{}) {
 	auditLog := audit.NewLog(userID, audit.ActionCreate, entityType, entityID, ipAddress, userAgent)
 	auditLog.AddMetadata("event", event)
-	
+
 	// Add additional metadata
-	if metadata != nil {
-		for key, value := range metadata {
-			auditLog.AddMetadata(key, value)
-		}
+	for key, value := range metadata {
+		auditLog.AddMetadata(key, value)
 	}
-	
+
 	// Fire and forget - don't block on audit logging
 	if err := s.auditRepo.Create(ctx, auditLog); err != nil {
 		s.logger.Warn("Failed to create audit log",
@@ -576,12 +574,12 @@ func (s *XrayProvisioningService) RegenerateAndReload(ctx context.Context, insta
 			"instance_id", instanceID,
 			"user_id", userID,
 			"operation", "health_check_reload")
-		
+
 		s.auditEvent(ctx, userID, "xray_instance", instanceID, "xray_health_check_failed", ipAddress, userAgent, map[string]interface{}{
 			"error": err.Error(),
 			"stage": "reload",
 		})
-		
+
 		return &ProvisioningError{Err: err, Class: ErrorClassRetryable}
 	}
 
@@ -672,7 +670,7 @@ func (s *XrayProvisioningService) RegenerateAndReload(ctx context.Context, insta
 				"instance_id", instanceID,
 				"user_id", userID,
 				"operation", "validation_rollback")
-			
+
 			if restoreErr := s.attemptConfigRollback(ctx, instanceID, userID, ipAddress, userAgent); restoreErr != nil {
 				s.logger.Error("Failed to rollback after validation failure",
 					"error", restoreErr,
@@ -705,7 +703,7 @@ func (s *XrayProvisioningService) RegenerateAndReload(ctx context.Context, insta
 	reloadStartTime := time.Now()
 	if err := s.processManager.Reload(reloadCtx, instanceID); err != nil {
 		reloadDuration := time.Since(reloadStartTime)
-		
+
 		// Check if timeout occurred
 		if errors.Is(err, context.DeadlineExceeded) {
 			s.logger.Error("Reload timeout exceeded",
@@ -726,7 +724,7 @@ func (s *XrayProvisioningService) RegenerateAndReload(ctx context.Context, insta
 					"instance_id", instanceID,
 					"user_id", userID,
 					"operation", "timeout_rollback")
-				
+
 				if restoreErr := s.attemptConfigRollback(ctx, instanceID, userID, ipAddress, userAgent); restoreErr != nil {
 					s.logger.Error("Config rollback failed after timeout",
 						"error", restoreErr,
@@ -761,7 +759,7 @@ func (s *XrayProvisioningService) RegenerateAndReload(ctx context.Context, insta
 				"instance_id", instanceID,
 				"user_id", userID,
 				"operation", "reload_failure_rollback")
-			
+
 			if restoreErr := s.attemptConfigRollback(ctx, instanceID, userID, ipAddress, userAgent); restoreErr != nil {
 				s.logger.Error("Config rollback failed",
 					"error", restoreErr,
@@ -772,7 +770,7 @@ func (s *XrayProvisioningService) RegenerateAndReload(ctx context.Context, insta
 					Class: ErrorClassRetryable,
 				}
 			}
-			
+
 			s.logger.Info("Config rollback successful after reload failure",
 				"instance_id", instanceID,
 				"user_id", userID)
@@ -814,13 +812,13 @@ func (s *XrayProvisioningService) attemptConfigRollback(ctx context.Context, ins
 			"error", err,
 			"instance_id", instanceID,
 			"user_id", userID)
-		
+
 		// Audit: Rollback failed - no backup
 		s.auditEvent(ctx, userID, "xray_config", instanceID, "xray_config_rollback_failed", ipAddress, userAgent, map[string]interface{}{
 			"error":  "no backups available",
 			"reason": "no_backup",
 		})
-		
+
 		return fmt.Errorf("no backups available: %w", err)
 	}
 
@@ -854,13 +852,13 @@ func (s *XrayProvisioningService) attemptConfigRollback(ctx context.Context, ins
 			"error", err,
 			"instance_id", instanceID,
 			"user_id", userID)
-		
+
 		// Audit: Rollback failed - reload error
 		s.auditEvent(ctx, userID, "xray_config", instanceID, "xray_config_rollback_failed", ipAddress, userAgent, map[string]interface{}{
 			"error":  err.Error(),
 			"reason": "reload_failed",
 		})
-		
+
 		// CRITICAL: System is now in unknown state
 		// Config is restored but process didn't reload
 		// Manual intervention may be required
@@ -873,6 +871,6 @@ func (s *XrayProvisioningService) attemptConfigRollback(ctx context.Context, ins
 	s.logger.Info("Config rollback completed successfully",
 		"instance_id", instanceID,
 		"user_id", userID)
-	
+
 	return nil
 }

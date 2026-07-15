@@ -77,7 +77,7 @@ func Initialize() (*Application, error) {
 	if cfg.Metrics.CollectionInterval > 0 {
 		collectionInterval = time.Duration(cfg.Metrics.CollectionInterval) * time.Second
 	}
-	
+
 	metricsCollector := metrics.NewCollector(
 		container.UserRepository,
 		container.XrayInstanceRepository,
@@ -118,7 +118,7 @@ func (app *Application) Shutdown() {
 	}
 
 	if err := app.Logger.Sync(); err != nil {
-		// Ignore sync errors on shutdown
+		// Ignore sync errors on shutdown - logger may already be closed or stdout/stderr may be unavailable
 	}
 
 	app.Logger.Info("Application shutdown complete")

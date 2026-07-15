@@ -40,11 +40,11 @@ func NewPlanHandler(
 // @Router /api/v1/plans [get]
 func (h *PlanHandler) ListPlans(c *gin.Context) {
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-
 	if offset < 0 {
 		offset = 0
 	}
+
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 	if limit <= 0 || limit > 100 {
 		limit = 10
 	}

@@ -116,7 +116,7 @@ func (m *RealBinaryManager) ValidateConfig(ctx context.Context, configPath strin
 	// Execute: xray run -test -c <configPath>
 	cmd := exec.CommandContext(ctx, binaryPath, "run", "-test", "-c", configPath)
 	output, err := cmd.CombinedOutput()
-	
+
 	if err != nil {
 		m.logger.Error("Config validation failed",
 			"error", err,
@@ -127,7 +127,7 @@ func (m *RealBinaryManager) ValidateConfig(ctx context.Context, configPath strin
 
 	m.logger.Debug("Config validation successful",
 		"config_path", configPath)
-	
+
 	return nil
 }
 
@@ -166,7 +166,7 @@ func (m *RealBinaryManager) CurrentVersion(ctx context.Context) (string, error) 
 func (m *RealBinaryManager) LatestVersion(ctx context.Context) (string, error) {
 	// Note: Fetching latest version from GitHub API
 	// In production, consider caching this response to avoid rate limits
-	
+
 	// TODO: Implement GitHub API call to fetch latest release
 	// GET https://api.github.com/repos/XTLS/Xray-core/releases/latest
 	// type GitHubRelease struct {
@@ -206,7 +206,7 @@ func (m *RealBinaryManager) Download(ctx context.Context, version string) error 
 	// 3. Archive extraction (zip/tar.gz)
 	// 4. Permission setting
 	// 5. Error handling and cleanup
-	
+
 	// TODO: Implement full download workflow
 	// osArch := m.getOSArch()
 	// downloadURL := fmt.Sprintf(
@@ -240,7 +240,7 @@ func (m *RealBinaryManager) Download(ctx context.Context, version string) error 
 func (m *RealBinaryManager) Upgrade(ctx context.Context, version string) error {
 	// Note: Upgrade workflow for production systems
 	// Requires careful handling to avoid downtime
-	
+
 	currentVersion, err := m.CurrentVersion(ctx)
 	if err != nil {
 		return err
@@ -258,7 +258,7 @@ func (m *RealBinaryManager) Upgrade(ctx context.Context, version string) error {
 	// 4. Validate new binary
 	// 5. Replace binary atomically
 	// 6. Optionally restart services
-	
+
 	// backupPath := m.binaryPath + ".backup." + currentVersion
 	// if err := m.copyFile(m.binaryPath, backupPath); err != nil {
 	//     m.logger.Warn("Failed to backup binary", "error", err)
@@ -267,8 +267,8 @@ func (m *RealBinaryManager) Upgrade(ctx context.Context, version string) error {
 	//     return err
 	// }
 
-	m.logger.Info("Binary upgrade workflow prepared (stub implementation)", 
-		"from", currentVersion, 
+	m.logger.Info("Binary upgrade workflow prepared (stub implementation)",
+		"from", currentVersion,
 		"to", version)
 	return fmt.Errorf("upgrade not implemented - manual upgrade required")
 }
@@ -294,76 +294,4 @@ func (m *RealBinaryManager) fileExists(path string) bool {
 	// Check if file exists
 	_, err := os.Stat(path)
 	return err == nil
-}
-
-func (m *RealBinaryManager) getOSArch() string {
-	// Detect OS and architecture
-	// Examples: linux-64, linux-arm64-v8a, windows-64, darwin-arm64-v8a
-
-	osName := runtime.GOOS
-	arch := runtime.GOARCH
-
-	// Map Go arch to Xray naming convention
-	switch {
-	case osName == "linux" && arch == "amd64":
-		return "linux-64"
-	case osName == "linux" && arch == "arm64":
-		return "linux-arm64-v8a"
-	case osName == "linux" && arch == "386":
-		return "linux-32"
-	case osName == "windows" && arch == "amd64":
-		return "windows-64"
-	case osName == "windows" && arch == "386":
-		return "windows-32"
-	case osName == "darwin" && arch == "arm64":
-		return "darwin-arm64-v8a"
-	case osName == "darwin" && arch == "amd64":
-		return "darwin-64"
-	default:
-		return fmt.Sprintf("%s-%s", osName, arch)
-	}
-}
-
-func (m *RealBinaryManager) extractAndInstall(archivePath, version string) error {
-	// Note: Archive extraction is platform-specific
-	// Requires handling different archive formats (zip, tar.gz)
-	
-	// TODO: Implement extraction
-	// 1. Detect archive type
-	// 2. Extract to temp directory
-	// 3. Find xray binary in extracted files
-	// 4. Set executable permissions
-	// 5. Move to install directory
-	// 6. Clean up temp files
-
-	_, _ = archivePath, version
-	return fmt.Errorf("extraction not implemented")
-}
-
-func (m *RealBinaryManager) copyFile(src, dst string) error {
-	// Note: File copy with permission preservation
-	// Important for binary files to maintain executable flag
-	
-	// TODO: Implement with permission preservation
-	// srcFile, err := os.Open(src)
-	// if err != nil {
-	//     return err
-	// }
-	// defer srcFile.Close()
-	// srcInfo, err := srcFile.Stat()
-	// if err != nil {
-	//     return err
-	// }
-	// dstFile, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, srcInfo.Mode())
-	// if err != nil {
-	//     return err
-	// }
-	// defer dstFile.Close()
-	// if _, err := io.Copy(dstFile, srcFile); err != nil {
-	//     return err
-	// }
-	// return dstFile.Sync()
-
-	_, _, _ = src, dst, strings.Contains
-	return fmt.Errorf("copy not implemented")
 }
