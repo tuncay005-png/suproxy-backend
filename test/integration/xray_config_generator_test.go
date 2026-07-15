@@ -124,11 +124,11 @@ func TestConfigGenerator_Generate(t *testing.T) {
 		testNode, err := testutil.CreateTestNodeWithDefaults(testServer.ID)
 		require.NoError(t, err)
 
-		nonExistentID, err := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
+		nonExistentInstance, err := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 		require.NoError(t, err)
-		require.NotNil(t, nonExistentID)
+		require.NotNil(t, nonExistentInstance)
 
-		_, err = generator.Generate(ctx, nonExistentID.ID)
+		_, err = generator.Generate(ctx, nonExistentInstance.ID)
 		assert.Error(t, err)
 	})
 }

@@ -1,34 +1,32 @@
 @echo off
-echo ======================================
-echo Git Status
-echo ======================================
+echo ========================================
+echo Git Push Script
+echo ========================================
+echo.
+
+echo Checking git status...
 git status
-
 echo.
-echo ======================================
-echo Adding changes...
-echo ======================================
+
+echo ========================================
+echo Adding all changes...
 git add .
-
 echo.
-echo ======================================
+
+echo ========================================
 echo Creating commit...
-echo ======================================
-git commit -m "fix: resolve test port conflicts with atomic counter
+set /p commit_msg="Commit message (or press Enter for default): "
+if "%commit_msg%"=="" set commit_msg=Fix test compilation errors and FK violations
 
-- Add atomic counter for unique test port generation
-- Fix idx_nodes_server_port duplicate key violation
-- Add servers table to cleanup for proper test isolation
-- Affects only test infrastructure, no production code changes"
-
+git commit -m "%commit_msg%"
 echo.
-echo ======================================
-echo Pushing to remote...
-echo ======================================
-git push
 
+echo ========================================
+echo Pushing to origin main...
+git push origin main
 echo.
-echo ======================================
+
+echo ========================================
 echo Done!
-echo ======================================
+echo ========================================
 pause
