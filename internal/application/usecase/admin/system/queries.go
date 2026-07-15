@@ -24,9 +24,9 @@ var (
 
 // GetSystemHealthQuery handles system-wide health check
 type GetSystemHealthQuery struct {
-	db               *database.Database
-	instanceRepo     xray.XrayInstanceRepository
-	processManager   xrayRuntime.Manager
+	db             *database.Database
+	instanceRepo   xray.XrayInstanceRepository
+	processManager xrayRuntime.Manager
 }
 
 func NewGetSystemHealthQuery(
@@ -186,21 +186,21 @@ func (q *GetSystemStatsQuery) Execute(ctx context.Context) (*SystemStats, error)
 	})
 	if err == nil {
 		stats.Users.TotalUsers = int64(len(allUsers))
-		
+
 		today := time.Now().Truncate(24 * time.Hour)
 		weekAgo := today.AddDate(0, 0, -7)
-		
+
 		for _, u := range allUsers {
 			if u.Status == user.StatusActive {
 				stats.Users.ActiveUsers++
 			} else if u.Status == user.StatusSuspended {
 				stats.Users.SuspendedUsers++
 			}
-			
+
 			if u.Role == user.RoleAdmin {
 				stats.Users.AdminUsers++
 			}
-			
+
 			if u.CreatedAt.After(today) {
 				stats.Users.NewUsersToday++
 			}
@@ -217,7 +217,7 @@ func (q *GetSystemStatsQuery) Execute(ctx context.Context) (*SystemStats, error)
 	})
 	if err == nil {
 		stats.Xray.TotalInstances = int64(len(instances))
-		
+
 		for _, inst := range instances {
 			if inst.IsRunning() {
 				stats.Xray.RunningInstances++
@@ -232,17 +232,17 @@ func (q *GetSystemStatsQuery) Execute(ctx context.Context) (*SystemStats, error)
 		inbounds, err := q.inboundRepo.FindByInstanceID(ctx, inst.ID)
 		if err == nil {
 			stats.Xray.TotalInbounds += int64(len(inbounds))
-			
+
 			for _, inbound := range inbounds {
 				if inbound.Enabled {
 					stats.Xray.EnabledInbounds++
 				}
-				
+
 				// Count clients for this inbound
 				clients, err := q.clientRepo.FindByInboundID(ctx, inbound.ID)
 				if err == nil {
 					stats.Xray.TotalClients += int64(len(clients))
-					
+
 					for _, client := range clients {
 						if client.Enabled {
 							stats.Xray.EnabledClients++
@@ -262,7 +262,7 @@ func (q *GetSystemStatsQuery) Execute(ctx context.Context) (*SystemStats, error)
 	// Logs today and this week
 	today := time.Now().Truncate(24 * time.Hour)
 	weekAgo := today.AddDate(0, 0, -7)
-	
+
 	filters := audit.AuditFilters{
 		DateFrom: &today,
 		Limit:    10000, // Large enough to count
@@ -270,7 +270,7 @@ func (q *GetSystemStatsQuery) Execute(ctx context.Context) (*SystemStats, error)
 	todayLogs, total, err := q.auditRepo.ListWithFilters(ctx, filters)
 	if err == nil {
 		stats.Audit.LogsToday = total
-		
+
 		// Count unique users today
 		uniqueUsers := make(map[uuid.UUID]bool)
 		for _, log := range todayLogs {
@@ -345,12 +345,12 @@ type DatabaseStatus struct {
 
 func (q *GetDatabaseStatusQuery) Execute(ctx context.Context) (*DatabaseStatus, error) {
 	start := time.Now()
-	
+
 	status := "connected"
 	if err := q.db.Ping(); err != nil {
 		status = "disconnected"
 	}
-	
+
 	latency := time.Since(start).Milliseconds()
 
 	// Get connection pool stats
@@ -422,7 +422,7 @@ func (q *GetXraySystemStatusQuery) Execute(ctx context.Context) (*XraySystemStat
 			NodeID:  inst.NodeID,
 			Status:  string(inst.Status),
 			Healthy: inst.Status == xray.StatusRunning, // Running means healthy
-			PID:     0, // PID not tracked in domain
+			PID:     0,                                 // PID not tracked in domain
 		}
 
 		if inst.IsRunning() {

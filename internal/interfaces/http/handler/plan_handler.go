@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"strconv"
-
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/suproxy/backend/internal/application/usecase/plan"
@@ -32,23 +30,11 @@ func NewPlanHandler(
 // @Tags plans
 // @Accept json
 // @Produce json
-// @Param offset query int false "Offset for pagination" default(0)
-// @Param limit query int false "Limit for pagination" default(10)
 // @Success 200 {object} dto.PlanListResponse
 // @Failure 400 {object} response.Response
 // @Failure 500 {object} response.Response
 // @Router /api/v1/plans [get]
 func (h *PlanHandler) ListPlans(c *gin.Context) {
-	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
-	if offset < 0 {
-		offset = 0
-	}
-
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	if limit <= 0 || limit > 100 {
-		limit = 10
-	}
-
 	plans, err := h.listPlansQuery.ExecuteAll(c.Request.Context())
 	if err != nil {
 		response.InternalError(c, "failed to fetch plans")

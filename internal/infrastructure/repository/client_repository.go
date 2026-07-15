@@ -132,7 +132,6 @@ func (r *clientRepository) Count(ctx context.Context) (int64, error) {
 	return count, nil
 }
 
-
 func (r *clientRepository) ListWithFilters(ctx context.Context, filters xray.ClientFilters) ([]*xray.Client, int64, error) {
 	query := r.db.WithContext(ctx).Model(&ClientModel{})
 

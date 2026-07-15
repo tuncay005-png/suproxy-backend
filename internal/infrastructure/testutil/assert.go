@@ -107,4 +107,3 @@ func AssertPointerNotNil(t *testing.T, ptr interface{}, msgAndArgs ...interface{
 	t.Helper()
 	return assert.NotNil(t, ptr, msgAndArgs...)
 }
-

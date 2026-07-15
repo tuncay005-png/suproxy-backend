@@ -9,40 +9,40 @@ import (
 
 var (
 	once sync.Once
-	
+
 	// HTTP Metrics
-	httpRequestsTotal *prometheus.CounterVec
-	httpRequestDuration *prometheus.HistogramVec
+	httpRequestsTotal    *prometheus.CounterVec
+	httpRequestDuration  *prometheus.HistogramVec
 	httpRequestsInFlight prometheus.Gauge
-	httpErrorsTotal *prometheus.CounterVec
-	
+	httpErrorsTotal      *prometheus.CounterVec
+
 	// Business Metrics - Users
-	activeUsersTotal prometheus.Gauge
+	activeUsersTotal       prometheus.Gauge
 	userRegistrationsTotal prometheus.Counter
-	userLoginsTotal prometheus.Counter
+	userLoginsTotal        prometheus.Counter
 	userLoginFailuresTotal prometheus.Counter
-	
+
 	// Business Metrics - Xray
 	xrayInstancesTotal *prometheus.GaugeVec
-	xrayClientsTotal *prometheus.GaugeVec
-	xrayInboundsTotal *prometheus.GaugeVec
-	
+	xrayClientsTotal   *prometheus.GaugeVec
+	xrayInboundsTotal  *prometheus.GaugeVec
+
 	// Business Metrics - Provisioning
 	provisioningOperationsTotal *prometheus.CounterVec
-	provisioningDuration *prometheus.HistogramVec
-	provisioningErrorsTotal *prometheus.CounterVec
-	configReloadTotal *prometheus.CounterVec
-	configReloadDuration prometheus.Histogram
-	
+	provisioningDuration        *prometheus.HistogramVec
+	provisioningErrorsTotal     *prometheus.CounterVec
+	configReloadTotal           *prometheus.CounterVec
+	configReloadDuration        prometheus.Histogram
+
 	// Database Metrics
-	databaseConnectionsInUse prometheus.Gauge
-	databaseConnectionsIdle prometheus.Gauge
+	databaseConnectionsInUse     prometheus.Gauge
+	databaseConnectionsIdle      prometheus.Gauge
 	databaseConnectionsWaitCount prometheus.Counter
-	databaseQueryDuration *prometheus.HistogramVec
-	
+	databaseQueryDuration        *prometheus.HistogramVec
+
 	// System Metrics
 	healthCheckStatus *prometheus.GaugeVec
-	auditLogsTotal prometheus.Counter
+	auditLogsTotal    prometheus.Counter
 )
 
 // Initialize initializes all Prometheus metrics
@@ -57,23 +57,23 @@ func Initialize() {
 			},
 			[]string{"method", "path", "status"},
 		)
-		
+
 		httpRequestDuration = promauto.NewHistogramVec(
 			prometheus.HistogramOpts{
-				Name: "suproxy_http_request_duration_seconds",
-				Help: "HTTP request duration in seconds",
+				Name:    "suproxy_http_request_duration_seconds",
+				Help:    "HTTP request duration in seconds",
 				Buckets: []float64{.001, .005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10},
 			},
 			[]string{"method", "path"},
 		)
-		
+
 		httpRequestsInFlight = promauto.NewGauge(
 			prometheus.GaugeOpts{
 				Name: "suproxy_http_requests_in_flight",
 				Help: "Current number of HTTP requests being processed",
 			},
 		)
-		
+
 		httpErrorsTotal = promauto.NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "suproxy_http_errors_total",
@@ -81,7 +81,7 @@ func Initialize() {
 			},
 			[]string{"method", "path", "status"},
 		)
-		
+
 		// Business Metrics - Users
 		activeUsersTotal = promauto.NewGauge(
 			prometheus.GaugeOpts{
@@ -89,28 +89,28 @@ func Initialize() {
 				Help: "Total number of active users",
 			},
 		)
-		
+
 		userRegistrationsTotal = promauto.NewCounter(
 			prometheus.CounterOpts{
 				Name: "suproxy_user_registrations_total",
 				Help: "Total number of user registrations",
 			},
 		)
-		
+
 		userLoginsTotal = promauto.NewCounter(
 			prometheus.CounterOpts{
 				Name: "suproxy_user_logins_total",
 				Help: "Total number of successful user logins",
 			},
 		)
-		
+
 		userLoginFailuresTotal = promauto.NewCounter(
 			prometheus.CounterOpts{
 				Name: "suproxy_user_login_failures_total",
 				Help: "Total number of failed user login attempts",
 			},
 		)
-		
+
 		// Business Metrics - Xray
 		xrayInstancesTotal = promauto.NewGaugeVec(
 			prometheus.GaugeOpts{
@@ -119,7 +119,7 @@ func Initialize() {
 			},
 			[]string{"status"},
 		)
-		
+
 		xrayClientsTotal = promauto.NewGaugeVec(
 			prometheus.GaugeOpts{
 				Name: "suproxy_xray_clients_total",
@@ -127,7 +127,7 @@ func Initialize() {
 			},
 			[]string{"enabled"},
 		)
-		
+
 		xrayInboundsTotal = promauto.NewGaugeVec(
 			prometheus.GaugeOpts{
 				Name: "suproxy_xray_inbounds_total",
@@ -135,7 +135,7 @@ func Initialize() {
 			},
 			[]string{"enabled"},
 		)
-		
+
 		// Business Metrics - Provisioning
 		provisioningOperationsTotal = promauto.NewCounterVec(
 			prometheus.CounterOpts{
@@ -144,16 +144,16 @@ func Initialize() {
 			},
 			[]string{"operation", "status"},
 		)
-		
+
 		provisioningDuration = promauto.NewHistogramVec(
 			prometheus.HistogramOpts{
-				Name: "suproxy_provisioning_duration_seconds",
-				Help: "Provisioning operation duration in seconds",
+				Name:    "suproxy_provisioning_duration_seconds",
+				Help:    "Provisioning operation duration in seconds",
 				Buckets: []float64{.1, .25, .5, 1, 2.5, 5, 10, 30, 60},
 			},
 			[]string{"operation"},
 		)
-		
+
 		provisioningErrorsTotal = promauto.NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "suproxy_provisioning_errors_total",
@@ -161,7 +161,7 @@ func Initialize() {
 			},
 			[]string{"operation", "error_type"},
 		)
-		
+
 		configReloadTotal = promauto.NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "suproxy_config_reload_total",
@@ -169,15 +169,15 @@ func Initialize() {
 			},
 			[]string{"status"},
 		)
-		
+
 		configReloadDuration = promauto.NewHistogram(
 			prometheus.HistogramOpts{
-				Name: "suproxy_config_reload_duration_seconds",
-				Help: "Configuration reload duration in seconds",
+				Name:    "suproxy_config_reload_duration_seconds",
+				Help:    "Configuration reload duration in seconds",
 				Buckets: []float64{.1, .25, .5, 1, 2.5, 5, 10, 30},
 			},
 		)
-		
+
 		// Database Metrics
 		databaseConnectionsInUse = promauto.NewGauge(
 			prometheus.GaugeOpts{
@@ -185,30 +185,30 @@ func Initialize() {
 				Help: "Number of database connections currently in use",
 			},
 		)
-		
+
 		databaseConnectionsIdle = promauto.NewGauge(
 			prometheus.GaugeOpts{
 				Name: "suproxy_database_connections_idle",
 				Help: "Number of idle database connections",
 			},
 		)
-		
+
 		databaseConnectionsWaitCount = promauto.NewCounter(
 			prometheus.CounterOpts{
 				Name: "suproxy_database_connections_wait_count_total",
 				Help: "Total number of times a connection had to wait",
 			},
 		)
-		
+
 		databaseQueryDuration = promauto.NewHistogramVec(
 			prometheus.HistogramOpts{
-				Name: "suproxy_database_query_duration_seconds",
-				Help: "Database query duration in seconds",
+				Name:    "suproxy_database_query_duration_seconds",
+				Help:    "Database query duration in seconds",
 				Buckets: []float64{.001, .005, .01, .025, .05, .1, .25, .5, 1},
 			},
 			[]string{"operation"},
 		)
-		
+
 		// System Metrics
 		healthCheckStatus = promauto.NewGaugeVec(
 			prometheus.GaugeOpts{
@@ -217,7 +217,7 @@ func Initialize() {
 			},
 			[]string{"component"},
 		)
-		
+
 		auditLogsTotal = promauto.NewCounter(
 			prometheus.CounterOpts{
 				Name: "suproxy_audit_logs_total",

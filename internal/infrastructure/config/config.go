@@ -50,12 +50,12 @@ type JWTConfig struct {
 }
 
 type XrayConfig struct {
-	UseMock     bool   `mapstructure:"use_mock"`
-	BinaryPath  string `mapstructure:"binary_path"`
-	ConfigDir   string `mapstructure:"config_dir"`
-	LogDir      string `mapstructure:"log_dir"`
-	BackupDir   string `mapstructure:"backup_dir"`
-	InstallDir  string `mapstructure:"install_dir"`
+	UseMock    bool   `mapstructure:"use_mock"`
+	BinaryPath string `mapstructure:"binary_path"`
+	ConfigDir  string `mapstructure:"config_dir"`
+	LogDir     string `mapstructure:"log_dir"`
+	BackupDir  string `mapstructure:"backup_dir"`
+	InstallDir string `mapstructure:"install_dir"`
 }
 
 type MetricsConfig struct {

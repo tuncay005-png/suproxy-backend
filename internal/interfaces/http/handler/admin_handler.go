@@ -8,12 +8,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/suproxy/backend/internal/application/dto"
 	"github.com/suproxy/backend/internal/application/mapper"
+	adminaudit "github.com/suproxy/backend/internal/application/usecase/admin/audit"
+	adminclient "github.com/suproxy/backend/internal/application/usecase/admin/client"
+	admininbound "github.com/suproxy/backend/internal/application/usecase/admin/inbound"
+	adminsystem "github.com/suproxy/backend/internal/application/usecase/admin/system"
 	adminuser "github.com/suproxy/backend/internal/application/usecase/admin/user"
 	adminxray "github.com/suproxy/backend/internal/application/usecase/admin/xray_instance"
-	admininbound "github.com/suproxy/backend/internal/application/usecase/admin/inbound"
-	adminclient "github.com/suproxy/backend/internal/application/usecase/admin/client"
-	adminaudit "github.com/suproxy/backend/internal/application/usecase/admin/audit"
-	adminsystem "github.com/suproxy/backend/internal/application/usecase/admin/system"
 	"github.com/suproxy/backend/internal/domain/user"
 	"github.com/suproxy/backend/internal/domain/xray"
 	"github.com/suproxy/backend/internal/infrastructure/logger"
@@ -42,13 +42,13 @@ type AdminHandler struct {
 	checkInstanceHealthCommand *adminxray.CheckInstanceHealthCommand
 
 	// Inbound Management UseCases (Phase 17.4)
-	listInboundsQuery      *admininbound.ListInboundsQuery
-	getInboundQuery        *admininbound.GetInboundQuery
-	createInboundCommand   *admininbound.CreateInboundCommand
-	updateInboundCommand   *admininbound.UpdateInboundCommand
-	deleteInboundCommand   *admininbound.DeleteInboundCommand
-	enableInboundCommand   *admininbound.EnableInboundCommand
-	disableInboundCommand  *admininbound.DisableInboundCommand
+	listInboundsQuery     *admininbound.ListInboundsQuery
+	getInboundQuery       *admininbound.GetInboundQuery
+	createInboundCommand  *admininbound.CreateInboundCommand
+	updateInboundCommand  *admininbound.UpdateInboundCommand
+	deleteInboundCommand  *admininbound.DeleteInboundCommand
+	enableInboundCommand  *admininbound.EnableInboundCommand
+	disableInboundCommand *admininbound.DisableInboundCommand
 
 	// Client Management UseCases (Phase 17.5)
 	listClientsQuery            *adminclient.ListClientsQuery
@@ -66,11 +66,11 @@ type AdminHandler struct {
 	getAuditStatsQuery *adminaudit.GetAuditStatsQuery
 
 	// System Admin UseCases (Phase 17.7)
-	getSystemHealthQuery      *adminsystem.GetSystemHealthQuery
-	getSystemStatsQuery       *adminsystem.GetSystemStatsQuery
-	getVersionQuery           *adminsystem.GetVersionQuery
-	getDatabaseStatusQuery    *adminsystem.GetDatabaseStatusQuery
-	getXraySystemStatusQuery  *adminsystem.GetXraySystemStatusQuery
+	getSystemHealthQuery     *adminsystem.GetSystemHealthQuery
+	getSystemStatsQuery      *adminsystem.GetSystemStatsQuery
+	getVersionQuery          *adminsystem.GetVersionQuery
+	getDatabaseStatusQuery   *adminsystem.GetDatabaseStatusQuery
+	getXraySystemStatusQuery *adminsystem.GetXraySystemStatusQuery
 
 	// Future: Add more UseCases here as they are implemented
 }
@@ -410,7 +410,6 @@ func (h *AdminHandler) UpdateUserRole(c *gin.Context) {
 	resp := mapper.ToAdminUserResponse(u)
 	response.SuccessOK(c, resp)
 }
-
 
 // ========================= XRAY INSTANCE MANAGEMENT =========================
 
@@ -814,7 +813,6 @@ func (h *AdminHandler) GetInstanceStats(c *gin.Context) {
 	response.SuccessOK(c, resp)
 }
 
-
 // ========================= INBOUND MANAGEMENT =========================
 
 // ListInbounds handles GET /api/v1/admin/xray/inbounds
@@ -1168,7 +1166,6 @@ func (h *AdminHandler) DisableInbound(c *gin.Context) {
 	}
 	response.SuccessOK(c, resp)
 }
-
 
 // ========================= CLIENT MANAGEMENT =========================
 
@@ -1527,7 +1524,6 @@ func (h *AdminHandler) ReprovisionClient(c *gin.Context) {
 	response.SuccessOK(c, resp)
 }
 
-
 // ========================= AUDIT LOG MANAGEMENT =========================
 
 // ListAuditLogs handles GET /api/v1/admin/audit/logs
@@ -1646,7 +1642,6 @@ func (h *AdminHandler) GetAuditStats(c *gin.Context) {
 	}
 	response.SuccessOK(c, resp)
 }
-
 
 // ========================= SYSTEM ADMIN =========================
 

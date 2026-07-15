@@ -59,8 +59,8 @@ func (g *generator) Generate(ctx context.Context, instanceID uuid.UUID) (*XrayCo
 	config := &XrayConfig{
 		Log: &LogConfig{
 			Loglevel: "warning",
-			Access:   "",     // Empty means no access log
-			Error:    "",     // Empty means stderr
+			Access:   "", // Empty means no access log
+			Error:    "", // Empty means stderr
 		},
 		API: &APIConfig{
 			Tag:      "api",
@@ -189,8 +189,8 @@ func (g *generator) GenerateExampleConfig() *XrayConfig {
 			Tag:      "api",
 			Services: []string{"HandlerService", "StatsService", "LoggerService"},
 		},
-		DNS: g.generateDNS(),
-		Stats: &StatsConfig{},
+		DNS:    g.generateDNS(),
+		Stats:  &StatsConfig{},
 		Policy: g.generatePolicy(),
 		Inbounds: []InboundConfig{
 			{

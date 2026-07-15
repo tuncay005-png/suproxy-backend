@@ -117,9 +117,8 @@ func (app *Application) Shutdown() {
 		app.Logger.Error("Failed to close database connection", "error", err)
 	}
 
-	if err := app.Logger.Sync(); err != nil {
-		// Ignore sync errors on shutdown - logger may already be closed or stdout/stderr may be unavailable
-	}
+	// Ignore sync errors on shutdown - logger may already be closed or stdout/stderr may be unavailable
+	_ = app.Logger.Sync()
 
 	app.Logger.Info("Application shutdown complete")
 }

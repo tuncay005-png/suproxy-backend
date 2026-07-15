@@ -57,4 +57,3 @@ func MinimalConfig() *config.Config {
 	cfg.Log.Level = "fatal" // Suppress all logs in unit tests
 	return cfg
 }
-

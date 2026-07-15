@@ -142,4 +142,3 @@ func (td *TestDatabase) TableExists(table string) bool {
 	require.NoError(td.t, err, "Failed to check table existence: %s", table)
 	return exists
 }
-

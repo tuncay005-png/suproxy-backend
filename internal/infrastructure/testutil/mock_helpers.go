@@ -84,4 +84,3 @@ func (b *MockCallBuilder) Run(fn func(args mock.Arguments)) *MockCallBuilder {
 	b.call.Run(fn)
 	return b
 }
-

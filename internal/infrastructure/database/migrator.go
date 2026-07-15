@@ -112,7 +112,7 @@ func (m *Migrator) getInstance() (*migrate.Migrate, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get absolute path for migrations: %w", err)
 	}
-	
+
 	// Check if migrations directory exists
 	if _, err := os.Stat(migrationsPath); os.IsNotExist(err) {
 		// Try going up directories to find migrations (for when running from test/integration)

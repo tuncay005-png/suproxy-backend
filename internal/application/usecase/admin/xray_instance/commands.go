@@ -261,7 +261,7 @@ func (c *CheckInstanceHealthCommand) Execute(ctx context.Context, instanceID uui
 	if status != nil {
 		statusStr = "running" // ProcessStatus is a struct, use a default string
 	}
-	
+
 	return &HealthCheckResult{
 		Healthy: true,
 		Status:  "healthy",

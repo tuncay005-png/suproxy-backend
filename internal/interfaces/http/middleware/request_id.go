@@ -8,7 +8,7 @@ import (
 const (
 	// RequestIDHeader is the header name for request ID
 	RequestIDHeader = "X-Request-ID"
-	
+
 	// RequestIDKey is the context key for request ID
 	RequestIDKey = "request_id"
 )
@@ -20,18 +20,18 @@ func RequestIDMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Check if request ID already exists in header
 		requestID := c.GetHeader(RequestIDHeader)
-		
+
 		// Generate new ID if not present
 		if requestID == "" {
 			requestID = uuid.New().String()
 		}
-		
+
 		// Set request ID in context
 		c.Set(RequestIDKey, requestID)
-		
+
 		// Set response header
 		c.Header(RequestIDHeader, requestID)
-		
+
 		c.Next()
 	}
 }

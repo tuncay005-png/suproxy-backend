@@ -161,4 +161,3 @@ func (ah *AuthHelper) InvalidToken() string {
 func (ah *AuthHelper) MalformedToken() string {
 	return "malformed-token"
 }
-

@@ -4,26 +4,26 @@ import "time"
 
 // SystemHealthResponse represents overall system health
 type SystemHealthResponse struct {
-	Status       string                       `json:"status"`        // ok, degraded, unhealthy
-	Timestamp    time.Time                    `json:"timestamp"`
-	Components   map[string]ComponentHealth   `json:"components"`
-	Version      string                       `json:"version"`
-	Uptime       int64                        `json:"uptime_seconds"`
+	Status     string                     `json:"status"` // ok, degraded, unhealthy
+	Timestamp  time.Time                  `json:"timestamp"`
+	Components map[string]ComponentHealth `json:"components"`
+	Version    string                     `json:"version"`
+	Uptime     int64                      `json:"uptime_seconds"`
 }
 
 // ComponentHealth represents individual component health
 type ComponentHealth struct {
-	Status  string `json:"status"`  // healthy, unhealthy, unknown
+	Status  string `json:"status"` // healthy, unhealthy, unknown
 	Message string `json:"message,omitempty"`
 	Latency int64  `json:"latency_ms,omitempty"` // Response time in milliseconds
 }
 
 // SystemStatsResponse represents system-wide statistics
 type SystemStatsResponse struct {
-	Users     UserStats     `json:"users"`
-	Xray      XrayStats     `json:"xray"`
-	Audit     AuditStats    `json:"audit"`
-	Timestamp time.Time     `json:"timestamp"`
+	Users     UserStats  `json:"users"`
+	Xray      XrayStats  `json:"xray"`
+	Audit     AuditStats `json:"audit"`
+	Timestamp time.Time  `json:"timestamp"`
 }
 
 // UserStats represents user statistics
@@ -68,8 +68,8 @@ type VersionResponse struct {
 
 // DatabaseStatusResponse represents database connection status
 type DatabaseStatusResponse struct {
-	Status       string `json:"status"`        // connected, disconnected
-	Type         string `json:"type"`          // postgresql
+	Status       string `json:"status"` // connected, disconnected
+	Type         string `json:"type"`   // postgresql
 	Latency      int64  `json:"latency_ms"`
 	MaxOpenConns int    `json:"max_open_conns"`
 	OpenConns    int    `json:"open_conns"`
@@ -90,10 +90,10 @@ type XraySystemStatusResponse struct {
 
 // XrayInstanceStatusInfo represents brief instance status
 type XrayInstanceStatusInfo struct {
-	ID       string `json:"id"`
-	NodeID   string `json:"node_id"`
-	Status   string `json:"status"`   // running, stopped
-	Healthy  bool   `json:"healthy"`
-	PID      int    `json:"pid,omitempty"`
-	Uptime   int64  `json:"uptime_seconds,omitempty"`
+	ID      string `json:"id"`
+	NodeID  string `json:"node_id"`
+	Status  string `json:"status"` // running, stopped
+	Healthy bool   `json:"healthy"`
+	PID     int    `json:"pid,omitempty"`
+	Uptime  int64  `json:"uptime_seconds,omitempty"`
 }

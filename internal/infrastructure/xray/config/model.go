@@ -30,21 +30,21 @@ type StatsConfig struct{}
 
 // DNSConfig represents DNS configuration
 type DNSConfig struct {
-	Servers       []DNSServer `json:"servers,omitempty"`
-	Hosts         map[string]string `json:"hosts,omitempty"`
-	ClientIP      string      `json:"clientIp,omitempty"`
-	QueryStrategy string      `json:"queryStrategy,omitempty"`
-	DisableCache  bool        `json:"disableCache,omitempty"`
-	DisableFallback bool      `json:"disableFallback,omitempty"`
+	Servers         []DNSServer       `json:"servers,omitempty"`
+	Hosts           map[string]string `json:"hosts,omitempty"`
+	ClientIP        string            `json:"clientIp,omitempty"`
+	QueryStrategy   string            `json:"queryStrategy,omitempty"`
+	DisableCache    bool              `json:"disableCache,omitempty"`
+	DisableFallback bool              `json:"disableFallback,omitempty"`
 }
 
 // DNSServer represents a DNS server configuration
 type DNSServer struct {
-	Address       string   `json:"address"`
-	Port          int      `json:"port,omitempty"`
-	Domains       []string `json:"domains,omitempty"`
-	ExpectIPs     []string `json:"expectIPs,omitempty"`
-	SkipFallback  bool     `json:"skipFallback,omitempty"`
+	Address      string   `json:"address"`
+	Port         int      `json:"port,omitempty"`
+	Domains      []string `json:"domains,omitempty"`
+	ExpectIPs    []string `json:"expectIPs,omitempty"`
+	SkipFallback bool     `json:"skipFallback,omitempty"`
 }
 
 // PolicyConfig represents Xray policy configuration

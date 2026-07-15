@@ -2,12 +2,12 @@ package bootstrap
 
 import (
 	"github.com/gin-gonic/gin"
+	adminAuditUseCasePackage "github.com/suproxy/backend/internal/application/usecase/admin/audit"
+	adminClientUseCase "github.com/suproxy/backend/internal/application/usecase/admin/client"
+	adminInboundUseCase "github.com/suproxy/backend/internal/application/usecase/admin/inbound"
+	adminSystemUseCase "github.com/suproxy/backend/internal/application/usecase/admin/system"
 	adminUserUseCase "github.com/suproxy/backend/internal/application/usecase/admin/user"
 	adminXrayUseCase "github.com/suproxy/backend/internal/application/usecase/admin/xray_instance"
-	adminInboundUseCase "github.com/suproxy/backend/internal/application/usecase/admin/inbound"
-	adminClientUseCase "github.com/suproxy/backend/internal/application/usecase/admin/client"
-	adminAuditUseCasePackage "github.com/suproxy/backend/internal/application/usecase/admin/audit"
-	adminSystemUseCase "github.com/suproxy/backend/internal/application/usecase/admin/system"
 	authUseCase "github.com/suproxy/backend/internal/application/usecase/auth"
 	nodeUseCase "github.com/suproxy/backend/internal/application/usecase/node"
 	planUseCase "github.com/suproxy/backend/internal/application/usecase/plan"

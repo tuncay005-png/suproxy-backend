@@ -14,8 +14,8 @@ import (
 	"github.com/suproxy/backend/internal/domain/user"
 	"github.com/suproxy/backend/internal/domain/xray"
 	"github.com/suproxy/backend/internal/infrastructure/logger"
-	"github.com/suproxy/backend/internal/infrastructure/xray/runtime"
 	xrayConfig "github.com/suproxy/backend/internal/infrastructure/xray/config"
+	"github.com/suproxy/backend/internal/infrastructure/xray/runtime"
 )
 
 // Mock repositories and dependencies
@@ -526,7 +526,7 @@ func TestProvisionUserToXray_Success(t *testing.T) {
 	testUser := createTestUser()
 	testInstance := createTestInstance()
 	testInbound := createTestInbound(testInstance.ID)
-	
+
 	mockXrayInstanceRepo := new(MockXrayInstanceRepo)
 	mockInboundRepo := new(MockInboundRepo)
 	mockClientRepo := new(MockClientRepo)
@@ -588,9 +588,9 @@ func TestProvisionUserToXray_ExistingClient(t *testing.T) {
 	testUser := createTestUser()
 	testInstance := createTestInstance()
 	testInbound := createTestInbound(testInstance.ID)
-	
+
 	existingClient, _ := xray.NewClient(testInbound.ID, testUser.ID, uuid.New().String(), "xtls-rprx-vision", testUser.Email.String())
-	
+
 	mockClientRepo := new(MockClientRepo)
 	mockAuditRepo := new(MockAuditRepo)
 	log := logger.New("info", "json")
@@ -628,7 +628,7 @@ func TestProvisionUserToXray_ConfigGenerationError_ClientRollback(t *testing.T) 
 	testUser := createTestUser()
 	testInstance := createTestInstance()
 	testInbound := createTestInbound(testInstance.ID)
-	
+
 	mockXrayInstanceRepo := new(MockXrayInstanceRepo)
 	mockInboundRepo := new(MockInboundRepo)
 	mockClientRepo := new(MockClientRepo)
@@ -681,7 +681,7 @@ func TestRegenerateAndReload_ReloadError_ConfigRollbackSuccess(t *testing.T) {
 	ctx := context.Background()
 	instanceID := uuid.New()
 	userID := uuid.New()
-	
+
 	mockConfigGenerator := new(MockConfigGenerator)
 	mockConfigWriter := new(MockConfigWriter)
 	mockProcessManager := new(MockProcessManager)
@@ -743,7 +743,7 @@ func TestRegenerateAndReload_ReloadError_ConfigRollbackFailed(t *testing.T) {
 	ctx := context.Background()
 	instanceID := uuid.New()
 	userID := uuid.New()
-	
+
 	mockConfigGenerator := new(MockConfigGenerator)
 	mockConfigWriter := new(MockConfigWriter)
 	mockProcessManager := new(MockProcessManager)
@@ -790,7 +790,7 @@ func TestRegenerateAndReload_ConfigValidationFailed(t *testing.T) {
 	ctx := context.Background()
 	instanceID := uuid.New()
 	userID := uuid.New()
-	
+
 	mockConfigGenerator := new(MockConfigGenerator)
 	mockConfigWriter := new(MockConfigWriter)
 	mockBinaryManager := new(MockBinaryManager)
@@ -854,7 +854,7 @@ func TestRegenerateAndReload_ReloadTimeout(t *testing.T) {
 	ctx := context.Background()
 	instanceID := uuid.New()
 	userID := uuid.New()
-	
+
 	mockConfigGenerator := new(MockConfigGenerator)
 	mockConfigWriter := new(MockConfigWriter)
 	mockBinaryManager := new(MockBinaryManager)
@@ -915,7 +915,7 @@ func TestProvisionUserToXray_ParallelRequests(t *testing.T) {
 	testUser := createTestUser()
 	testInstance := createTestInstance()
 	testInbound := createTestInbound(testInstance.ID)
-	
+
 	mockXrayInstanceRepo := new(MockXrayInstanceRepo)
 	mockInboundRepo := new(MockInboundRepo)
 	mockClientRepo := new(MockClientRepo)

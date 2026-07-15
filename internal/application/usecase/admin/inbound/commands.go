@@ -78,13 +78,13 @@ func (c *CreateInboundCommand) Execute(
 			// Critical: Failed to rollback, log and return compound error
 			return nil, fmt.Errorf("config reload failed AND rollback delete failed: reload=%w, rollback=%v", err, delErr)
 		}
-		
+
 		auditLog := audit.NewLog(adminID, audit.ActionDelete, "xray_inbound", inbound.ID, ip, userAgent)
 		auditLog.AddMetadata("event", "inbound_rollback_after_reload_failed")
 		if auditErr := c.auditRepo.Create(ctx, auditLog); auditErr != nil {
 			_ = auditErr // errcheck: acknowledged, audit failure in rollback is not critical
 		}
-		
+
 		return nil, fmt.Errorf("config reload failed, inbound rolled back: %w", err)
 	}
 
@@ -201,13 +201,13 @@ func (c *UpdateInboundCommand) Execute(
 		if updErr := c.inboundRepo.Update(ctx, inbound); updErr != nil {
 			return nil, fmt.Errorf("config reload failed AND rollback Update failed: reload=%w, rollback=%v", err, updErr)
 		}
-		
+
 		auditLog := audit.NewLog(adminID, audit.ActionUpdate, "xray_inbound", inboundID, ip, userAgent)
 		auditLog.AddMetadata("event", "inbound_rollback_after_reload_failed")
 		if auditErr := c.auditRepo.Create(ctx, auditLog); auditErr != nil {
 			_ = auditErr // errcheck: acknowledged, audit failure in rollback is not critical
 		}
-		
+
 		return nil, fmt.Errorf("config reload failed, inbound rolled back: %w", err)
 	}
 
@@ -326,13 +326,13 @@ func (c *EnableInboundCommand) Execute(ctx context.Context, inboundID, adminID u
 		if updErr := c.inboundRepo.Update(ctx, inbound); updErr != nil {
 			return fmt.Errorf("config reload failed AND rollback Update failed: reload=%w, rollback=%v", err, updErr)
 		}
-		
+
 		auditLog := audit.NewLog(adminID, audit.ActionUpdate, "xray_inbound", inboundID, ip, userAgent)
 		auditLog.AddMetadata("event", "inbound_rollback_after_reload_failed")
 		if auditErr := c.auditRepo.Create(ctx, auditLog); auditErr != nil {
 			_ = auditErr // errcheck: acknowledged, audit failure in rollback is not critical
 		}
-		
+
 		return fmt.Errorf("config reload failed, inbound rolled back: %w", err)
 	}
 
@@ -391,13 +391,13 @@ func (c *DisableInboundCommand) Execute(ctx context.Context, inboundID, adminID 
 		if updErr := c.inboundRepo.Update(ctx, inbound); updErr != nil {
 			return fmt.Errorf("config reload failed AND rollback Update failed: reload=%w, rollback=%v", err, updErr)
 		}
-		
+
 		auditLog := audit.NewLog(adminID, audit.ActionUpdate, "xray_inbound", inboundID, ip, userAgent)
 		auditLog.AddMetadata("event", "inbound_rollback_after_reload_failed")
 		if auditErr := c.auditRepo.Create(ctx, auditLog); auditErr != nil {
 			_ = auditErr // errcheck: acknowledged, audit failure in rollback is not critical
 		}
-		
+
 		return fmt.Errorf("config reload failed, inbound rolled back: %w", err)
 	}
 

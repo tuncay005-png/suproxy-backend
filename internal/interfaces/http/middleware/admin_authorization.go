@@ -18,7 +18,7 @@ func AdminAuthorization(log *logger.Logger) gin.HandlerFunc {
 				"ip", c.ClientIP(),
 				"user_agent", c.GetHeader("User-Agent"),
 				"path", c.Request.URL.Path)
-			
+
 			response.Unauthorized(c, "authentication required")
 			c.Abort()
 			return

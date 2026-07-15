@@ -135,4 +135,3 @@ func MergeHeaders(headers ...map[string]string) map[string]string {
 	}
 	return result
 }
-

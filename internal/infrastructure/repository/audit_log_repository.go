@@ -41,7 +41,7 @@ func (r *auditLogRepository) Create(ctx context.Context, log *audit.Log) error {
 	if err != nil {
 		return err
 	}
-	
+
 	model := &AuditLogModel{
 		ID:         log.ID,
 		UserID:     log.UserID,
@@ -53,10 +53,10 @@ func (r *auditLogRepository) Create(ctx context.Context, log *audit.Log) error {
 		Metadata:   metadataJSON,
 		CreatedAt:  log.CreatedAt,
 	}
-	
+
 	// Record metric
 	metrics.IncAuditLogs()
-	
+
 	return r.db.WithContext(ctx).Create(model).Error
 }
 
@@ -294,7 +294,7 @@ func toDomainAuditLog(m *AuditLogModel) *audit.Log {
 	if len(m.Metadata) > 0 {
 		_ = m.Metadata.UnmarshalJSON(m.Metadata) // Ignore error, metadata is optional
 	}
-	
+
 	return &audit.Log{
 		ID:         m.ID,
 		UserID:     m.UserID,

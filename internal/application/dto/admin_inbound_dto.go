@@ -56,7 +56,7 @@ type AdminUpdateInboundRequest struct {
 
 // Inbound Operation Response
 type InboundOperationResponse struct {
-	Success  bool                  `json:"success"`
-	Message  string                `json:"message"`
-	Inbound  *AdminInboundResponse `json:"inbound"`
+	Success bool                  `json:"success"`
+	Message string                `json:"message"`
+	Inbound *AdminInboundResponse `json:"inbound"`
 }

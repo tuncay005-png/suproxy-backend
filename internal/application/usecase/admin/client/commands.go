@@ -76,14 +76,14 @@ func (c *CreateClientCommand) Execute(
 		if delErr := c.clientRepo.Delete(ctx, client.ID); delErr != nil {
 			return nil, fmt.Errorf("config reload failed and rollback also failed - reload error: %w, delete error: %v", err, delErr)
 		}
-		
+
 		auditLog := audit.NewLog(adminID, audit.ActionDelete, "xray_client", client.ID, ip, userAgent)
 		auditLog.AddMetadata("event", "client_rollback_after_reload_failed")
 		if auditErr := c.auditRepo.Create(ctx, auditLog); auditErr != nil {
 			// Non-critical: audit log failure during rollback
 			_ = auditErr
 		}
-		
+
 		return nil, fmt.Errorf("config reload failed, client rolled back: %w", err)
 	}
 
@@ -209,14 +209,14 @@ func (c *EnableClientCommand) Execute(ctx context.Context, clientID, adminID uui
 		if updateErr := c.clientRepo.Update(ctx, client); updateErr != nil {
 			return fmt.Errorf("config reload failed and rollback save failed - reload error: %w, update error: %v", err, updateErr)
 		}
-		
+
 		auditLog := audit.NewLog(adminID, audit.ActionUpdate, "xray_client", clientID, ip, userAgent)
 		auditLog.AddMetadata("event", "client_rollback_after_reload_failed")
 		if auditErr := c.auditRepo.Create(ctx, auditLog); auditErr != nil {
 			// Non-critical: audit log failure during rollback
 			_ = auditErr
 		}
-		
+
 		return fmt.Errorf("config reload failed, client rolled back: %w", err)
 	}
 
@@ -285,14 +285,14 @@ func (c *DisableClientCommand) Execute(ctx context.Context, clientID, adminID uu
 		if updateErr := c.clientRepo.Update(ctx, client); updateErr != nil {
 			return fmt.Errorf("config reload failed and rollback save failed - reload error: %w, update error: %v", err, updateErr)
 		}
-		
+
 		auditLog := audit.NewLog(adminID, audit.ActionUpdate, "xray_client", clientID, ip, userAgent)
 		auditLog.AddMetadata("event", "client_rollback_after_reload_failed")
 		if auditErr := c.auditRepo.Create(ctx, auditLog); auditErr != nil {
 			// Non-critical: audit log failure during rollback
 			_ = auditErr
 		}
-		
+
 		return fmt.Errorf("config reload failed, client rolled back: %w", err)
 	}
 
@@ -366,14 +366,14 @@ func (c *RegenerateClientUUIDCommand) Execute(ctx context.Context, clientID, adm
 		if updateErr := c.clientRepo.Update(ctx, client); updateErr != nil {
 			return nil, fmt.Errorf("config reload failed and rollback save failed - reload error: %w, update error: %v", err, updateErr)
 		}
-		
+
 		auditLog := audit.NewLog(adminID, audit.ActionUpdate, "xray_client", clientID, ip, userAgent)
 		auditLog.AddMetadata("event", "client_rollback_after_reload_failed")
 		if auditErr := c.auditRepo.Create(ctx, auditLog); auditErr != nil {
 			// Non-critical: audit log failure during rollback
 			_ = auditErr
 		}
-		
+
 		return nil, fmt.Errorf("config reload failed, client rolled back: %w", err)
 	}
 
@@ -454,14 +454,14 @@ func (c *ReprovisionClientCommand) Execute(ctx context.Context, clientID, adminI
 				return nil, fmt.Errorf("config reload failed and rollback save failed - reload error: %w, update error: %v", err, updateErr)
 			}
 		}
-		
+
 		auditLog := audit.NewLog(adminID, audit.ActionUpdate, "xray_client", clientID, ip, userAgent)
 		auditLog.AddMetadata("event", "client_rollback_after_reload_failed")
 		if auditErr := c.auditRepo.Create(ctx, auditLog); auditErr != nil {
 			// Non-critical: audit log failure during rollback
 			_ = auditErr
 		}
-		
+
 		return nil, fmt.Errorf("config reload failed, client rolled back: %w", err)
 	}
 

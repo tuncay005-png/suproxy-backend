@@ -18,25 +18,25 @@ import (
 // Container holds all application dependencies
 type Container struct {
 	// Domain Repositories
-	UserRepository              user.Repository
-	RefreshTokenRepository      session.RefreshTokenRepository
-	AuditLogRepository          audit.Repository
-	SubscriptionRepository      subscription.SubscriptionRepository
-	PlanRepository              subscription.PlanRepository
-	ServerRepository            server.Repository
-	NodeRepository              node.Repository
-	XrayInstanceRepository      xray.XrayInstanceRepository
-	InboundRepository           xray.InboundRepository
-	ClientRepository            xray.ClientRepository
-	RealityConfigRepository     xray.RealityConfigRepository
+	UserRepository          user.Repository
+	RefreshTokenRepository  session.RefreshTokenRepository
+	AuditLogRepository      audit.Repository
+	SubscriptionRepository  subscription.SubscriptionRepository
+	PlanRepository          subscription.PlanRepository
+	ServerRepository        server.Repository
+	NodeRepository          node.Repository
+	XrayInstanceRepository  xray.XrayInstanceRepository
+	InboundRepository       xray.InboundRepository
+	ClientRepository        xray.ClientRepository
+	RealityConfigRepository xray.RealityConfigRepository
 
 	// Xray Infrastructure
-	XrayKernel        vpn.Kernel
-	XrayProcessManager xrayRuntime.Manager
-	XrayConfigWriter   xrayConfig.Writer
+	XrayKernel          vpn.Kernel
+	XrayProcessManager  xrayRuntime.Manager
+	XrayConfigWriter    xrayConfig.Writer
 	XrayConfigGenerator xrayConfig.Generator
 	XrayConfigValidator xrayConfig.Validator
-	XrayBinaryManager  xrayBinary.Manager
+	XrayBinaryManager   xrayBinary.Manager
 
 	// Application Services
 	XrayProvisioningService *service.XrayProvisioningService

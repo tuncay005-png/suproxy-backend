@@ -77,4 +77,3 @@ func (ta *TestApp) CleanupTables() {
 	}
 	testDB.Cleanup()
 }
-

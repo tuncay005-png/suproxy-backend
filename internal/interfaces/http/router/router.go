@@ -9,19 +9,19 @@ import (
 )
 
 type Router struct {
-	engine                 *gin.Engine
-	logger                 *logger.Logger
-	jwtManager             *jwt.Manager
-	healthHandler          *handler.HealthHandler
-	metricsHandler         *handler.MetricsHandler
-	authHandler            *handler.AuthHandler
-	userHandler            *handler.UserHandler
-	planHandler            *handler.PlanHandler
-	subscriptionHandler    *handler.SubscriptionHandler
-	serverHandler          *handler.ServerHandler
-	nodeHandler            *handler.NodeHandler
-	xrayHandler            *handler.XrayHandler
-	adminHandler           *handler.AdminHandler
+	engine              *gin.Engine
+	logger              *logger.Logger
+	jwtManager          *jwt.Manager
+	healthHandler       *handler.HealthHandler
+	metricsHandler      *handler.MetricsHandler
+	authHandler         *handler.AuthHandler
+	userHandler         *handler.UserHandler
+	planHandler         *handler.PlanHandler
+	subscriptionHandler *handler.SubscriptionHandler
+	serverHandler       *handler.ServerHandler
+	nodeHandler         *handler.NodeHandler
+	xrayHandler         *handler.XrayHandler
+	adminHandler        *handler.AdminHandler
 }
 
 func NewRouter(
@@ -67,7 +67,7 @@ func (r *Router) Setup() {
 	// Health check endpoints (no auth required)
 	r.engine.GET("/health", r.healthHandler.Health)
 	r.engine.GET("/ready", r.healthHandler.Ready)
-	
+
 	// Metrics endpoint (no auth required - can be protected with network rules)
 	r.engine.GET("/metrics", r.metricsHandler.Metrics)
 
@@ -159,8 +159,8 @@ func (r *Router) Setup() {
 			// User Management (Phase 17.2)
 			users := admin.Group("/users")
 			{
-				users.GET("", r.adminHandler.ListUsers)           // List users with filters
-				users.GET("/:id", r.adminHandler.GetUser)         // Get user details
+				users.GET("", r.adminHandler.ListUsers)                   // List users with filters
+				users.GET("/:id", r.adminHandler.GetUser)                 // Get user details
 				users.PUT("/:id/status", r.adminHandler.UpdateUserStatus) // Update user status
 				users.PUT("/:id/role", r.adminHandler.UpdateUserRole)     // Update user role
 			}

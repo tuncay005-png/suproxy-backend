@@ -42,4 +42,3 @@ func IsCI() bool {
 func IsIntegrationTest() bool {
 	return GetEnvBool("INTEGRATION_TEST", false)
 }
-

@@ -8,12 +8,12 @@ import (
 
 // Admin Xray Instance List Request with filters
 type AdminXrayInstanceListRequest struct {
-	Offset    int       `form:"offset"`
-	Limit     int       `form:"limit" binding:"max=100"`
-	NodeID    string    `form:"node_id"` // UUID as string
-	Status    string    `form:"status" binding:"omitempty,oneof=running stopped failed"`
-	SortBy    string    `form:"sort_by" binding:"omitempty,oneof=created_at status"`
-	SortOrder string    `form:"sort_order" binding:"omitempty,oneof=asc desc"`
+	Offset    int    `form:"offset"`
+	Limit     int    `form:"limit" binding:"max=100"`
+	NodeID    string `form:"node_id"` // UUID as string
+	Status    string `form:"status" binding:"omitempty,oneof=running stopped failed"`
+	SortBy    string `form:"sort_by" binding:"omitempty,oneof=created_at status"`
+	SortOrder string `form:"sort_order" binding:"omitempty,oneof=asc desc"`
 }
 
 // Admin Xray Instance Response
