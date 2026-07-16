@@ -107,7 +107,7 @@ Total: 47 production-ready endpoints
 
 ## Technology Stack
 
-- **Language**: Go 1.21+
+- **Language**: Go 1.23+
 - **Framework**: Gin (HTTP router)
 - **Database**: PostgreSQL 15
 - **Metrics**: Prometheus
@@ -168,7 +168,7 @@ Total: 47 production-ready endpoints
 ## Development
 
 ### Prerequisites
-- Go 1.21+
+- Go 1.23+
 - Docker & Docker Compose
 - PostgreSQL 15 (optional, Docker provides)
 - Make (optional)
