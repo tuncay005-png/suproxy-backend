@@ -536,6 +536,9 @@ func TestAuditRepository_GetOldestAndNewestLogDate(t *testing.T) {
 	repo := app.Container.AuditLogRepository
 
 	t.Run("GetLogDates_Success", func(t *testing.T) {
+		// Clean up first to ensure empty state
+		app.CleanupTables()
+		
 		userID := uuid.New()
 
 		// Create logs
@@ -558,7 +561,8 @@ func TestAuditRepository_GetOldestAndNewestLogDate(t *testing.T) {
 	})
 
 	t.Run("GetLogDates_EmptyDatabase", func(t *testing.T) {
-		defer app.CleanupTables()
+		// Clean up to ensure empty state
+		app.CleanupTables()
 
 		oldest, err := repo.GetOldestLogDate(ctx)
 		require.NoError(t, err)

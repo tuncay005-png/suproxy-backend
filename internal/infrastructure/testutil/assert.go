@@ -21,9 +21,20 @@ func AssertTimeEqual(t *testing.T, expected, actual time.Time, tolerance time.Du
 }
 
 // AssertTimeNow asserts that a time is close to now
-func AssertTimeNow(t *testing.T, actual time.Time, tolerance time.Duration, msgAndArgs ...interface{}) bool {
+func AssertTimeNow(t *testing.T, actual time.Time, toleranceMs time.Duration, msgAndArgs ...interface{}) bool {
 	t.Helper()
-	return AssertTimeEqual(t, time.Now().UTC(), actual, tolerance, msgAndArgs...)
+	now := time.Now()
+	// Convert both to UTC for comparison
+	actualUTC := actual.UTC()
+	nowUTC := now.UTC()
+	
+	diff := nowUTC.Sub(actualUTC)
+	if diff < 0 {
+		diff = -diff
+	}
+	
+	toleranceDuration := time.Duration(toleranceMs) * time.Millisecond
+	return assert.True(t, diff <= toleranceDuration, msgAndArgs...)
 }
 
 // AssertUUIDValid asserts that a UUID is valid

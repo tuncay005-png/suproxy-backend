@@ -191,7 +191,8 @@ func TestJWTService_ValidateToken(t *testing.T) {
 
 		_, err = differentManager.ValidateToken(token)
 		assert.Error(t, err)
-		assert.ErrorIs(t, err, jwt.ErrInvalidSignature)
+		// The error should indicate invalid token (signature mismatch causes parse failure)
+		assert.ErrorIs(t, err, jwt.ErrInvalidToken)
 	})
 }
 

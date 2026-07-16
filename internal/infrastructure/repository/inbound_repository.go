@@ -81,8 +81,12 @@ func (r *inboundRepository) Update(ctx context.Context, inbound *xray.Inbound) e
 	}
 
 	model := toInboundModel(inbound)
-	if err := r.db.WithContext(ctx).Save(model).Error; err != nil {
-		return err
+	result := r.db.WithContext(ctx).Save(model)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return errors.New("inbound not found")
 	}
 	return nil
 }

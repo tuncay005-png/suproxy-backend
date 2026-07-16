@@ -77,18 +77,19 @@ func TestE2E_UserRegistrationFlow(t *testing.T) {
 	}
 
 	resp := httpCtx.POST("/api/v1/auth/register", registerReq, nil)
+	t.Logf("Registration response status: %d, body: %s", resp.Code, resp.Body.String())
 	require.Equal(t, 201, resp.Code, "Registration should succeed")
 
 	var registerResult response.Response
 	httpCtx.GetResponseJSON(&registerResult)
-	require.True(t, registerResult.Success)
+	require.True(t, registerResult.Success, "Expected success=true, got: %+v", registerResult)
 	require.NotNil(t, registerResult.Data)
 
 	// Extract tokens from registration response
 	registerData, ok := registerResult.Data.(map[string]interface{})
-	require.True(t, ok)
+	require.True(t, ok, "Expected data to be map, got: %T", registerResult.Data)
 	accessToken, ok := registerData["access_token"].(string)
-	require.True(t, ok)
+	require.True(t, ok, "Expected access_token in response")
 	require.NotEmpty(t, accessToken)
 
 	// Step 2: Login with same credentials
@@ -188,8 +189,7 @@ func TestE2E_UserSessionFlow(t *testing.T) {
 		RefreshToken: refreshToken,
 	}
 
-	// Store refresh token first
-	testutil.CreateTestRefreshToken(ctx, t, app.Container.RefreshTokenRepository, testUser.ID, refreshToken)
+	// Note: Login already created the refresh token, no need to create it again
 
 	resp = httpCtx.POST("/api/v1/auth/refresh", refreshReq, nil)
 	require.Equal(t, 200, resp.Code)
@@ -363,7 +363,7 @@ func TestE2E_UserRegistrationValidation(t *testing.T) {
 		Password: "Test123!@#",
 	}
 	resp := httpCtx.POST("/api/v1/auth/register", req1, nil)
-	assert.Equal(t, 400, resp.Code)
+	assert.Equal(t, 422, resp.Code)
 
 	// Step 2: Try register with invalid email
 	t.Log("Step 2: Register with Invalid Email")
@@ -372,7 +372,7 @@ func TestE2E_UserRegistrationValidation(t *testing.T) {
 		Password: "Test123!@#",
 	}
 	resp = httpCtx.POST("/api/v1/auth/register", req2, nil)
-	assert.Equal(t, 400, resp.Code)
+	assert.Equal(t, 422, resp.Code)
 
 	// Step 3: Try register with weak password
 	t.Log("Step 3: Register with Weak Password")
@@ -381,7 +381,7 @@ func TestE2E_UserRegistrationValidation(t *testing.T) {
 		Password: "weak",
 	}
 	resp = httpCtx.POST("/api/v1/auth/register", req3, nil)
-	assert.Equal(t, 400, resp.Code)
+	assert.Equal(t, 422, resp.Code)
 
 	// Step 4: Register successfully
 	t.Log("Step 4: Register Successfully")

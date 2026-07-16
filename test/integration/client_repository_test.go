@@ -359,16 +359,15 @@ func TestClientRepository_FindEnabledByInboundID(t *testing.T) {
 		// Create enabled client
 		enabledClient, err := testutil.CreateTestClientWithDefaults(inbound.ID, user.ID)
 		require.NoError(t, err)
-		// Explicitly enable
-		err = enabledClient.Enable()
-		require.NoError(t, err)
+		// Client is enabled by default, just create it
 		err = clientRepo.Create(ctx, enabledClient)
 		require.NoError(t, err)
 
 		// Create disabled client
 		disabledClient, err := testutil.CreateTestClientWithDefaults(inbound.ID, user.ID)
 		require.NoError(t, err)
-		_ = disabledClient.Disable() // Test setup: intentionally ignoring error
+		err = disabledClient.Disable()
+		require.NoError(t, err)
 		err = clientRepo.Create(ctx, disabledClient)
 		require.NoError(t, err)
 
@@ -689,16 +688,15 @@ func TestClientRepository_ListWithFilters(t *testing.T) {
 	// Create enabled client
 	enabledClient, err := testutil.CreateTestClientWithDefaults(inbound.ID, user.ID)
 	require.NoError(t, err)
-	// Explicitly enable
-	err = enabledClient.Enable()
-	require.NoError(t, err)
+	// Client is enabled by default
 	err = clientRepo.Create(ctx, enabledClient)
 	require.NoError(t, err)
 
 	// Create disabled client
 	disabledClient, err := testutil.CreateTestClientWithDefaults(inbound.ID, user.ID)
 	require.NoError(t, err)
-	_ = disabledClient.Disable() // Test setup: intentionally ignoring error
+	err = disabledClient.Disable()
+	require.NoError(t, err)
 	err = clientRepo.Create(ctx, disabledClient)
 	require.NoError(t, err)
 
