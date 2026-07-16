@@ -88,8 +88,12 @@ func (r *inboundRepository) Update(ctx context.Context, inbound *xray.Inbound) e
 }
 
 func (r *inboundRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	if err := r.db.WithContext(ctx).Delete(&InboundModel{}, id).Error; err != nil {
-		return err
+	result := r.db.WithContext(ctx).Delete(&InboundModel{}, id)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return xray.ErrInboundNotFound
 	}
 	return nil
 }

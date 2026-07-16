@@ -59,8 +59,12 @@ func (r *realityConfigRepository) Update(ctx context.Context, config *xray.Reali
 }
 
 func (r *realityConfigRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	if err := r.db.WithContext(ctx).Delete(&RealityConfigModel{}, id).Error; err != nil {
-		return err
+	result := r.db.WithContext(ctx).Delete(&RealityConfigModel{}, id)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return xray.ErrRealityConfigNotFound
 	}
 	return nil
 }

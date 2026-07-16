@@ -63,8 +63,12 @@ func (r *userRepository) Update(ctx context.Context, u *user.User) error {
 }
 
 func (r *userRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	if err := r.db.WithContext(ctx).Delete(&UserModel{}, id).Error; err != nil {
-		return err
+	result := r.db.WithContext(ctx).Delete(&UserModel{}, id)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return user.ErrUserNotFound
 	}
 	return nil
 }

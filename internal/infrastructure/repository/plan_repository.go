@@ -76,8 +76,12 @@ func (r *planRepository) Update(ctx context.Context, plan *subscription.Plan) er
 }
 
 func (r *planRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	if err := r.db.WithContext(ctx).Delete(&PlanModel{}, id).Error; err != nil {
-		return err
+	result := r.db.WithContext(ctx).Delete(&PlanModel{}, id)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return subscription.ErrPlanNotFound
 	}
 	return nil
 }

@@ -72,8 +72,12 @@ func (r *subscriptionRepository) Update(ctx context.Context, sub *subscription.S
 }
 
 func (r *subscriptionRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	if err := r.db.WithContext(ctx).Delete(&SubscriptionModel{}, id).Error; err != nil {
-		return err
+	result := r.db.WithContext(ctx).Delete(&SubscriptionModel{}, id)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return subscription.ErrSubscriptionNotFound
 	}
 	return nil
 }

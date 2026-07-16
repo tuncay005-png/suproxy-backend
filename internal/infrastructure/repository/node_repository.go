@@ -100,8 +100,12 @@ func (r *nodeRepository) Update(ctx context.Context, n *node.Node) error {
 }
 
 func (r *nodeRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	if err := r.db.WithContext(ctx).Delete(&NodeModel{}, id).Error; err != nil {
-		return err
+	result := r.db.WithContext(ctx).Delete(&NodeModel{}, id)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return node.ErrNodeNotFound
 	}
 	return nil
 }

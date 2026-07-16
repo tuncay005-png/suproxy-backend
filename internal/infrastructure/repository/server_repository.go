@@ -105,8 +105,12 @@ func (r *serverRepository) Update(ctx context.Context, srv *server.Server) error
 }
 
 func (r *serverRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	if err := r.db.WithContext(ctx).Delete(&ServerModel{}, id).Error; err != nil {
-		return err
+	result := r.db.WithContext(ctx).Delete(&ServerModel{}, id)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return server.ErrServerNotFound
 	}
 	return nil
 }

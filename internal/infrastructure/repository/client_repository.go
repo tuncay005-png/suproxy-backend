@@ -108,8 +108,12 @@ func (r *clientRepository) Update(ctx context.Context, client *xray.Client) erro
 }
 
 func (r *clientRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	if err := r.db.WithContext(ctx).Delete(&ClientModel{}, id).Error; err != nil {
-		return err
+	result := r.db.WithContext(ctx).Delete(&ClientModel{}, id)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return xray.ErrClientNotFound
 	}
 	return nil
 }
