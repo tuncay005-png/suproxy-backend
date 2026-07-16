@@ -14,6 +14,7 @@ import (
 	"github.com/suproxy/backend/internal/domain/session"
 	"github.com/suproxy/backend/internal/domain/user"
 	"github.com/suproxy/backend/internal/domain/xray"
+	"github.com/suproxy/backend/internal/infrastructure/security"
 )
 
 // Atomic counter for unique port generation in tests
@@ -62,7 +63,13 @@ func CreateTestUser(username, email, password string) (*user.User, error) {
 		return nil, err
 	}
 
-	passwordVO, err := user.NewPassword(password)
+	// Hash the password before creating the user
+	hashedPassword, err := security.HashPassword(password)
+	if err != nil {
+		return nil, err
+	}
+
+	passwordVO, err := user.NewPassword(hashedPassword)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +100,13 @@ func CreateTestAdminUser() (*user.User, error) {
 		return nil, err
 	}
 
-	passwordVO, err := user.NewPassword(fixture.Password)
+	// Hash the password before creating the user
+	hashedPassword, err := security.HashPassword(fixture.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	passwordVO, err := user.NewPassword(hashedPassword)
 	if err != nil {
 		return nil, err
 	}
