@@ -161,6 +161,9 @@ func TestAdminHandler_ListClients(t *testing.T) {
 
 		client, err := testutil.CreateTestClientWithDefaults(inbound.ID, user.ID)
 		require.NoError(t, err)
+		// Explicitly enable the client for this test
+		err = client.Enable()
+		require.NoError(t, err)
 		err = app.Container.ClientRepository.Create(ctx, client)
 		require.NoError(t, err)
 
@@ -246,6 +249,9 @@ func TestAdminHandler_GetClient(t *testing.T) {
 
 		client, err := testutil.CreateTestClientWithDefaults(inbound.ID, user.ID)
 		require.NoError(t, err)
+		// Explicitly enable the client for this test
+		err = client.Enable()
+		require.NoError(t, err)
 		err = app.Container.ClientRepository.Create(ctx, client)
 		require.NoError(t, err)
 
@@ -329,6 +335,9 @@ func TestAdminHandler_CreateClient(t *testing.T) {
 		err = app.Container.XrayInstanceRepository.Create(ctx, instance)
 		require.NoError(t, err)
 
+		// Start the mock Xray instance so health checks pass
+		testutil.StartMockXrayInstance(ctx, t, app.Container.XrayProcessManager, instance.ID)
+
 		inbound, err := testutil.CreateTestInboundWithDefaults(instance.ID)
 		require.NoError(t, err)
 		err = app.Container.InboundRepository.Create(ctx, inbound)
@@ -408,11 +417,17 @@ func TestAdminHandler_DeleteClient(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, app.Container.XrayInstanceRepository.Create(ctx, instance))
 
+		// Start the mock Xray instance so health checks pass
+		testutil.StartMockXrayInstance(ctx, t, app.Container.XrayProcessManager, instance.ID)
+
 		inbound, err := testutil.CreateTestInboundWithDefaults(instance.ID)
 		require.NoError(t, err)
 		require.NoError(t, app.Container.InboundRepository.Create(ctx, inbound))
 
 		client, err := testutil.CreateTestClientWithDefaults(inbound.ID, user.ID)
+		require.NoError(t, err)
+		// Explicitly enable the client for this test
+		err = client.Enable()
 		require.NoError(t, err)
 		require.NoError(t, app.Container.ClientRepository.Create(ctx, client))
 

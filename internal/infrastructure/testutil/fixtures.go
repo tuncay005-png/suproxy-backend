@@ -214,7 +214,7 @@ func DefaultClientFixture(inboundID, userID uuid.UUID) ClientFixture {
 	}
 }
 
-// CreateTestClient creates a test client entity
+// CreateTestClient creates a test client entity (disabled by default)
 func CreateTestClient(fixture ClientFixture) (*xray.Client, error) {
 	client, err := xray.NewClient(
 		fixture.InboundID,
@@ -223,6 +223,16 @@ func CreateTestClient(fixture ClientFixture) (*xray.Client, error) {
 		fixture.Flow,
 		fixture.Email,
 	)
+	if err != nil {
+		return nil, err
+	}
+	// Don't enable by default - let tests explicitly enable if needed
+	return client, nil
+}
+
+// CreateEnabledTestClient creates a test client entity that is already enabled
+func CreateEnabledTestClient(fixture ClientFixture) (*xray.Client, error) {
+	client, err := CreateTestClient(fixture)
 	if err != nil {
 		return nil, err
 	}

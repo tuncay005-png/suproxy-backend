@@ -285,6 +285,9 @@ func TestAdminHandler_CreateInbound(t *testing.T) {
 		instance, _ := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 		_ = app.Container.XrayInstanceRepository.Create(ctx, instance) // Test setup
 
+		// Start the mock Xray instance so health checks pass
+		testutil.StartMockXrayInstance(ctx, t, app.Container.XrayProcessManager, instance.ID)
+
 		httpCtx := testutil.NewHTTPTestContext(t)
 		httpCtx.Router = router
 
@@ -384,6 +387,9 @@ func TestAdminHandler_DeleteInbound(t *testing.T) {
 
 		instance, _ := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 		_ = app.Container.XrayInstanceRepository.Create(ctx, instance) // Test setup
+
+		// Start the mock Xray instance so health checks pass
+		testutil.StartMockXrayInstance(ctx, t, app.Container.XrayProcessManager, instance.ID)
 
 		inbound, _ := testutil.CreateTestInboundWithDefaults(instance.ID)
 		_ = app.Container.InboundRepository.Create(ctx, inbound) // Test setup

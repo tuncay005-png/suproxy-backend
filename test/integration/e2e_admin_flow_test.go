@@ -330,6 +330,9 @@ func TestE2E_XrayProvisioningFlow(t *testing.T) {
 	instance, _ := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 	_ = app.Container.XrayInstanceRepository.Create(ctx, instance) // Test setup
 
+	// Start the mock Xray instance so health checks pass
+	testutil.StartMockXrayInstance(ctx, t, app.Container.XrayProcessManager, instance.ID)
+
 	// Step 2: List instances
 	t.Log("Step 2: List Xray Instances")
 	resp = httpCtx.GET("/api/v1/admin/xray/instances", testutil.AuthHeader(adminToken))
@@ -437,6 +440,9 @@ func TestE2E_ClientLifecycleFlow(t *testing.T) {
 
 	instance, _ := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 	_ = app.Container.XrayInstanceRepository.Create(ctx, instance) // Test setup
+
+	// Start the mock Xray instance so health checks pass
+	testutil.StartMockXrayInstance(ctx, t, app.Container.XrayProcessManager, instance.ID)
 
 	inbound, _ := testutil.CreateTestInboundWithDefaults(instance.ID)
 	_ = app.Container.InboundRepository.Create(ctx, inbound) // Test setup
@@ -546,6 +552,9 @@ func TestE2E_InboundLifecycleFlow(t *testing.T) {
 
 	instance, _ := testutil.CreateTestXrayInstanceWithDefaults(testNode.ID)
 	_ = app.Container.XrayInstanceRepository.Create(ctx, instance) // Test setup
+
+	// Start the mock Xray instance so health checks pass
+	testutil.StartMockXrayInstance(ctx, t, app.Container.XrayProcessManager, instance.ID)
 
 	// Admin login
 	loginReq := dto.LoginRequest{

@@ -60,6 +60,9 @@ func TestConfigGenerator_Generate(t *testing.T) {
 
 		client, err := testutil.CreateTestClientWithDefaults(inbound.ID, user.ID)
 		require.NoError(t, err)
+		// Enable client so it appears in config
+		err = client.Enable()
+		require.NoError(t, err)
 		err = clientRepo.Create(ctx, client)
 		require.NoError(t, err)
 
@@ -180,6 +183,9 @@ func TestConfigGenerator_GenerateJSON(t *testing.T) {
 		require.NoError(t, err)
 
 		client, err := testutil.CreateTestClientWithDefaults(inbound.ID, user.ID)
+		require.NoError(t, err)
+		// Enable client so it appears in config
+		err = client.Enable()
 		require.NoError(t, err)
 		err = clientRepo.Create(ctx, client)
 		require.NoError(t, err)
