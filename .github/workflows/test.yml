@@ -89,7 +89,7 @@ jobs:
           TEST_DB_PASSWORD: suproxy_test
           TEST_DB_NAME: suproxy_test
           CI: true
-        run: go test -v -race -coverprofile=coverage-integration.out ./...
+        run: go test -v -race -p 1 -coverprofile=coverage-integration.out ./...
 
       - name: Upload integration test coverage
         uses: codecov/codecov-action@v4
