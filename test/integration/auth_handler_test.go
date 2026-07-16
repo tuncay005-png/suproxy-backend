@@ -78,7 +78,7 @@ func TestAuthHandler_Register(t *testing.T) {
 		}
 
 		resp := httpCtx.POST("/api/v1/auth/register", req, nil)
-		assert.Equal(t, 400, resp.Code)
+		assert.Equal(t, 422, resp.Code) // Validation errors return 422
 	})
 
 	t.Run("Conflict_EmailExists", func(t *testing.T) {

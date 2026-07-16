@@ -2,6 +2,8 @@ package testutil
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"sync/atomic"
 	"testing"
@@ -377,8 +379,9 @@ func CreateTestNodeWithDefaults(serverID uuid.UUID) (*node.Node, error) {
 func CreateTestRefreshToken(ctx context.Context, t *testing.T, repo session.RefreshTokenRepository, userID uuid.UUID, token string) *session.RefreshToken {
 	t.Helper()
 
-	// Use a simple hash for testing
-	tokenHash := fmt.Sprintf("%x", token)
+	// Use SHA256 hash consistent with production code
+	hash := sha256.Sum256([]byte(token))
+	tokenHash := hex.EncodeToString(hash[:])
 
 	refreshToken := session.NewRefreshToken(
 		userID,
@@ -394,4 +397,20 @@ func CreateTestRefreshToken(ctx context.Context, t *testing.T, repo session.Refr
 	require.NoError(t, err, "Failed to create refresh token")
 
 	return refreshToken
+}
+
+// StartMockXrayInstance starts a mock Xray process for testing
+// This is needed when tests create inbounds or clients that trigger health checks
+func StartMockXrayInstance(ctx context.Context, t *testing.T, processManager interface{}, instanceID uuid.UUID) {
+	t.Helper()
+	
+	// Type assert to access Start method
+	type processStarter interface {
+		Start(ctx context.Context, instanceID uuid.UUID) error
+	}
+	
+	if starter, ok := processManager.(processStarter); ok {
+		err := starter.Start(ctx, instanceID)
+		require.NoError(t, err, "Failed to start mock Xray instance")
+	}
 }

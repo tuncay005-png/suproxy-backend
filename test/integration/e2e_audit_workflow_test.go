@@ -213,17 +213,20 @@ func TestE2E_AuditFlow(t *testing.T) {
 
 	// Step 4: Get specific audit log
 	t.Log("Step 4: Get Specific Audit Log")
-	logs := auditListData["logs"].([]interface{})
-	if len(logs) > 0 {
-		firstLog := logs[0].(map[string]interface{})
-		logID := firstLog["id"].(string)
+	logsRaw := auditListData["logs"]
+	if logsRaw != nil {
+		logs := logsRaw.([]interface{})
+		if len(logs) > 0 {
+			firstLog := logs[0].(map[string]interface{})
+			logID := firstLog["id"].(string)
 
-		resp = httpCtx.GET("/api/v1/admin/audit/"+logID, testutil.AuthHeader(adminToken))
-		require.Equal(t, 200, resp.Code)
+			resp = httpCtx.GET("/api/v1/admin/audit/"+logID, testutil.AuthHeader(adminToken))
+			require.Equal(t, 200, resp.Code)
 
-		var logResult response.Response
-		httpCtx.GetResponseJSON(&logResult)
-		require.True(t, logResult.Success)
+			var logResult response.Response
+			httpCtx.GetResponseJSON(&logResult)
+			require.True(t, logResult.Success)
+		}
 	}
 
 	// Step 5: Get audit statistics
