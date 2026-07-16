@@ -55,13 +55,20 @@ func (r *userRepository) FindByEmail(ctx context.Context, email user.Email) (*us
 }
 
 func (r *userRepository) Update(ctx context.Context, u *user.User) error {
+	// First check if the user exists
+	var existing UserModel
+	if err := r.db.WithContext(ctx).First(&existing, u.ID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return user.ErrUserNotFound
+		}
+		return err
+	}
+
+	// Update the existing record
 	userModel := toUserModel(u)
 	result := r.db.WithContext(ctx).Save(userModel)
 	if result.Error != nil {
 		return result.Error
-	}
-	if result.RowsAffected == 0 {
-		return user.ErrUserNotFound
 	}
 	return nil
 }

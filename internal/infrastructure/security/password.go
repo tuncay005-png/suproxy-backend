@@ -2,15 +2,28 @@ package security
 
 import (
 	"errors"
+	"os"
+	"strconv"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
-const bcryptCost = 12
+const defaultBcryptCost = 12
 
 var (
 	ErrInvalidPassword = errors.New("invalid password")
 )
+
+// getBcryptCost returns the bcrypt cost, using a lower value in test environment
+func getBcryptCost() int {
+	// Check if we're in test environment
+	if testCost := os.Getenv("BCRYPT_COST"); testCost != "" {
+		if cost, err := strconv.Atoi(testCost); err == nil && cost >= bcrypt.MinCost && cost <= bcrypt.MaxCost {
+			return cost
+		}
+	}
+	return defaultBcryptCost
+}
 
 // HashPassword hashes a plain text password using bcrypt
 func HashPassword(password string) (string, error) {
@@ -18,7 +31,7 @@ func HashPassword(password string) (string, error) {
 		return "", ErrInvalidPassword
 	}
 
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcryptCost)
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), getBcryptCost())
 	if err != nil {
 		return "", err
 	}
