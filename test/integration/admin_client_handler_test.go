@@ -161,9 +161,6 @@ func TestAdminHandler_ListClients(t *testing.T) {
 
 		client, err := testutil.CreateTestClientWithDefaults(inbound.ID, user.ID)
 		require.NoError(t, err)
-		// Explicitly enable the client for this test
-		err = client.Enable()
-		require.NoError(t, err)
 		err = app.Container.ClientRepository.Create(ctx, client)
 		require.NoError(t, err)
 
@@ -248,9 +245,6 @@ func TestAdminHandler_GetClient(t *testing.T) {
 		require.NoError(t, err)
 
 		client, err := testutil.CreateTestClientWithDefaults(inbound.ID, user.ID)
-		require.NoError(t, err)
-		// Explicitly enable the client for this test
-		err = client.Enable()
 		require.NoError(t, err)
 		err = app.Container.ClientRepository.Create(ctx, client)
 		require.NoError(t, err)
@@ -425,9 +419,6 @@ func TestAdminHandler_DeleteClient(t *testing.T) {
 		require.NoError(t, app.Container.InboundRepository.Create(ctx, inbound))
 
 		client, err := testutil.CreateTestClientWithDefaults(inbound.ID, user.ID)
-		require.NoError(t, err)
-		// Explicitly enable the client for this test
-		err = client.Enable()
 		require.NoError(t, err)
 		require.NoError(t, app.Container.ClientRepository.Create(ctx, client))
 

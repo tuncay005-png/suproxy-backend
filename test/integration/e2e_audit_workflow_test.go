@@ -208,24 +208,32 @@ func TestE2E_AuditFlow(t *testing.T) {
 	require.True(t, auditListResult.Success)
 
 	auditListData := auditListResult.Data.(map[string]interface{})
-	total := int(auditListData["total"].(float64))
+	
+	// Safe type assertion for total
+	var total int
+	if totalRaw, ok := auditListData["total"]; ok && totalRaw != nil {
+		if totalFloat, ok := totalRaw.(float64); ok {
+			total = int(totalFloat)
+		}
+	}
 	assert.GreaterOrEqual(t, total, 1, "Should have at least one audit log")
 
 	// Step 4: Get specific audit log
 	t.Log("Step 4: Get Specific Audit Log")
 	logsRaw := auditListData["logs"]
 	if logsRaw != nil {
-		logs := logsRaw.([]interface{})
-		if len(logs) > 0 {
-			firstLog := logs[0].(map[string]interface{})
-			logID := firstLog["id"].(string)
+		// Safe type assertion for logs array
+		if logs, ok := logsRaw.([]interface{}); ok && len(logs) > 0 {
+			if firstLog, ok := logs[0].(map[string]interface{}); ok {
+				if logID, ok := firstLog["id"].(string); ok {
+					resp = httpCtx.GET("/api/v1/admin/audit/"+logID, testutil.AuthHeader(adminToken))
+					require.Equal(t, 200, resp.Code)
 
-			resp = httpCtx.GET("/api/v1/admin/audit/"+logID, testutil.AuthHeader(adminToken))
-			require.Equal(t, 200, resp.Code)
-
-			var logResult response.Response
-			httpCtx.GetResponseJSON(&logResult)
-			require.True(t, logResult.Success)
+					var logResult response.Response
+					httpCtx.GetResponseJSON(&logResult)
+					require.True(t, logResult.Success)
+				}
+			}
 		}
 	}
 
@@ -291,7 +299,14 @@ func TestE2E_AuditFilteringFlow(t *testing.T) {
 	var allLogsResult response.Response
 	httpCtx.GetResponseJSON(&allLogsResult)
 	allLogsData := allLogsResult.Data.(map[string]interface{})
-	totalAll := int(allLogsData["total"].(float64))
+	
+	// Safe type assertion for total
+	var totalAll int
+	if totalRaw, ok := allLogsData["total"]; ok && totalRaw != nil {
+		if totalFloat, ok := totalRaw.(float64); ok {
+			totalAll = int(totalFloat)
+		}
+	}
 	assert.GreaterOrEqual(t, totalAll, 6)
 
 	// Step 2: Filter by action
@@ -302,7 +317,14 @@ func TestE2E_AuditFilteringFlow(t *testing.T) {
 	var loginLogsResult response.Response
 	httpCtx.GetResponseJSON(&loginLogsResult)
 	loginLogsData := loginLogsResult.Data.(map[string]interface{})
-	totalLogin := int(loginLogsData["total"].(float64))
+	
+	// Safe type assertion for total
+	var totalLogin int
+	if totalRaw, ok := loginLogsData["total"]; ok && totalRaw != nil {
+		if totalFloat, ok := totalRaw.(float64); ok {
+			totalLogin = int(totalFloat)
+		}
+	}
 	assert.GreaterOrEqual(t, totalLogin, 3)
 
 	// Step 3: Filter by user
@@ -313,7 +335,14 @@ func TestE2E_AuditFilteringFlow(t *testing.T) {
 	var userLogsResult response.Response
 	httpCtx.GetResponseJSON(&userLogsResult)
 	userLogsData := userLogsResult.Data.(map[string]interface{})
-	totalUser := int(userLogsData["total"].(float64))
+	
+	// Safe type assertion for total
+	var totalUser int
+	if totalRaw, ok := userLogsData["total"]; ok && totalRaw != nil {
+		if totalFloat, ok := totalRaw.(float64); ok {
+			totalUser = int(totalFloat)
+		}
+	}
 	assert.GreaterOrEqual(t, totalUser, 6)
 
 	// Step 4: Pagination
@@ -324,7 +353,14 @@ func TestE2E_AuditFilteringFlow(t *testing.T) {
 	var paginatedResult response.Response
 	httpCtx.GetResponseJSON(&paginatedResult)
 	paginatedData := paginatedResult.Data.(map[string]interface{})
-	logs := paginatedData["logs"].([]interface{})
+	
+	// Safe type assertion for logs array
+	var logs []interface{}
+	if logsRaw, ok := paginatedData["logs"]; ok && logsRaw != nil {
+		if logsArray, ok := logsRaw.([]interface{}); ok {
+			logs = logsArray
+		}
+	}
 	assert.LessOrEqual(t, len(logs), 2)
 
 	t.Log("✅ E2E Audit Filtering Flow Complete")
@@ -385,7 +421,14 @@ func TestE2E_FullAdminWorkflow(t *testing.T) {
 	var usersResult response.Response
 	httpCtx.GetResponseJSON(&usersResult)
 	usersData := usersResult.Data.(map[string]interface{})
-	totalUsers := int(usersData["total"].(float64))
+	
+	// Safe type assertion for total
+	var totalUsers int
+	if totalRaw, ok := usersData["total"]; ok && totalRaw != nil {
+		if totalFloat, ok := totalRaw.(float64); ok {
+			totalUsers = int(totalFloat)
+		}
+	}
 	assert.GreaterOrEqual(t, totalUsers, 3)
 
 	t.Log("Step 2.2: Deactivate User 1")
@@ -414,7 +457,14 @@ func TestE2E_FullAdminWorkflow(t *testing.T) {
 	var auditResult response.Response
 	httpCtx.GetResponseJSON(&auditResult)
 	auditData := auditResult.Data.(map[string]interface{})
-	totalAudit := int(auditData["total"].(float64))
+	
+	// Safe type assertion for total
+	var totalAudit int
+	if totalRaw, ok := auditData["total"]; ok && totalRaw != nil {
+		if totalFloat, ok := totalRaw.(float64); ok {
+			totalAudit = int(totalFloat)
+		}
+	}
 	assert.GreaterOrEqual(t, totalAudit, 3, "Should have audit logs for login and status changes")
 
 	t.Log("Step 3.2: Get Audit Statistics")
