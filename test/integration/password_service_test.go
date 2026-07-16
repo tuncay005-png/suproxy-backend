@@ -222,12 +222,14 @@ func TestPasswordService_LongPasswords(t *testing.T) {
 	}
 
 	tests := []struct {
-		name   string
-		length int
+		name        string
+		length      int
+		expectError bool
 	}{
-		{"Length_50", 50},
-		{"Length_100", 100},
-		{"Length_200", 200},
+		{"Length_50", 50, false},
+		{"Length_72", 72, false},      // bcrypt limit
+		{"Length_100", 100, true},     // exceeds bcrypt limit
+		{"Length_200", 200, true},     // exceeds bcrypt limit
 	}
 
 	for _, tt := range tests {
@@ -240,6 +242,10 @@ func TestPasswordService_LongPasswords(t *testing.T) {
 			password += "123" // Add numbers for validation
 
 			hash, err := security.HashPassword(password)
+			if tt.expectError {
+				assert.Error(t, err, "Expected error for password length %d (exceeds bcrypt 72-byte limit)", tt.length)
+				return
+			}
 			require.NoError(t, err)
 
 			err = security.CheckPassword(hash, password)

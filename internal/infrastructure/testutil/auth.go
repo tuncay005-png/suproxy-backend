@@ -2,6 +2,7 @@ package testutil
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
@@ -112,9 +113,10 @@ func (ah *AuthHelper) CreateMultipleUsers(userRepo user.Repository, count int) [
 	users := make([]*user.User, count)
 
 	for i := 0; i < count; i++ {
+		uniqueID := uuid.New().String()[:8]
 		fixture := UserFixture{
-			Username: "testuser" + string(rune(i)),
-			Email:    "user" + string(rune(i)) + "@example.com",
+			Username: fmt.Sprintf("testuser_%s", uniqueID),
+			Email:    fmt.Sprintf("user_%s@example.com", uniqueID),
 			Password: "Test123!@#",
 		}
 

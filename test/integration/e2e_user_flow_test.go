@@ -85,12 +85,12 @@ func TestE2E_UserRegistrationFlow(t *testing.T) {
 	require.True(t, registerResult.Success, "Expected success=true, got: %+v", registerResult)
 	require.NotNil(t, registerResult.Data)
 
-	// Extract tokens from registration response
+	// Registration only returns user, not tokens
 	registerData, ok := registerResult.Data.(map[string]interface{})
 	require.True(t, ok, "Expected data to be map, got: %T", registerResult.Data)
-	accessToken, ok := registerData["access_token"].(string)
-	require.True(t, ok, "Expected access_token in response")
-	require.NotEmpty(t, accessToken)
+	userDataMap, ok := registerData["user"].(map[string]interface{})
+	require.True(t, ok, "Expected user in response")
+	require.NotEmpty(t, userDataMap["id"], "Expected user ID in response")
 
 	// Step 2: Login with same credentials
 	t.Log("Step 2: User Login")
@@ -188,8 +188,6 @@ func TestE2E_UserSessionFlow(t *testing.T) {
 	refreshReq := dto.RefreshTokenRequest{
 		RefreshToken: refreshToken,
 	}
-
-	// Note: Login already created the refresh token, no need to create it again
 
 	resp = httpCtx.POST("/api/v1/auth/refresh", refreshReq, nil)
 	require.Equal(t, 200, resp.Code)

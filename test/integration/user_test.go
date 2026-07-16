@@ -148,8 +148,8 @@ func TestUserAuthentication_Integration(t *testing.T) {
 		// Validate token
 		claims, err := authHelper.ValidateToken(accessToken)
 		require.NoError(t, err)
-		assert.Equal(t, testUser.ID, claims.UserID)
-		assert.Equal(t, user.RoleUser, claims.Role)
+		assert.Equal(t, testUser.ID.String(), claims.UserID) // JWT stores UserID as string
+		assert.Equal(t, string(user.RoleUser), claims.Role)   // JWT stores Role as string
 	})
 
 	t.Run("Generate Admin Token", func(t *testing.T) {
@@ -167,8 +167,8 @@ func TestUserAuthentication_Integration(t *testing.T) {
 		// Validate token
 		claims, err := authHelper.ValidateToken(adminToken)
 		require.NoError(t, err)
-		assert.Equal(t, adminUser.ID, claims.UserID)
-		assert.Equal(t, user.RoleAdmin, claims.Role)
+		assert.Equal(t, adminUser.ID.String(), claims.UserID) // JWT stores UserID as string
+		assert.Equal(t, string(user.RoleAdmin), claims.Role)   // JWT stores Role as string
 	})
 
 	t.Run("Generate Token Pair", func(t *testing.T) {
@@ -187,11 +187,11 @@ func TestUserAuthentication_Integration(t *testing.T) {
 		// Validate both tokens
 		accessClaims, err := authHelper.ValidateToken(tokenPair.AccessToken)
 		require.NoError(t, err)
-		assert.Equal(t, testUser.ID, accessClaims.UserID)
+		assert.Equal(t, testUser.ID.String(), accessClaims.UserID) // JWT stores UserID as string
 
 		refreshClaims, err := authHelper.ValidateToken(tokenPair.RefreshToken)
 		require.NoError(t, err)
-		assert.Equal(t, testUser.ID, refreshClaims.UserID)
+		assert.Equal(t, testUser.ID.String(), refreshClaims.UserID) // JWT stores UserID as string
 	})
 
 	t.Run("Reject Invalid Token", func(t *testing.T) {

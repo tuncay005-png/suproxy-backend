@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/suproxy/backend/internal/infrastructure/config"
 )
 
@@ -76,6 +77,7 @@ func (m *Manager) generateToken(userID, email, role string, tokenType TokenType,
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(now.Add(expiry)),
 			NotBefore: jwt.NewNumericDate(now),
+			ID:        uuid.New().String(), // Add unique JTI to prevent duplicate tokens
 		},
 	}
 
