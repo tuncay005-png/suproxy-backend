@@ -65,7 +65,6 @@ func (r *Router) Setup() {
 	r.engine.Use(middleware.RequestLogger(r.logger))
 
 	// Health check endpoints (no auth required)
-	r.engine.GET("/health", r.healthHandler.Health)
 	r.engine.GET("/ready", r.healthHandler.Ready)
 
 	// Metrics endpoint (no auth required - can be protected with network rules)

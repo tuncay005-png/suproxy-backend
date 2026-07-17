@@ -37,6 +37,9 @@ WORKDIR /app
 # Copy binary from builder
 COPY --from=builder --chown=suproxy:suproxy /build/suproxy-api .
 
+# Copy migrations
+COPY --chown=suproxy:suproxy migrations ./migrations
+
 # Copy config template
 COPY --chown=suproxy:suproxy configs/config.yaml /etc/suproxy/config.yaml
 
