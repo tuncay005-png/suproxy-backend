@@ -1,0 +1,305 @@
+name: Canary Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to canary deploy'
+        required: true
+        type: string
+      canary_percentage:
+        description: 'Percentage of traffic to canary (1-100)'
+        required: true
+        default: '10'
+        type: string
+      monitoring_duration:
+        description: 'Monitoring duration in minutes'
+        required: false
+        default: '5'
+        type: string
+      auto_promote:
+        description: 'Automatically promote if healthy'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  deploy-canary:
+    name: Deploy Canary Version
+    runs-on: ubuntu-latest
+    outputs:
+      canary_healthy: ${{ steps.health.outputs.healthy }}
+    
+    steps:
+      - name: Deploy Canary
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          VERSION: ${{ inputs.version }}
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+          CANARY_PERCENTAGE: ${{ inputs.canary_percentage }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.VPS_PORT || '22' }}
+          envs: VERSION,GITHUB_REPOSITORY_OWNER,CANARY_PERCENTAGE
+          script: |
+            echo "🐤 Deploying canary version: $VERSION"
+            echo "📊 Canary traffic: $CANARY_PERCENTAGE%"
+            
+            cd /opt/suproxy
+            
+            # Create canary compose file
+            CANARY_PORT=8083
+            COMPOSE_FILE="docker-compose.canary.yml"
+            
+            if [ ! -f "$COMPOSE_FILE" ]; then
+              cp docker-compose.production.yml $COMPOSE_FILE
+              sed -i "s/8080:8080/$CANARY_PORT:8080/g" $COMPOSE_FILE
+              sed -i "s/suproxy-api-prod/suproxy-api-canary/g" $COMPOSE_FILE
+              sed -i "s/suproxy-postgres-prod/suproxy-postgres-canary/g" $COMPOSE_FILE
+            fi
+            
+            # Create canary .env
+            cp .env.production .env.canary
+            sed -i "s/^VERSION=.*/VERSION=$VERSION/" .env.canary
+            sed -i "s/^API_PORT=.*/API_PORT=$CANARY_PORT/" .env.canary
+            sed -i "s|^DOCKER_REGISTRY=.*|DOCKER_REGISTRY=ghcr.io/$GITHUB_REPOSITORY_OWNER/suproxy-backend|" .env.canary
+            
+            # Pull and deploy canary
+            export DOCKER_REGISTRY="ghcr.io/$GITHUB_REPOSITORY_OWNER/suproxy-backend"
+            docker pull "$DOCKER_REGISTRY:$VERSION"
+            docker-compose -f $COMPOSE_FILE --env-file .env.canary up -d
+            
+            echo "✅ Canary deployed on port $CANARY_PORT"
+
+      - name: Configure Traffic Split
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          CANARY_PERCENTAGE: ${{ inputs.canary_percentage }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.VPS_PORT || '22' }}
+          envs: CANARY_PERCENTAGE
+          script: |
+            echo "🔀 Configuring $CANARY_PERCENTAGE% traffic to canary"
+            
+            # Configure nginx for canary routing
+            if [ -f /etc/nginx/sites-available/suproxy ]; then
+              # Create split configuration
+              cat > /tmp/canary.conf << EOF
+            upstream suproxy_backend {
+                server localhost:8080 weight=$((100 - CANARY_PERCENTAGE));
+                server localhost:8083 weight=$CANARY_PERCENTAGE;
+            }
+            EOF
+              
+              # Update nginx config
+              if ! grep -q "upstream suproxy_backend" /etc/nginx/sites-available/suproxy; then
+                sed -i '/server {/i upstream suproxy_backend {\n    server localhost:8080 weight='$((100 - CANARY_PERCENTAGE))';\n    server localhost:8083 weight='$CANARY_PERCENTAGE';\n}\n' /etc/nginx/sites-available/suproxy
+                sed -i 's/proxy_pass http:\/\/localhost:[0-9]\+/proxy_pass http:\/\/suproxy_backend/g' /etc/nginx/sites-available/suproxy
+              fi
+              
+              nginx -t && systemctl reload nginx
+              echo "✅ Nginx configured for canary routing"
+            else
+              echo "⚠️  Manual canary routing required - nginx not configured"
+            fi
+
+      - name: Health Check Canary
+        id: health
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.VPS_PORT || '22' }}
+          script: |
+            echo "🏥 Checking canary health"
+            
+            CANARY_PORT=8083
+            MAX_RETRIES=30
+            RETRY_COUNT=0
+            
+            while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+              if curl -f -s http://localhost:$CANARY_PORT/health > /dev/null 2>&1; then
+                echo "✅ Canary is healthy"
+                echo "healthy=true" >> $GITHUB_OUTPUT
+                exit 0
+              fi
+              RETRY_COUNT=$((RETRY_COUNT+1))
+              sleep 2
+            done
+            
+            echo "❌ Canary health check failed"
+            echo "healthy=false" >> $GITHUB_OUTPUT
+            exit 1
+
+  monitor-canary:
+    name: Monitor Canary Performance
+    runs-on: ubuntu-latest
+    needs: deploy-canary
+    if: needs.deploy-canary.outputs.canary_healthy == 'true'
+    
+    steps:
+      - name: Monitor Metrics
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          MONITORING_DURATION: ${{ inputs.monitoring_duration }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.VPS_PORT || '22' }}
+          envs: MONITORING_DURATION
+          script: |
+            echo "📊 Monitoring canary for $MONITORING_DURATION minutes"
+            
+            CANARY_PORT=8083
+            PROD_PORT=8080
+            DURATION_SECONDS=$((MONITORING_DURATION * 60))
+            CHECK_INTERVAL=30
+            ITERATIONS=$((DURATION_SECONDS / CHECK_INTERVAL))
+            
+            for i in $(seq 1 $ITERATIONS); do
+              echo "Check $i/$ITERATIONS"
+              
+              # Check canary health
+              if ! curl -f -s http://localhost:$CANARY_PORT/health > /dev/null 2>&1; then
+                echo "❌ Canary health check failed during monitoring"
+                exit 1
+              fi
+              
+              # Check production health (baseline)
+              if ! curl -f -s http://localhost:$PROD_PORT/health > /dev/null 2>&1; then
+                echo "⚠️  Production health check failed"
+              fi
+              
+              echo "✅ Canary still healthy ($i/$ITERATIONS)"
+              sleep $CHECK_INTERVAL
+            done
+            
+            echo "✅ Canary monitoring complete - no issues detected"
+
+  promote-canary:
+    name: Promote Canary to Production
+    runs-on: ubuntu-latest
+    needs: [deploy-canary, monitor-canary]
+    if: ${{ inputs.auto_promote == true && needs.deploy-canary.outputs.canary_healthy == 'true' }}
+    
+    steps:
+      - name: Promote to Production
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          VERSION: ${{ inputs.version }}
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.VPS_PORT || '22' }}
+          envs: VERSION,GITHUB_REPOSITORY_OWNER
+          script: |
+            echo "🚀 Promoting canary to production"
+            
+            cd /opt/suproxy
+            
+            # Update production to canary version
+            sed -i "s/^VERSION=.*/VERSION=$VERSION/" .env.production
+            sed -i "s|^DOCKER_REGISTRY=.*|DOCKER_REGISTRY=ghcr.io/$GITHUB_REPOSITORY_OWNER/suproxy-backend|" .env.production
+            
+            export VERSION=$VERSION
+            export GITHUB_REPOSITORY_OWNER=$GITHUB_REPOSITORY_OWNER
+            export DOCKER_REGISTRY="ghcr.io/$GITHUB_REPOSITORY_OWNER/suproxy-backend"
+            
+            # Deploy to production
+            bash /opt/suproxy/scripts/deploy.sh
+            
+            echo "✅ Canary promoted to production"
+
+      - name: Remove Canary
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.VPS_PORT || '22' }}
+          script: |
+            echo "🧹 Cleaning up canary deployment"
+            
+            cd /opt/suproxy
+            
+            if [ -f "docker-compose.canary.yml" ]; then
+              docker-compose -f docker-compose.canary.yml down
+              echo "✅ Canary environment cleaned up"
+            fi
+            
+            # Remove nginx canary routing
+            if [ -f /etc/nginx/sites-available/suproxy ]; then
+              # Restore direct routing
+              sed -i '/upstream suproxy_backend/,/}/d' /etc/nginx/sites-available/suproxy
+              sed -i 's/proxy_pass http:\/\/suproxy_backend/proxy_pass http:\/\/localhost:8080/g' /etc/nginx/sites-available/suproxy
+              nginx -t && systemctl reload nginx
+              echo "✅ Nginx routing restored"
+            fi
+
+  rollback-canary:
+    name: Rollback Failed Canary
+    runs-on: ubuntu-latest
+    needs: [deploy-canary, monitor-canary]
+    if: ${{ always() && (needs.deploy-canary.outputs.canary_healthy != 'true' || needs.monitor-canary.result == 'failure') }}
+    
+    steps:
+      - name: Rollback Canary
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.VPS_PORT || '22' }}
+          script: |
+            echo "🔄 Rolling back failed canary"
+            
+            cd /opt/suproxy
+            
+            # Stop canary
+            if [ -f "docker-compose.canary.yml" ]; then
+              docker-compose -f docker-compose.canary.yml down
+            fi
+            
+            # Remove nginx canary routing
+            if [ -f /etc/nginx/sites-available/suproxy ]; then
+              sed -i '/upstream suproxy_backend/,/}/d' /etc/nginx/sites-available/suproxy
+              sed -i 's/proxy_pass http:\/\/suproxy_backend/proxy_pass http:\/\/localhost:8080/g' /etc/nginx/sites-available/suproxy
+              nginx -t && systemctl reload nginx
+            fi
+            
+            echo "✅ Canary rollback complete"
+
+      - name: Create Rollback Issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const version = '${{ inputs.version }}';
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🐤 Canary Deployment Failed: ${version}`,
+              body: `## Canary Deployment Failure
+            
+            **Version:** \`${version}\`
+            **Time:** ${new Date().toISOString()}
+            
+            The canary deployment failed health checks or monitoring.
+            Automatic rollback has been performed.
+            
+            **Action Required:** Investigate the issue before attempting deployment again.`,
+              labels: ['canary-failure', 'deployment', 'urgent']
+            });

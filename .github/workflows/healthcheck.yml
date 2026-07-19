@@ -1,0 +1,197 @@
+name: Health Check
+
+on:
+  schedule:
+    # Run every 15 minutes
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+    inputs:
+      servers:
+        description: 'Servers to check (comma-separated or "all")'
+        required: false
+        default: 'all'
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  healthcheck:
+    name: Check ${{ matrix.server }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        server: [finland]  # Add more as they become available
+      fail-fast: false
+    
+    steps:
+      - name: Get Server Configuration
+        id: config
+        run: |
+          SERVER="${{ matrix.server }}"
+          
+          case "$SERVER" in
+            finland)
+              echo "host_secret=VPS_FINLAND_HOST" >> $GITHUB_OUTPUT
+              echo "user_secret=VPS_FINLAND_USER" >> $GITHUB_OUTPUT
+              echo "key_secret=VPS_FINLAND_KEY" >> $GITHUB_OUTPUT
+              echo "port_secret=VPS_FINLAND_PORT" >> $GITHUB_OUTPUT
+              echo "host_fallback=VPS_HOST" >> $GITHUB_OUTPUT
+              echo "user_fallback=VPS_USER" >> $GITHUB_OUTPUT
+              echo "key_fallback=SSH_PRIVATE_KEY" >> $GITHUB_OUTPUT
+              echo "port_fallback=VPS_PORT" >> $GITHUB_OUTPUT
+              ;;
+            germany)
+              echo "host_secret=VPS_GERMANY_HOST" >> $GITHUB_OUTPUT
+              echo "user_secret=VPS_GERMANY_USER" >> $GITHUB_OUTPUT
+              echo "key_secret=VPS_GERMANY_KEY" >> $GITHUB_OUTPUT
+              echo "port_secret=VPS_GERMANY_PORT" >> $GITHUB_OUTPUT
+              ;;
+            turkey)
+              echo "host_secret=VPS_TURKEY_HOST" >> $GITHUB_OUTPUT
+              echo "user_secret=VPS_TURKEY_USER" >> $GITHUB_OUTPUT
+              echo "key_secret=VPS_TURKEY_KEY" >> $GITHUB_OUTPUT
+              echo "port_secret=VPS_TURKEY_PORT" >> $GITHUB_OUTPUT
+              ;;
+          esac
+
+      - name: Health Check via SSH
+        id: ssh_check
+        continue-on-error: true
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets[steps.config.outputs.host_secret] || secrets[steps.config.outputs.host_fallback] }}
+          username: ${{ secrets[steps.config.outputs.user_secret] || secrets.VPS_USER }}
+          key: ${{ secrets[steps.config.outputs.key_secret] || secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets[steps.config.outputs.port_secret] || secrets.VPS_PORT || '22' }}
+          script: |
+            echo "🏥 Checking health on ${{ matrix.server }}"
+            
+            # Check if containers are running
+            cd /opt/suproxy
+            RUNNING=$(docker-compose -f docker-compose.production.yml ps --services --filter "status=running" | wc -l)
+            TOTAL=$(docker-compose -f docker-compose.production.yml ps --services | wc -l)
+            
+            if [ $RUNNING -lt $TOTAL ]; then
+              echo "❌ Not all containers running: $RUNNING/$TOTAL"
+              exit 1
+            fi
+            
+            # Check health endpoint
+            if curl -f -s http://localhost:8080/health > /dev/null 2>&1; then
+              echo "✅ ${{ matrix.server }} is healthy"
+            else
+              echo "❌ Health endpoint not responding"
+              exit 1
+            fi
+
+      - name: Create Issue on Failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const server = '${{ matrix.server }}';
+            const timestamp = new Date().toISOString();
+            
+            // Check if issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['health-check-failure', server]
+            });
+            
+            if (issues.data.length === 0) {
+              // Create new issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `🚨 Health Check Failed: ${server}`,
+                body: `## Health Check Failure
+            
+            **Server:** ${server}
+            **Time:** ${timestamp}
+            **Status:** Health check endpoint not responding
+            
+            ### Recommended Actions
+            
+            1. Check server status
+            2. Review application logs
+            3. Verify Docker containers are running
+            4. Check resource usage
+            
+            ### Investigation Commands
+            
+            \`\`\`bash
+            # SSH to server
+            ssh user@${server}-server
+            
+            # Check containers
+            docker-compose -f docker-compose.production.yml ps
+            
+            # Check logs
+            docker-compose -f docker-compose.production.yml logs --tail=100 api
+            
+            # Check health endpoint directly
+            curl http://localhost:8080/health
+            \`\`\`
+            
+            This issue will auto-close when health checks pass.`,
+                labels: ['health-check-failure', server, 'urgent']
+              });
+            }
+
+      - name: Close Issue on Success
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const server = '${{ matrix.server }}';
+            
+            // Find open health check issues for this server
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['health-check-failure', server]
+            });
+            
+            // Close them
+            for (const issue of issues.data) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed'
+              });
+              
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: '✅ Health check is now passing. Auto-closing issue.'
+              });
+            }
+
+  summary:
+    name: Health Check Summary
+    runs-on: ubuntu-latest
+    needs: healthcheck
+    if: always()
+    
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "# 🏥 Health Check Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Time:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.healthcheck.result }}" = "success" ]; then
+            echo "**Status:** ✅ All servers healthy" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Status:** ❌ Some servers unhealthy" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ Check the logs above for details" >> $GITHUB_STEP_SUMMARY
+          fi

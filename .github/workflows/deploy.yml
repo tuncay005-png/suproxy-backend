@@ -1,47 +1,336 @@
-name: SuProxy Auto Deploy
+name: Deploy to Production
 
 on:
-  push:
+  workflow_run:
+    workflows: ["Build Docker Image"]
+    types:
+      - completed
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to deploy (e.g., v1.0.42 or latest)'
+        required: false
+        default: 'latest'
+        type: string
+      servers:
+        description: 'Servers to deploy (comma-separated: finland,germany,turkey or "all")'
+        required: false
+        default: 'all'
+        type: string
 
 permissions:
   contents: read
-  packages: write
 
 jobs:
-  deploy:
+  prepare:
+    name: Prepare Deployment
     runs-on: ubuntu-latest
-
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      servers: ${{ steps.servers.outputs.matrix }}
+    
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - name: Determine Version
+        id: version
+        run: |
+          VERSION="${{ inputs.version || 'latest' }}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Deploying version: $VERSION"
+      
+      - name: Determine Servers
+        id: servers
+        run: |
+          SERVERS="${{ inputs.servers || 'all' }}"
+          
+          # Define all available servers
+          if [ "$SERVERS" = "all" ]; then
+            MATRIX='["finland"]'
+          else
+            # Convert comma-separated to JSON array
+            MATRIX=$(echo "$SERVERS" | jq -R -c 'split(",") | map(select(length > 0))')
+          fi
+          
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+          echo "🌍 Deploying to servers: $MATRIX"
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+  deploy:
+    name: Deploy to ${{ matrix.server }}
+    runs-on: ubuntu-latest
+    needs: prepare
+    strategy:
+      matrix:
+        server: ${{ fromJson(needs.prepare.outputs.servers) }}
+      max-parallel: 1  # Deploy one server at a time for safety
+      fail-fast: false  # Continue deploying to other servers if one fails
+    
+    steps:
+      - name: Get Server Configuration
+        id: config
+        run: |
+          SERVER="${{ matrix.server }}"
+          
+          # Map server names to secret names
+          case "$SERVER" in
+            finland)
+              echo "host_secret=VPS_FINLAND_HOST" >> $GITHUB_OUTPUT
+              echo "user_secret=VPS_FINLAND_USER" >> $GITHUB_OUTPUT
+              echo "key_secret=VPS_FINLAND_KEY" >> $GITHUB_OUTPUT
+              echo "port_secret=VPS_FINLAND_PORT" >> $GITHUB_OUTPUT
+              # Fallback to legacy secrets for backward compatibility
+              echo "host_fallback=VPS_HOST" >> $GITHUB_OUTPUT
+              echo "user_fallback=VPS_USER" >> $GITHUB_OUTPUT
+              echo "key_fallback=SSH_PRIVATE_KEY" >> $GITHUB_OUTPUT
+              echo "port_fallback=VPS_PORT" >> $GITHUB_OUTPUT
+              ;;
+            germany)
+              echo "host_secret=VPS_GERMANY_HOST" >> $GITHUB_OUTPUT
+              echo "user_secret=VPS_GERMANY_USER" >> $GITHUB_OUTPUT
+              echo "key_secret=VPS_GERMANY_KEY" >> $GITHUB_OUTPUT
+              echo "port_secret=VPS_GERMANY_PORT" >> $GITHUB_OUTPUT
+              ;;
+            turkey)
+              echo "host_secret=VPS_TURKEY_HOST" >> $GITHUB_OUTPUT
+              echo "user_secret=VPS_TURKEY_USER" >> $GITHUB_OUTPUT
+              echo "key_secret=VPS_TURKEY_KEY" >> $GITHUB_OUTPUT
+              echo "port_secret=VPS_TURKEY_PORT" >> $GITHUB_OUTPUT
+              ;;
+            usa)
+              echo "host_secret=VPS_USA_HOST" >> $GITHUB_OUTPUT
+              echo "user_secret=VPS_USA_USER" >> $GITHUB_OUTPUT
+              echo "key_secret=VPS_USA_KEY" >> $GITHUB_OUTPUT
+              echo "port_secret=VPS_USA_PORT" >> $GITHUB_OUTPUT
+              ;;
+            japan)
+              echo "host_secret=VPS_JAPAN_HOST" >> $GITHUB_OUTPUT
+              echo "user_secret=VPS_JAPAN_USER" >> $GITHUB_OUTPUT
+              echo "key_secret=VPS_JAPAN_KEY" >> $GITHUB_OUTPUT
+              echo "port_secret=VPS_JAPAN_PORT" >> $GITHUB_OUTPUT
+              ;;
+            singapore)
+              echo "host_secret=VPS_SINGAPORE_HOST" >> $GITHUB_OUTPUT
+              echo "user_secret=VPS_SINGAPORE_USER" >> $GITHUB_OUTPUT
+              echo "key_secret=VPS_SINGAPORE_KEY" >> $GITHUB_OUTPUT
+              echo "port_secret=VPS_SINGAPORE_PORT" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "❌ Unknown server: $SERVER"
+              exit 1
+              ;;
+          esac
+
+      - name: Deploy to ${{ matrix.server }}
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          host: ${{ secrets[steps.config.outputs.host_secret] || secrets[steps.config.outputs.host_fallback] }}
+          username: ${{ secrets[steps.config.outputs.user_secret] || secrets[steps.config.outputs.user_fallback] }}
+          key: ${{ secrets[steps.config.outputs.key_secret] || secrets[steps.config.outputs.key_fallback] }}
+          port: ${{ secrets[steps.config.outputs.port_secret] || secrets[steps.config.outputs.port_fallback] || '22' }}
+          envs: VERSION,GITHUB_REPOSITORY_OWNER
+          script: |
+            echo "🚀 Starting deployment to ${{ matrix.server }}"
+            echo "📦 Version: $VERSION"
+            echo "🏢 Owner: $GITHUB_REPOSITORY_OWNER"
+            
+            cd /opt/suproxy
+            
+            # Set environment variables in .env.production for deploy.sh
+            # Update VERSION in .env.production
+            sed -i "s/^VERSION=.*/VERSION=$VERSION/" .env.production
+            
+            # Update DOCKER_REGISTRY if not set
+            if ! grep -q "^DOCKER_REGISTRY=" .env.production; then
+              echo "DOCKER_REGISTRY=ghcr.io/$GITHUB_REPOSITORY_OWNER/suproxy-backend" >> .env.production
+            else
+              sed -i "s|^DOCKER_REGISTRY=.*|DOCKER_REGISTRY=ghcr.io/$GITHUB_REPOSITORY_OWNER/suproxy-backend|" .env.production
+            fi
+            
+            # Export for current session
+            export VERSION=$VERSION
+            export GITHUB_REPOSITORY_OWNER=$GITHUB_REPOSITORY_OWNER
+            export DOCKER_REGISTRY="ghcr.io/$GITHUB_REPOSITORY_OWNER/suproxy-backend"
+            
+            # Run deployment script
+            bash /opt/suproxy/scripts/deploy.sh
 
-      - name: Build Docker Image
-        run: |
-          docker build \
-            -t ghcr.io/${{ github.repository_owner }}/suproxy-backend:latest \
-            .
-
-      - name: Push Docker Image
-        run: |
-          docker push \
-            ghcr.io/${{ github.repository_owner }}/suproxy-backend:latest
-
-      - name: Deploy to VPS
+      - name: Health Check - ${{ matrix.server }}
+        id: health_check
+        continue-on-error: true
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.VPS_PORT }}
+          host: ${{ secrets[steps.config.outputs.host_secret] || secrets[steps.config.outputs.host_fallback] }}
+          username: ${{ secrets[steps.config.outputs.user_secret] || secrets[steps.config.outputs.user_fallback] }}
+          key: ${{ secrets[steps.config.outputs.key_secret] || secrets[steps.config.outputs.key_fallback] }}
+          port: ${{ secrets[steps.config.outputs.port_secret] || secrets[steps.config.outputs.port_fallback] || '22' }}
           script: |
+            echo "🏥 Running extended health check on ${{ matrix.server }}"
+            
+            # Wait for service to be fully ready
+            sleep 5
+            
+            # Check if containers are running
             cd /opt/suproxy
-            /opt/suproxy/scripts/deploy.sh
+            RUNNING=$(docker-compose -f docker-compose.production.yml ps --services --filter "status=running" | wc -l)
+            TOTAL=$(docker-compose -f docker-compose.production.yml ps --services | wc -l)
+            
+            echo "Running containers: $RUNNING/$TOTAL"
+            
+            if [ $RUNNING -lt $TOTAL ]; then
+              echo "❌ Not all containers are running"
+              docker-compose -f docker-compose.production.yml ps
+              exit 1
+            fi
+            
+            # Check API health endpoint
+            MAX_RETRIES=30
+            RETRY_COUNT=0
+            
+            while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+              if curl -f -s http://localhost:8080/health > /dev/null 2>&1; then
+                echo "✅ Health check passed on ${{ matrix.server }}"
+                exit 0
+              fi
+              RETRY_COUNT=$((RETRY_COUNT+1))
+              echo "⏳ Waiting for API... ($RETRY_COUNT/$MAX_RETRIES)"
+              sleep 2
+            done
+            
+            echo "❌ Health check failed on ${{ matrix.server }}"
+            docker-compose -f docker-compose.production.yml logs --tail=50 api
+            exit 1
+
+      - name: Get Previous Version for Rollback
+        id: previous_version
+        if: steps.health_check.outcome == 'failure'
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets[steps.config.outputs.host_secret] || secrets[steps.config.outputs.host_fallback] }}
+          username: ${{ secrets[steps.config.outputs.user_secret] || secrets[steps.config.outputs.user_fallback] }}
+          key: ${{ secrets[steps.config.outputs.key_secret] || secrets[steps.config.outputs.key_fallback] }}
+          port: ${{ secrets[steps.config.outputs.port_secret] || secrets[steps.config.outputs.port_fallback] || '22' }}
+          script: |
+            # Get previous running image tag
+            PREV_IMAGE=$(docker ps --filter "name=suproxy-api-prod" --format "{{.Image}}" | head -1)
+            if [ -n "$PREV_IMAGE" ]; then
+              PREV_TAG=$(echo $PREV_IMAGE | cut -d: -f2)
+              echo "PREVIOUS_VERSION=$PREV_TAG" >> $GITHUB_OUTPUT
+              echo "Found previous version: $PREV_TAG"
+            else
+              echo "No previous version found"
+              echo "PREVIOUS_VERSION=latest" >> $GITHUB_OUTPUT
+            fi
+
+      - name: Automatic Rollback
+        if: steps.health_check.outcome == 'failure'
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          ROLLBACK_VERSION: ${{ steps.previous_version.outputs.PREVIOUS_VERSION || 'latest' }}
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+        with:
+          host: ${{ secrets[steps.config.outputs.host_secret] || secrets[steps.config.outputs.host_fallback] }}
+          username: ${{ secrets[steps.config.outputs.user_secret] || secrets[steps.config.outputs.user_fallback] }}
+          key: ${{ secrets[steps.config.outputs.key_secret] || secrets[steps.config.outputs.key_fallback] }}
+          port: ${{ secrets[steps.config.outputs.port_secret] || secrets[steps.config.outputs.port_fallback] || '22' }}
+          envs: ROLLBACK_VERSION,GITHUB_REPOSITORY_OWNER
+          script: |
+            echo "🔄 AUTOMATIC ROLLBACK INITIATED"
+            echo "Rolling back to: $ROLLBACK_VERSION"
+            
+            cd /opt/suproxy
+            
+            # Update VERSION in .env.production
+            sed -i "s/^VERSION=.*/VERSION=$ROLLBACK_VERSION/" .env.production
+            
+            # Export for current session
+            export VERSION=$ROLLBACK_VERSION
+            export GITHUB_REPOSITORY_OWNER=$GITHUB_REPOSITORY_OWNER
+            export DOCKER_REGISTRY="ghcr.io/$GITHUB_REPOSITORY_OWNER/suproxy-backend"
+            
+            # Run deployment script
+            bash /opt/suproxy/scripts/deploy.sh
+
+      - name: Verify Rollback Health
+        if: steps.health_check.outcome == 'failure'
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets[steps.config.outputs.host_secret] || secrets[steps.config.outputs.host_fallback] }}
+          username: ${{ secrets[steps.config.outputs.user_secret] || secrets[steps.config.outputs.user_fallback] }}
+          key: ${{ secrets[steps.config.outputs.key_secret] || secrets[steps.config.outputs.key_fallback] }}
+          port: ${{ secrets[steps.config.outputs.port_secret] || secrets[steps.config.outputs.port_fallback] || '22' }}
+          script: |
+            echo "🏥 Verifying rollback health"
+            
+            cd /opt/suproxy
+            
+            MAX_RETRIES=30
+            RETRY_COUNT=0
+            
+            while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+              if curl -f -s http://localhost:8080/health > /dev/null 2>&1; then
+                echo "✅ Rollback successful - service restored"
+                exit 0
+              fi
+              RETRY_COUNT=$((RETRY_COUNT+1))
+              sleep 2
+            done
+            
+            echo "❌ Rollback also failed - manual intervention required"
+            exit 1
+
+      - name: Set Deployment Result
+        id: deploy_result
+        if: always()
+        run: |
+          if [ "${{ steps.health_check.outcome }}" = "failure" ]; then
+            echo "failed=true" >> $GITHUB_OUTPUT
+          else
+            echo "failed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deployment Success - ${{ matrix.server }}
+        if: success()
+        run: |
+          echo "## ✅ Deployment Successful - ${{ matrix.server }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Server:** ${{ matrix.server }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ needs.prepare.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** Deployed and healthy" >> $GITHUB_STEP_SUMMARY
+
+      - name: Deployment Failed - ${{ matrix.server }}
+        if: failure()
+        run: |
+          echo "## ❌ Deployment Failed - ${{ matrix.server }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Server:** ${{ matrix.server }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ needs.prepare.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** Failed - check logs above" >> $GITHUB_STEP_SUMMARY
+
+  notify:
+    name: Deployment Summary
+    runs-on: ubuntu-latest
+    needs: [prepare, deploy]
+    if: always()
+    
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "# 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ needs.prepare.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Servers:** ${{ needs.prepare.outputs.servers }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.deploy.result }}" = "success" ]; then
+            echo "**Status:** ✅ All deployments successful" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.deploy.result }}" = "failure" ]; then
+            echo "**Status:** ❌ Some deployments failed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Status:** ⚠️  Deployment status unclear" >> $GITHUB_STEP_SUMMARY
+          fi

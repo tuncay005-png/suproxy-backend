@@ -37,7 +37,7 @@ services:
       - /run
 
   api:
-    image: ${DOCKER_REGISTRY:-suproxy}/backend:${VERSION:-latest}
+    image: ${DOCKER_REGISTRY:-ghcr.io/tuncay005-png/suproxy-backend}:${VERSION:-latest}
     container_name: suproxy-api-prod
     restart: always
     depends_on:

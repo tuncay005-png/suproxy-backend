@@ -36,16 +36,22 @@ done
 
 echo -e "${GREEN}Environment variables validated${NC}"
 
-# Build Docker image
-echo -e "${GREEN}Building Docker image...${NC}"
-docker build -t ${DOCKER_REGISTRY:-suproxy}/backend:${VERSION:-latest} .
+# Determine image to pull
+IMAGE_REGISTRY="${DOCKER_REGISTRY:-ghcr.io/${GITHUB_REPOSITORY_OWNER:-tuncay005-png}/suproxy-backend}"
+IMAGE_TAG="${VERSION:-latest}"
+FULL_IMAGE="${IMAGE_REGISTRY}:${IMAGE_TAG}"
+
+# Pull Docker image from registry
+echo -e "${GREEN}Pulling Docker image: ${FULL_IMAGE}${NC}"
+docker pull "${FULL_IMAGE}"
 
 if [ $? -ne 0 ]; then
-    echo -e "${RED}Docker build failed${NC}"
+    echo -e "${RED}Docker pull failed${NC}"
+    echo -e "${YELLOW}Make sure the image exists in GHCR: ${FULL_IMAGE}${NC}"
     exit 1
 fi
 
-echo -e "${GREEN}Docker image built successfully${NC}"
+echo -e "${GREEN}Docker image pulled successfully: ${FULL_IMAGE}${NC}"
 
 # Stop existing containers
 echo -e "${YELLOW}Stopping existing containers...${NC}"

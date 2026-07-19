@@ -1,0 +1,211 @@
+name: Blue/Green Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to deploy (e.g., v1.0.42 or latest)'
+        required: true
+        type: string
+      target_environment:
+        description: 'Target environment (blue or green)'
+        required: true
+        type: choice
+        options:
+          - blue
+          - green
+      switch_traffic:
+        description: 'Switch traffic after successful deployment'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-to-environment:
+    name: Deploy to ${{ inputs.target_environment }} Environment
+    runs-on: ubuntu-latest
+    outputs:
+      deployment_success: ${{ steps.health.outputs.success }}
+    
+    steps:
+      - name: Deploy to ${{ inputs.target_environment }}
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          VERSION: ${{ inputs.version }}
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+          TARGET_ENV: ${{ inputs.target_environment }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.VPS_PORT || '22' }}
+          envs: VERSION,GITHUB_REPOSITORY_OWNER,TARGET_ENV
+          script: |
+            echo "🔵🟢 Deploying to $TARGET_ENV environment"
+            echo "📦 Version: $VERSION"
+            
+            cd /opt/suproxy
+            
+            # Determine ports based on environment
+            if [ "$TARGET_ENV" = "blue" ]; then
+              API_PORT=8081
+              COMPOSE_FILE="docker-compose.blue.yml"
+            else
+              API_PORT=8082
+              COMPOSE_FILE="docker-compose.green.yml"
+            fi
+            
+            # Create environment-specific compose file if it doesn't exist
+            if [ ! -f "$COMPOSE_FILE" ]; then
+              cp docker-compose.production.yml $COMPOSE_FILE
+              # Update ports
+              sed -i "s/8080:8080/$API_PORT:8080/g" $COMPOSE_FILE
+              # Update container names
+              sed -i "s/suproxy-api-prod/suproxy-api-$TARGET_ENV/g" $COMPOSE_FILE
+              sed -i "s/suproxy-postgres-prod/suproxy-postgres-$TARGET_ENV/g" $COMPOSE_FILE
+            fi
+            
+            # Create environment-specific .env file
+            cp .env.production .env.$TARGET_ENV
+            sed -i "s/^VERSION=.*/VERSION=$VERSION/" .env.$TARGET_ENV
+            sed -i "s/^API_PORT=.*/API_PORT=$API_PORT/" .env.$TARGET_ENV
+            sed -i "s|^DOCKER_REGISTRY=.*|DOCKER_REGISTRY=ghcr.io/$GITHUB_REPOSITORY_OWNER/suproxy-backend|" .env.$TARGET_ENV
+            
+            # Pull new image
+            export DOCKER_REGISTRY="ghcr.io/$GITHUB_REPOSITORY_OWNER/suproxy-backend"
+            docker pull "$DOCKER_REGISTRY:$VERSION"
+            
+            # Deploy to environment
+            docker-compose -f $COMPOSE_FILE --env-file .env.$TARGET_ENV up -d
+            
+            echo "✅ Deployed to $TARGET_ENV environment on port $API_PORT"
+
+      - name: Health Check ${{ inputs.target_environment }}
+        id: health
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          TARGET_ENV: ${{ inputs.target_environment }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.VPS_PORT || '22' }}
+          envs: TARGET_ENV
+          script: |
+            # Determine port
+            if [ "$TARGET_ENV" = "blue" ]; then
+              API_PORT=8081
+            else
+              API_PORT=8082
+            fi
+            
+            echo "🏥 Health checking $TARGET_ENV on port $API_PORT"
+            
+            MAX_RETRIES=30
+            RETRY_COUNT=0
+            
+            while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+              if curl -f -s http://localhost:$API_PORT/health > /dev/null 2>&1; then
+                echo "✅ $TARGET_ENV environment is healthy"
+                echo "success=true" >> $GITHUB_OUTPUT
+                exit 0
+              fi
+              RETRY_COUNT=$((RETRY_COUNT+1))
+              sleep 2
+            done
+            
+            echo "❌ $TARGET_ENV environment health check failed"
+            echo "success=false" >> $GITHUB_OUTPUT
+            exit 1
+
+  switch-traffic:
+    name: Switch Traffic to ${{ inputs.target_environment }}
+    runs-on: ubuntu-latest
+    needs: deploy-to-environment
+    if: ${{ inputs.switch_traffic == true && needs.deploy-to-environment.outputs.deployment_success == 'true' }}
+    
+    steps:
+      - name: Switch Nginx Traffic
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          TARGET_ENV: ${{ inputs.target_environment }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.VPS_PORT || '22' }}
+          envs: TARGET_ENV
+          script: |
+            echo "🔀 Switching traffic to $TARGET_ENV"
+            
+            # Determine port
+            if [ "$TARGET_ENV" = "blue" ]; then
+              NEW_PORT=8081
+            else
+              NEW_PORT=8082
+            fi
+            
+            # Update nginx configuration (if nginx is configured)
+            if [ -f /etc/nginx/sites-available/suproxy ]; then
+              sed -i "s/proxy_pass http:\/\/localhost:[0-9]\+/proxy_pass http:\/\/localhost:$NEW_PORT/g" /etc/nginx/sites-available/suproxy
+              nginx -t && systemctl reload nginx
+              echo "✅ Nginx traffic switched to port $NEW_PORT ($TARGET_ENV)"
+            else
+              echo "⚠️  No nginx configuration found - manual traffic switch required"
+              echo "Current active environment: $TARGET_ENV on port $NEW_PORT"
+            fi
+
+      - name: Verify Traffic Switch
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.VPS_PORT || '22' }}
+          script: |
+            # Test through nginx (port 80)
+            if curl -f -s http://localhost/health > /dev/null 2>&1; then
+              echo "✅ Traffic switch verified - nginx routing correctly"
+            else
+              echo "⚠️  Traffic verification inconclusive"
+            fi
+
+  cleanup-old-environment:
+    name: Cleanup Old Environment
+    runs-on: ubuntu-latest
+    needs: [deploy-to-environment, switch-traffic]
+    if: ${{ inputs.switch_traffic == true && needs.deploy-to-environment.outputs.deployment_success == 'true' }}
+    
+    steps:
+      - name: Stop Old Environment
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          TARGET_ENV: ${{ inputs.target_environment }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.VPS_PORT || '22' }}
+          envs: TARGET_ENV
+          script: |
+            # Determine which environment to stop
+            if [ "$TARGET_ENV" = "blue" ]; then
+              OLD_ENV="green"
+              COMPOSE_FILE="docker-compose.green.yml"
+            else
+              OLD_ENV="blue"
+              COMPOSE_FILE="docker-compose.blue.yml"
+            fi
+            
+            echo "🧹 Stopping old $OLD_ENV environment"
+            
+            cd /opt/suproxy
+            if [ -f "$COMPOSE_FILE" ]; then
+              docker-compose -f $COMPOSE_FILE down
+              echo "✅ $OLD_ENV environment stopped"
+            else
+              echo "⚠️  $OLD_ENV environment not found"
+            fi

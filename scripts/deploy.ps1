@@ -35,18 +35,22 @@ foreach ($var in $requiredVars) {
 
 Write-Host "Environment variables validated" -ForegroundColor Green
 
-# Build Docker image
-Write-Host "Building Docker image..." -ForegroundColor Green
-$registry = if ($env:DOCKER_REGISTRY) { $env:DOCKER_REGISTRY } else { "suproxy" }
-$version = if ($env:VERSION) { $env:VERSION } else { "latest" }
-docker build -t "${registry}/backend:${version}" .
+# Determine image to pull
+$imageRegistry = if ($env:DOCKER_REGISTRY) { $env:DOCKER_REGISTRY } else { if ($env:GITHUB_REPOSITORY_OWNER) { "ghcr.io/$($env:GITHUB_REPOSITORY_OWNER)/suproxy-backend" } else { "ghcr.io/tuncay005-png/suproxy-backend" } }
+$imageTag = if ($env:VERSION) { $env:VERSION } else { "latest" }
+$fullImage = "${imageRegistry}:${imageTag}"
+
+# Pull Docker image from registry
+Write-Host "Pulling Docker image: $fullImage" -ForegroundColor Green
+docker pull $fullImage
 
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "Docker build failed" -ForegroundColor Red
+    Write-Host "Docker pull failed" -ForegroundColor Red
+    Write-Host "Make sure the image exists in GHCR: $fullImage" -ForegroundColor Yellow
     exit 1
 }
 
-Write-Host "Docker image built successfully" -ForegroundColor Green
+Write-Host "Docker image pulled successfully: $fullImage" -ForegroundColor Green
 
 # Stop existing containers
 Write-Host "Stopping existing containers..." -ForegroundColor Yellow

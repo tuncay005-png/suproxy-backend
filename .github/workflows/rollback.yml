@@ -1,0 +1,256 @@
+name: Rollback Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to rollback to (e.g., v1.0.42, latest, or sha-abc123)'
+        required: true
+        type: string
+      servers:
+        description: 'Servers to rollback (comma-separated: finland,germany,turkey or "all")'
+        required: false
+        default: 'all'
+        type: string
+      reason:
+        description: 'Reason for rollback'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  verify-version:
+    name: Verify Rollback Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.verify.outputs.version }}
+      image_exists: ${{ steps.verify.outputs.image_exists }}
+    
+    steps:
+      - name: Verify Version Exists
+        id: verify
+        run: |
+          VERSION="${{ inputs.version }}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          
+          echo "🔍 Verifying Docker image exists: ghcr.io/${{ github.repository_owner }}/suproxy-backend:$VERSION"
+          
+          # Check if image exists in GHCR
+          if docker manifest inspect ghcr.io/${{ github.repository_owner }}/suproxy-backend:$VERSION >/dev/null 2>&1; then
+            echo "✅ Image exists in GHCR"
+            echo "image_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Image not found in GHCR"
+            echo "image_exists=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+  create-rollback-issue:
+    name: Create Rollback Tracking Issue
+    runs-on: ubuntu-latest
+    needs: verify-version
+    outputs:
+      issue_number: ${{ steps.create.outputs.issue_number }}
+    
+    steps:
+      - name: Create Issue
+        id: create
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const version = '${{ needs.verify-version.outputs.version }}';
+            const servers = '${{ inputs.servers }}';
+            const reason = '${{ inputs.reason }}' || 'Manual rollback initiated';
+            const timestamp = new Date().toISOString();
+            
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🔄 Rollback to ${version}`,
+              body: `## Rollback Information
+            
+            **Version:** \`${version}\`
+            **Servers:** ${servers}
+            **Reason:** ${reason}
+            **Initiated by:** @${context.actor}
+            **Time:** ${timestamp}
+            
+            ---
+            
+            **Status:** 🔄 In Progress
+            
+            This issue will be automatically updated with rollback progress.`,
+              labels: ['rollback', 'deployment', 'urgent']
+            });
+            
+            console.log('Created issue #' + issue.data.number);
+            core.setOutput('issue_number', issue.data.number);
+            return issue.data.number;
+
+  rollback:
+    name: Rollback ${{ matrix.server }}
+    runs-on: ubuntu-latest
+    needs: [verify-version, create-rollback-issue]
+    strategy:
+      matrix:
+        server: ${{ fromJson(inputs.servers == 'all' && '["finland"]' || format('["{0}"]', split(inputs.servers, ',')[0])) }}
+      max-parallel: 1
+      fail-fast: false
+    
+    steps:
+      - name: Get Server Configuration
+        id: config
+        run: |
+          SERVER="${{ matrix.server }}"
+          
+          case "$SERVER" in
+            finland)
+              echo "host_secret=VPS_FINLAND_HOST" >> $GITHUB_OUTPUT
+              echo "user_secret=VPS_FINLAND_USER" >> $GITHUB_OUTPUT
+              echo "key_secret=VPS_FINLAND_KEY" >> $GITHUB_OUTPUT
+              echo "port_secret=VPS_FINLAND_PORT" >> $GITHUB_OUTPUT
+              echo "host_fallback=VPS_HOST" >> $GITHUB_OUTPUT
+              echo "user_fallback=VPS_USER" >> $GITHUB_OUTPUT
+              echo "key_fallback=SSH_PRIVATE_KEY" >> $GITHUB_OUTPUT
+              echo "port_fallback=VPS_PORT" >> $GITHUB_OUTPUT
+              ;;
+            germany)
+              echo "host_secret=VPS_GERMANY_HOST" >> $GITHUB_OUTPUT
+              echo "user_secret=VPS_GERMANY_USER" >> $GITHUB_OUTPUT
+              echo "key_secret=VPS_GERMANY_KEY" >> $GITHUB_OUTPUT
+              echo "port_secret=VPS_GERMANY_PORT" >> $GITHUB_OUTPUT
+              ;;
+            turkey)
+              echo "host_secret=VPS_TURKEY_HOST" >> $GITHUB_OUTPUT
+              echo "user_secret=VPS_TURKEY_USER" >> $GITHUB_OUTPUT
+              echo "key_secret=VPS_TURKEY_KEY" >> $GITHUB_OUTPUT
+              echo "port_secret=VPS_TURKEY_PORT" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "❌ Unknown server: $SERVER"
+              exit 1
+              ;;
+          esac
+
+      - name: Rollback to ${{ needs.verify-version.outputs.version }}
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          VERSION: ${{ needs.verify-version.outputs.version }}
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+        with:
+          host: ${{ secrets[steps.config.outputs.host_secret] || secrets[steps.config.outputs.host_fallback] }}
+          username: ${{ secrets[steps.config.outputs.user_secret] || secrets[steps.config.outputs.user_fallback] }}
+          key: ${{ secrets[steps.config.outputs.key_secret] || secrets[steps.config.outputs.key_fallback] }}
+          port: ${{ secrets[steps.config.outputs.port_secret] || secrets[steps.config.outputs.port_fallback] || '22' }}
+          envs: VERSION,GITHUB_REPOSITORY_OWNER
+          script: |
+            echo "🔄 Rolling back ${{ matrix.server }} to version: $VERSION"
+            
+            cd /opt/suproxy
+            
+            # Update VERSION in .env.production
+            sed -i "s/^VERSION=.*/VERSION=$VERSION/" .env.production
+            
+            # Update DOCKER_REGISTRY
+            if ! grep -q "^DOCKER_REGISTRY=" .env.production; then
+              echo "DOCKER_REGISTRY=ghcr.io/$GITHUB_REPOSITORY_OWNER/suproxy-backend" >> .env.production
+            else
+              sed -i "s|^DOCKER_REGISTRY=.*|DOCKER_REGISTRY=ghcr.io/$GITHUB_REPOSITORY_OWNER/suproxy-backend|" .env.production
+            fi
+            
+            # Export for current session
+            export VERSION=$VERSION
+            export GITHUB_REPOSITORY_OWNER=$GITHUB_REPOSITORY_OWNER
+            export DOCKER_REGISTRY="ghcr.io/$GITHUB_REPOSITORY_OWNER/suproxy-backend"
+            
+            # Run deployment script (will pull the rollback version)
+            bash /opt/suproxy/scripts/deploy.sh
+
+      - name: Verify Rollback Health
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets[steps.config.outputs.host_secret] || secrets[steps.config.outputs.host_fallback] }}
+          username: ${{ secrets[steps.config.outputs.user_secret] || secrets[steps.config.outputs.user_fallback] }}
+          key: ${{ secrets[steps.config.outputs.key_secret] || secrets[steps.config.outputs.key_fallback] }}
+          port: ${{ secrets[steps.config.outputs.port_secret] || secrets[steps.config.outputs.port_fallback] || '22' }}
+          script: |
+            echo "🏥 Verifying rollback health on ${{ matrix.server }}"
+            
+            cd /opt/suproxy
+            
+            # Check containers
+            RUNNING=$(docker-compose -f docker-compose.production.yml ps --services --filter "status=running" | wc -l)
+            TOTAL=$(docker-compose -f docker-compose.production.yml ps --services | wc -l)
+            
+            if [ $RUNNING -lt $TOTAL ]; then
+              echo "❌ Not all containers running after rollback"
+              docker-compose -f docker-compose.production.yml ps
+              exit 1
+            fi
+            
+            # Check health endpoint
+            MAX_RETRIES=30
+            RETRY_COUNT=0
+            
+            while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+              if curl -f -s http://localhost:8080/health > /dev/null 2>&1; then
+                echo "✅ Rollback verified healthy on ${{ matrix.server }}"
+                exit 0
+              fi
+              RETRY_COUNT=$((RETRY_COUNT+1))
+              echo "⏳ Waiting for API... ($RETRY_COUNT/$MAX_RETRIES)"
+              sleep 2
+            done
+            
+            echo "❌ Rollback health check failed on ${{ matrix.server }}"
+            docker-compose -f docker-compose.production.yml logs --tail=50 api
+            exit 1
+
+  update-issue:
+    name: Update Rollback Issue
+    runs-on: ubuntu-latest
+    needs: [verify-version, create-rollback-issue, rollback]
+    if: always()
+    
+    steps:
+      - name: Update Issue Status
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumber = ${{ needs.create-rollback-issue.outputs.issue_number }};
+            const version = '${{ needs.verify-version.outputs.version }}';
+            const rollbackResult = '${{ needs.rollback.result }}';
+            
+            let status = '✅ Success';
+            let body = `## Rollback Complete
+            
+            **Version:** \`${version}\`
+            **Status:** ${rollbackResult === 'success' ? '✅ Successful' : '❌ Failed'}
+            **Completed:** ${new Date().toISOString()}
+            `;
+            
+            if (rollbackResult !== 'success') {
+              status = '❌ Failed';
+              body += '\n\n**Action Required:** Review deployment logs and retry rollback if needed.';
+            } else {
+              body += '\n\n**Result:** All servers successfully rolled back and verified healthy.';
+            }
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: body
+            });
+            
+            if (rollbackResult === 'success') {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                state: 'closed'
+              });
+            }
