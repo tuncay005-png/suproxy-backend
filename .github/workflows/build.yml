@@ -16,7 +16,7 @@ jobs:
   build:
     name: Build and Push Docker Image
     runs-on: ubuntu-latest
-    # Only run if tests passed - NO BYPASS ALLOWED
+    # Only run if tests passed
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
@@ -25,23 +25,19 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
-      - name: Generate Version Tags
-        id: version
+      - name: Generate Docker Tags
+        id: tags
         run: |
-          # Generate semantic version
-          VERSION=v1.0.${{ github.run_number }}
-          
-          # Generate SHA tag
+          # Generate SHA tag only
           SHA_SHORT=$(echo ${{ github.sha }} | cut -c1-7)
           SHA_TAG="sha-${SHA_SHORT}"
           
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "SHA_TAG=$SHA_TAG" >> $GITHUB_ENV
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "sha_tag=$SHA_TAG" >> $GITHUB_OUTPUT
           
-          echo "📦 Version: $VERSION"
-          echo "🔖 SHA Tag: $SHA_TAG"
+          echo "📦 Building Docker image with tags:"
+          echo "  - latest"
+          echo "  - $SHA_TAG"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -60,14 +56,12 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ github.repository_owner }}/suproxy-backend:latest
-            ghcr.io/${{ github.repository_owner }}/suproxy-backend:${{ env.VERSION }}
             ghcr.io/${{ github.repository_owner }}/suproxy-backend:${{ env.SHA_TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64
           build-args: |
             BUILDTIME=${{ github.event.repository.updated_at }}
-            VERSION=${{ env.VERSION }}
             REVISION=${{ github.sha }}
 
       - name: Image Summary
@@ -78,101 +72,12 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Tags pushed:**" >> $GITHUB_STEP_SUMMARY
           echo "- \`ghcr.io/${{ github.repository_owner }}/suproxy-backend:latest\`" >> $GITHUB_STEP_SUMMARY
-          echo "- \`ghcr.io/${{ github.repository_owner }}/suproxy-backend:${{ env.VERSION }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- \`ghcr.io/${{ github.repository_owner }}/suproxy-backend:${{ env.SHA_TAG }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Pull command:**" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-          echo "docker pull ghcr.io/${{ github.repository_owner }}/suproxy-backend:${{ env.VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ghcr.io/${{ github.repository_owner }}/suproxy-backend:latest" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ghcr.io/${{ github.repository_owner }}/suproxy-backend:${{ env.SHA_TAG }}" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-
-      - name: Output Version for Next Workflow
-        id: output
-        run: |
-          echo "version=${{ env.VERSION }}" >> $GITHUB_OUTPUT
-          echo "sha_tag=${{ env.SHA_TAG }}" >> $GITHUB_OUTPUT
-
-  create-release:
-    name: Create GitHub Release
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.ref == 'refs/heads/main'
-    permissions:
-      contents: write
-    
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Get Version from Build
-        id: get_version
-        run: |
-          VERSION=v1.0.${{ github.run_number }}
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Generate Changelog
-        id: changelog
-        run: |
-          VERSION=${{ env.VERSION }}
-          PREVIOUS_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          
-          if [ -z "$PREVIOUS_TAG" ]; then
-            COMMITS=$(git log --pretty=format:"- %s (%h)" --no-merges -10)
-          else
-            COMMITS=$(git log $PREVIOUS_TAG..HEAD --pretty=format:"- %s (%h)" --no-merges)
-          fi
-          
-          CHANGELOG="## What's Changed
-
-$COMMITS
-
-**Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREVIOUS_TAG}...${VERSION}"
-          
-          echo "changelog<<EOF" >> $GITHUB_OUTPUT
-          echo "$CHANGELOG" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Create Git Tag
-        run: |
-          VERSION=${{ env.VERSION }}
-          
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          git tag -a "$VERSION" -m "Automatic release $VERSION"
-          git push origin "$VERSION"
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ env.VERSION }}
-          name: Release ${{ env.VERSION }}
-          body: |
-            ## 🚀 Automatic Release ${{ env.VERSION }}
-            
-            ### Docker Images
-            ```bash
-            docker pull ghcr.io/${{ github.repository_owner }}/suproxy-backend:${{ env.VERSION }}
-            docker pull ghcr.io/${{ github.repository_owner }}/suproxy-backend:latest
-            docker pull ghcr.io/${{ github.repository_owner }}/suproxy-backend:sha-${{ github.sha }}
-            ```
-            
-            ### Commit Information
-            - **SHA:** `${{ github.sha }}`
-            - **Author:** ${{ github.actor }}
-            - **Workflow:** #${{ github.run_number }}
-            
-            ### Deployment
-            This release will be automatically deployed to production.
-            
-            ---
-            
-            ${{ steps.changelog.outputs.changelog }}
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

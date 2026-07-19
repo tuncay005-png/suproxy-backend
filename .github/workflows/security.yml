@@ -4,10 +4,6 @@ on:
   schedule:
     # Run security scans daily at 3 AM
     - cron: '0 3 * * *'
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
   workflow_dispatch:
 
 permissions:
