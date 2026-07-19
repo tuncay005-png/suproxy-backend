@@ -17,11 +17,13 @@ jobs:
           echo "🔍 Checking workflow files..."
           
           WORKFLOWS=(
-            ".github/workflows/test.yml"
-            ".github/workflows/build.yml"
+            ".github/workflows/ci.yml"
             ".github/workflows/deploy.yml"
-            ".github/workflows/release.yml"
             ".github/workflows/security.yml"
+            ".github/workflows/release.yml"
+            ".github/workflows/rollback.yml"
+            ".github/workflows/blue-green-deploy.yml"
+            ".github/workflows/canary-deploy.yml"
             ".github/workflows/healthcheck.yml"
           )
           
@@ -38,27 +40,19 @@ jobs:
         run: |
           echo "🔍 Verifying workflow triggers..."
           
-          # test.yml should trigger on push to main
-          if grep -q "branches: \[ main" .github/workflows/test.yml; then
-            echo "✅ test.yml triggers on push to main"
+          # ci.yml should trigger on push to main
+          if grep -q "branches: \[ main" .github/workflows/ci.yml; then
+            echo "✅ ci.yml triggers on push to main"
           else
-            echo "❌ test.yml doesn't trigger on push to main"
+            echo "❌ ci.yml doesn't trigger on push to main"
             exit 1
           fi
           
-          # build.yml should wait for Tests workflow
-          if grep -q 'workflows: \["Tests"\]' .github/workflows/build.yml; then
-            echo "✅ build.yml waits for Tests workflow"
+          # deploy.yml should wait for CI workflow
+          if grep -q 'workflows: \["CI"\]' .github/workflows/deploy.yml; then
+            echo "✅ deploy.yml waits for CI workflow"
           else
-            echo "❌ build.yml doesn't wait for Tests"
-            exit 1
-          fi
-          
-          # deploy.yml should wait for Build Docker Image workflow
-          if grep -q 'workflows: \["Build Docker Image"\]' .github/workflows/deploy.yml; then
-            echo "✅ deploy.yml waits for Build Docker Image workflow"
-          else
-            echo "❌ deploy.yml doesn't wait for Build"
+            echo "❌ deploy.yml doesn't wait for CI"
             exit 1
           fi
       
@@ -66,11 +60,11 @@ jobs:
         run: |
           echo "🔍 Verifying permissions..."
           
-          # build.yml needs packages: write
-          if grep -q "packages: write" .github/workflows/build.yml; then
-            echo "✅ build.yml has packages: write permission"
+          # ci.yml needs packages: write for Docker push
+          if grep -q "packages: write" .github/workflows/ci.yml; then
+            echo "✅ ci.yml has packages: write permission"
           else
-            echo "❌ build.yml missing packages: write"
+            echo "❌ ci.yml missing packages: write"
             exit 1
           fi
           
@@ -89,13 +83,16 @@ jobs:
           echo "```" >> $GITHUB_STEP_SUMMARY
           echo "git push origin main" >> $GITHUB_STEP_SUMMARY
           echo "    ↓" >> $GITHUB_STEP_SUMMARY
-          echo "test.yml (Tests)" >> $GITHUB_STEP_SUMMARY
+          echo "ci.yml (CI: Tests + Build + Docker Push)" >> $GITHUB_STEP_SUMMARY
           echo "    ↓ (workflow_run)" >> $GITHUB_STEP_SUMMARY
-          echo "build.yml (Build Docker Image)" >> $GITHUB_STEP_SUMMARY
-          echo "    ↓ (workflow_run)" >> $GITHUB_STEP_SUMMARY
-          echo "deploy.yml (Deploy to Production)" >> $GITHUB_STEP_SUMMARY
-          echo "    ↓" >> $GITHUB_STEP_SUMMARY
-          echo "Health Checks" >> $GITHUB_STEP_SUMMARY
+          echo "deploy.yml (Deploy to Production + Health Check)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Manual/Scheduled Workflows:" >> $GITHUB_STEP_SUMMARY
+          echo "  - security.yml (nightly at 03:00 UTC)" >> $GITHUB_STEP_SUMMARY
+          echo "  - release.yml (manual only)" >> $GITHUB_STEP_SUMMARY
+          echo "  - rollback.yml (manual only)" >> $GITHUB_STEP_SUMMARY
+          echo "  - blue-green-deploy.yml (manual only)" >> $GITHUB_STEP_SUMMARY
+          echo "  - canary-deploy.yml (manual only)" >> $GITHUB_STEP_SUMMARY
           echo "```" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ All workflow files verified" >> $GITHUB_STEP_SUMMARY

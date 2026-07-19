@@ -5,7 +5,7 @@
 # 
 # This file is preserved for rollback purposes only
 
-name: SuProxy Auto Deploy (DEPRECATED - BACKUP ONLY)
+name: Emergency Deploy (Deprecated)
 
 on:
   # DISABLED - Will not trigger automatically
