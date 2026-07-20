@@ -104,12 +104,15 @@ func (q *GetSystemHealthQuery) Execute(ctx context.Context) (*SystemHealth, erro
 
 	// Overall status
 	overallStatus := "ok"
-	if dbStatus == "unhealthy" {
+	switch {
+	case dbStatus == "unhealthy":
 		overallStatus = "unhealthy"
-	} else if xrayStatus == "unhealthy" {
+	case xrayStatus == "unhealthy":
 		overallStatus = "degraded"
-	} else if xrayStatus == "degraded" {
+	case xrayStatus == "degraded":
 		overallStatus = "degraded"
+	default:
+		overallStatus = "ok"
 	}
 
 	return &SystemHealth{

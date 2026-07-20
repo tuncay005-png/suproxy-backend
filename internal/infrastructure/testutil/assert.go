@@ -21,7 +21,7 @@ func AssertTimeEqual(t *testing.T, expected, actual time.Time, tolerance time.Du
 }
 
 // AssertTimeNow asserts that a time is close to now
-func AssertTimeNow(t *testing.T, actual time.Time, toleranceMs time.Duration, msgAndArgs ...interface{}) bool {
+func AssertTimeNow(t *testing.T, actual time.Time, tolerance time.Duration, msgAndArgs ...interface{}) bool {
 	t.Helper()
 	now := time.Now()
 	// Convert both to UTC for comparison
@@ -33,7 +33,7 @@ func AssertTimeNow(t *testing.T, actual time.Time, toleranceMs time.Duration, ms
 		diff = -diff
 	}
 	
-	toleranceDuration := time.Duration(toleranceMs) * time.Millisecond
+	toleranceDuration := time.Duration(tolerance) * time.Millisecond
 	return assert.True(t, diff <= toleranceDuration, msgAndArgs...)
 }
 
