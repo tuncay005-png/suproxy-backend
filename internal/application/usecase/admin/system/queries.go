@@ -103,7 +103,7 @@ func (q *GetSystemHealthQuery) Execute(ctx context.Context) (*SystemHealth, erro
 	}
 
 	// Overall status
-	overallStatus := "ok"
+	var overallStatus string
 	switch {
 	case dbStatus == "unhealthy":
 		overallStatus = "unhealthy"
@@ -194,9 +194,10 @@ func (q *GetSystemStatsQuery) Execute(ctx context.Context) (*SystemStats, error)
 		weekAgo := today.AddDate(0, 0, -7)
 
 		for _, u := range allUsers {
-			if u.Status == user.StatusActive {
+			switch u.Status {
+			case user.StatusActive:
 				stats.Users.ActiveUsers++
-			} else if u.Status == user.StatusSuspended {
+			case user.StatusSuspended:
 				stats.Users.SuspendedUsers++
 			}
 
