@@ -1,0 +1,14 @@
+﻿govulncheck : govulncheck: fetching vulnerabilities: read tcp 172.20.10.
+2:51227->34.117.213.18:443: wsarecv: A connection attempt failed because
+ the connected party did not properly respond after a period of time, or
+ established connection failed because connected host has failed to resp
+ond.
+At line:1 char:11
++ $output = govulncheck ./... 2>&1 | Out-String; $output | Out-File -Fi 
+...
++           ~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (govulncheck: fe...led to r 
+   espond.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
