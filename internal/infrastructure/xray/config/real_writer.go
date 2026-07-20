@@ -42,7 +42,7 @@ func (w *RealWriter) Write(ctx context.Context, instanceID uuid.UUID, config []b
 	}
 
 	if err := os.Rename(tempPath, configPath); err != nil {
-		os.Remove(tempPath) // Cleanup
+		_ = os.Remove(tempPath) // Cleanup
 		return fmt.Errorf("failed to rename config: %w", err)
 	}
 
@@ -102,7 +102,7 @@ func (w *RealWriter) Restore(ctx context.Context, instanceID uuid.UUID, backupTi
 	}
 
 	if err := os.Rename(tempPath, configPath); err != nil {
-		os.Remove(tempPath) // Cleanup
+		_ = os.Remove(tempPath) // Cleanup
 		return fmt.Errorf("failed to restore config: %w", err)
 	}
 
@@ -192,13 +192,13 @@ func (w *RealWriter) copyFile(src, dst string) error {
 	if err != nil {
 		return err
 	}
-	defer sourceFile.Close()
+	defer func() { _ = sourceFile.Close() }()
 
 	destFile, err := os.Create(dst)
 	if err != nil {
 		return err
 	}
-	defer destFile.Close()
+	defer func() { _ = destFile.Close() }()
 
 	if _, err := io.Copy(destFile, sourceFile); err != nil {
 		return err

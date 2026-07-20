@@ -363,6 +363,6 @@ func (v *validator) isPortReserved(port int) bool {
 		// Port is likely in use or unavailable
 		return false // Let the actual start process handle it
 	}
-	ln.Close()
+	_ = ln.Close()
 	return false
 }

@@ -31,7 +31,7 @@ func (m *Migrator) Up() error {
 	if err != nil {
 		return err
 	}
-	defer mig.Close()
+	defer func() { _, _ = mig.Close() }()
 
 	m.logger.Info("Running database migrations...")
 
@@ -57,7 +57,7 @@ func (m *Migrator) Down() error {
 	if err != nil {
 		return err
 	}
-	defer mig.Close()
+	defer func() { _, _ = mig.Close() }()
 
 	m.logger.Info("Rolling back database migrations...")
 
@@ -74,7 +74,7 @@ func (m *Migrator) Version() (uint, bool, error) {
 	if err != nil {
 		return 0, false, err
 	}
-	defer mig.Close()
+	defer func() { _, _ = mig.Close() }()
 
 	version, dirty, err := mig.Version()
 	if err != nil && err != migrate.ErrNilVersion {

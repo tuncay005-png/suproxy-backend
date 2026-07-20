@@ -63,7 +63,7 @@ func (m *RealProcessManager) Start(ctx context.Context, instanceID uuid.UUID) er
 
 	errorFile, err := os.OpenFile(errorPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
-		logFile.Close()
+		_ = logFile.Close()
 		m.logger.Error("Failed to open error log file", "error", err, "path", errorPath)
 		return fmt.Errorf("failed to open error log file: %w", err)
 	}
@@ -78,8 +78,8 @@ func (m *RealProcessManager) Start(ctx context.Context, instanceID uuid.UUID) er
 
 	// Start the process
 	if err := cmd.Start(); err != nil {
-		logFile.Close()
-		errorFile.Close()
+		_ = logFile.Close()
+		_ = errorFile.Close()
 		m.logger.Error("Failed to start Xray process", "error", err, "instance_id", instanceID)
 		return fmt.Errorf("%w: %v", ErrProcessStartFailed, err)
 	}
@@ -104,8 +104,8 @@ func (m *RealProcessManager) Start(ctx context.Context, instanceID uuid.UUID) er
 		if killErr := cmd.Process.Kill(); killErr != nil {
 			m.logger.Error("Failed to kill process after registration failure", "error", killErr, "pid", cmd.Process.Pid)
 		}
-		logFile.Close()
-		errorFile.Close()
+		_ = logFile.Close()
+		_ = errorFile.Close()
 		delete(m.commands, instanceID)
 		return err
 	}
@@ -327,8 +327,8 @@ func (m *RealProcessManager) Kill(ctx context.Context, instanceID uuid.UUID) err
 
 // monitorProcess monitors a running process and handles unexpected exits
 func (m *RealProcessManager) monitorProcess(instanceID uuid.UUID, cmd *exec.Cmd, logFile, errorFile *os.File) {
-	defer logFile.Close()
-	defer errorFile.Close()
+	defer func() { _ = logFile.Close() }()
+	defer func() { _ = errorFile.Close() }()
 
 	// Wait for process to exit
 	err := cmd.Wait()
@@ -419,7 +419,7 @@ func (m *RealProcessManager) tailFile(filePath string, lines int) ([]string, err
 		}
 		return nil, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	// Read all lines (for simplicity)
 	// In production, use more efficient tail algorithm for large files
