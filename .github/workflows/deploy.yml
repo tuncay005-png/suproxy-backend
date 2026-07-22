@@ -15,7 +15,7 @@ on:
         default: 'latest'
         type: string
       servers:
-        description: 'Servers to deploy (comma-separated: finland,germany,turkey or "all")'
+        description: 'Servers to deploy (comma-separated server names or "all")'
         required: false
         default: 'all'
         type: string
@@ -31,8 +31,48 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
       servers: ${{ steps.servers.outputs.matrix }}
+      server_configs: ${{ steps.load-registry.outputs.registry }}
     
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github/server-registry.json
+          sparse-checkout-cone-mode: false
+      
+      - name: Load Server Registry
+        id: load-registry
+        run: |
+          # Verify jq is available
+          if ! command -v jq &> /dev/null; then
+            echo "❌ jq is not installed"
+            echo "Installing jq..."
+            sudo apt-get update -qq && sudo apt-get install -y jq
+            if ! command -v jq &> /dev/null; then
+              echo "❌ Failed to install jq"
+              exit 1
+            fi
+          fi
+          echo "✅ jq version: $(jq --version)"
+          
+          # Verify registry file exists
+          if [ ! -f .github/server-registry.json ]; then
+            echo "❌ Server registry not found at .github/server-registry.json"
+            exit 1
+          fi
+          
+          # Validate JSON syntax
+          if ! jq empty .github/server-registry.json 2>/dev/null; then
+            echo "❌ Invalid JSON in server-registry.json"
+            exit 1
+          fi
+          
+          # Load registry
+          REGISTRY=$(cat .github/server-registry.json | jq -c .)
+          echo "registry=$REGISTRY" >> $GITHUB_OUTPUT
+          echo "✅ Loaded server registry (version: $(echo "$REGISTRY" | jq -r '.version'))"
+      
       - name: Determine Version
         id: version
         run: |
@@ -44,10 +84,11 @@ jobs:
         id: servers
         run: |
           SERVERS="${{ inputs.servers || 'all' }}"
+          REGISTRY='${{ steps.load-registry.outputs.registry }}'
           
-          # Define all available servers
+          # Get all enabled servers from registry
           if [ "$SERVERS" = "all" ]; then
-            MATRIX='["finland"]'
+            MATRIX=$(echo "$REGISTRY" | jq -c '[.servers | to_entries[] | select(.value.enabled == true) | .key]')
           else
             # Convert comma-separated to JSON array
             MATRIX=$(echo "$SERVERS" | jq -R -c 'split(",") | map(select(length > 0))')
@@ -71,55 +112,36 @@ jobs:
         id: config
         run: |
           SERVER="${{ matrix.server }}"
+          REGISTRY='${{ needs.prepare.outputs.server_configs }}'
           
-          # Map server names to secret names
-          case "$SERVER" in
-            finland)
-              echo "host_secret=VPS_FINLAND_HOST" >> $GITHUB_OUTPUT
-              echo "user_secret=VPS_FINLAND_USER" >> $GITHUB_OUTPUT
-              echo "key_secret=VPS_FINLAND_KEY" >> $GITHUB_OUTPUT
-              echo "port_secret=VPS_FINLAND_PORT" >> $GITHUB_OUTPUT
-              # Fallback to legacy secrets for backward compatibility
-              echo "host_fallback=VPS_HOST" >> $GITHUB_OUTPUT
-              echo "user_fallback=VPS_USER" >> $GITHUB_OUTPUT
-              echo "key_fallback=SSH_PRIVATE_KEY" >> $GITHUB_OUTPUT
-              echo "port_fallback=VPS_PORT" >> $GITHUB_OUTPUT
-              ;;
-            germany)
-              echo "host_secret=VPS_GERMANY_HOST" >> $GITHUB_OUTPUT
-              echo "user_secret=VPS_GERMANY_USER" >> $GITHUB_OUTPUT
-              echo "key_secret=VPS_GERMANY_KEY" >> $GITHUB_OUTPUT
-              echo "port_secret=VPS_GERMANY_PORT" >> $GITHUB_OUTPUT
-              ;;
-            turkey)
-              echo "host_secret=VPS_TURKEY_HOST" >> $GITHUB_OUTPUT
-              echo "user_secret=VPS_TURKEY_USER" >> $GITHUB_OUTPUT
-              echo "key_secret=VPS_TURKEY_KEY" >> $GITHUB_OUTPUT
-              echo "port_secret=VPS_TURKEY_PORT" >> $GITHUB_OUTPUT
-              ;;
-            usa)
-              echo "host_secret=VPS_USA_HOST" >> $GITHUB_OUTPUT
-              echo "user_secret=VPS_USA_USER" >> $GITHUB_OUTPUT
-              echo "key_secret=VPS_USA_KEY" >> $GITHUB_OUTPUT
-              echo "port_secret=VPS_USA_PORT" >> $GITHUB_OUTPUT
-              ;;
-            japan)
-              echo "host_secret=VPS_JAPAN_HOST" >> $GITHUB_OUTPUT
-              echo "user_secret=VPS_JAPAN_USER" >> $GITHUB_OUTPUT
-              echo "key_secret=VPS_JAPAN_KEY" >> $GITHUB_OUTPUT
-              echo "port_secret=VPS_JAPAN_PORT" >> $GITHUB_OUTPUT
-              ;;
-            singapore)
-              echo "host_secret=VPS_SINGAPORE_HOST" >> $GITHUB_OUTPUT
-              echo "user_secret=VPS_SINGAPORE_USER" >> $GITHUB_OUTPUT
-              echo "key_secret=VPS_SINGAPORE_KEY" >> $GITHUB_OUTPUT
-              echo "port_secret=VPS_SINGAPORE_PORT" >> $GITHUB_OUTPUT
-              ;;
-            *)
-              echo "❌ Unknown server: $SERVER"
-              exit 1
-              ;;
-          esac
+          # Validate server exists in registry
+          if ! echo "$REGISTRY" | jq -e ".servers.\"$SERVER\"" > /dev/null 2>&1; then
+            echo "❌ Server '$SERVER' not found in registry"
+            exit 1
+          fi
+          
+          # Extract configuration from registry dynamically
+          HOST_SECRET=$(echo "$REGISTRY" | jq -r ".servers.\"$SERVER\".secrets.host")
+          USER_SECRET=$(echo "$REGISTRY" | jq -r ".servers.\"$SERVER\".secrets.user")
+          KEY_SECRET=$(echo "$REGISTRY" | jq -r ".servers.\"$SERVER\".secrets.key")
+          PORT_SECRET=$(echo "$REGISTRY" | jq -r ".servers.\"$SERVER\".secrets.port")
+          
+          # Fallback secrets for backward compatibility
+          HOST_FALLBACK=$(echo "$REGISTRY" | jq -r ".servers.\"$SERVER\".fallback_secrets.host // empty")
+          USER_FALLBACK=$(echo "$REGISTRY" | jq -r ".servers.\"$SERVER\".fallback_secrets.user // empty")
+          KEY_FALLBACK=$(echo "$REGISTRY" | jq -r ".servers.\"$SERVER\".fallback_secrets.key // empty")
+          PORT_FALLBACK=$(echo "$REGISTRY" | jq -r ".servers.\"$SERVER\".fallback_secrets.port // empty")
+          
+          echo "host_secret=$HOST_SECRET" >> $GITHUB_OUTPUT
+          echo "user_secret=$USER_SECRET" >> $GITHUB_OUTPUT
+          echo "key_secret=$KEY_SECRET" >> $GITHUB_OUTPUT
+          echo "port_secret=$PORT_SECRET" >> $GITHUB_OUTPUT
+          echo "host_fallback=$HOST_FALLBACK" >> $GITHUB_OUTPUT
+          echo "user_fallback=$USER_FALLBACK" >> $GITHUB_OUTPUT
+          echo "key_fallback=$KEY_FALLBACK" >> $GITHUB_OUTPUT
+          echo "port_fallback=$PORT_FALLBACK" >> $GITHUB_OUTPUT
+          
+          echo "✅ Loaded configuration for server: $SERVER"
 
       - name: Deploy to ${{ matrix.server }}
         uses: appleboy/ssh-action@v1.2.0

@@ -1,0 +1,39 @@
+{
+  "version": "1.0.0",
+  "description": "Central server registry - Single source of truth for ALL deployment workflows",
+  "metadata": {
+    "last_updated": "2026-07-22",
+    "maintainer": "DevOps Team",
+    "usage": "Add new servers here and configure GitHub Secrets. No workflow changes required.",
+    "supported_workflows": [
+      "deploy.yml",
+      "rollback.yml",
+      "healthcheck.yml",
+      "blue-green-deploy.yml",
+      "canary-deploy.yml"
+    ]
+  },
+  "servers": {
+    "finland": {
+      "enabled": true,
+      "description": "Primary production server - Finland",
+      "secrets": {
+        "host": "VPS_FINLAND_HOST",
+        "user": "VPS_FINLAND_USER",
+        "key": "VPS_FINLAND_KEY",
+        "port": "VPS_FINLAND_PORT"
+      },
+      "fallback_secrets": {
+        "host": "VPS_HOST",
+        "user": "VPS_USER",
+        "key": "SSH_PRIVATE_KEY",
+        "port": "VPS_PORT"
+      },
+      "metadata": {
+        "region": "eu-north",
+        "provider": "custom-vps",
+        "environment": "production"
+      }
+    }
+  }
+}
