@@ -41,12 +41,30 @@ IMAGE_REGISTRY="${DOCKER_REGISTRY:-ghcr.io/${GITHUB_REPOSITORY_OWNER:-tuncay005-
 IMAGE_TAG="${VERSION:-latest}"
 FULL_IMAGE="${IMAGE_REGISTRY}:${IMAGE_TAG}"
 
-# Pull Docker image from registry
+# Pull Docker image from registry with retry mechanism
 echo -e "${GREEN}Pulling Docker image: ${FULL_IMAGE}${NC}"
-docker pull "${FULL_IMAGE}"
 
-if [ $? -ne 0 ]; then
-    echo -e "${RED}Docker pull failed${NC}"
+MAX_PULL_RETRIES=3
+PULL_RETRY=0
+PULL_SUCCESS=false
+
+while [ $PULL_RETRY -lt $MAX_PULL_RETRIES ]; do
+    if docker pull "${FULL_IMAGE}"; then
+        PULL_SUCCESS=true
+        break
+    fi
+    
+    PULL_RETRY=$((PULL_RETRY+1))
+    
+    if [ $PULL_RETRY -lt $MAX_PULL_RETRIES ]; then
+        BACKOFF_DELAY=$((PULL_RETRY * 10))
+        echo -e "${YELLOW}Pull attempt $PULL_RETRY failed, retrying in ${BACKOFF_DELAY}s... ($PULL_RETRY/$MAX_PULL_RETRIES)${NC}"
+        sleep $BACKOFF_DELAY
+    fi
+done
+
+if [ "$PULL_SUCCESS" = false ]; then
+    echo -e "${RED}Docker pull failed after $MAX_PULL_RETRIES attempts${NC}"
     echo -e "${YELLOW}Make sure the image exists in GHCR: ${FULL_IMAGE}${NC}"
     exit 1
 fi
