@@ -90,7 +90,7 @@ jobs:
 
       - name: TruffleHog Scan
         run: |
-          docker run --rm -v "$PWD:/scan" trufflesecurity/trufflehog:v3.95.9 \
+          docker run --rm -v "$PWD:/scan" trufflesecurity/trufflehog:3.95.9 \
             git file:///scan \
             --results=verified,unknown \
             --fail \
