@@ -89,11 +89,13 @@ jobs:
           fetch-depth: 0
 
       - name: TruffleHog Scan
-        uses: trufflesecurity/trufflehog@main
-        with:
-          path: ./
-          base: main
-          head: HEAD
+        run: |
+          docker run --rm -v "$PWD:/scan" trufflesecurity/trufflehog:latest \
+            filesystem /scan \
+            --results=verified,unknown \
+            --fail \
+            --no-update \
+            --github-actions
 
   summary:
     name: Security Summary
