@@ -272,7 +272,7 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const issueNumber = ${{ needs.prepare.outputs.issue_number }};
+            const issueNumber = parseInt('${{ needs.prepare.outputs.issue_number }}') || 0;
             const version = '${{ needs.prepare.outputs.version }}';
             const rollbackResult = '${{ needs.rollback.result }}';
             
