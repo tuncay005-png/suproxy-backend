@@ -1,0 +1,56 @@
+﻿{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "timezone": "Asia/Baku",
+  "schedule": [
+    "after 10pm every weekday",
+    "before 5am every weekday",
+    "every weekend"
+  ],
+  "labels": ["dependencies"],
+  "assignees": ["tuncay005-png"],
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 0,
+  "enabledManagers": ["gomod", "dockerfile", "github-actions"],
+  "packageRules": [
+    {
+      "description": "Group all Go toolchain updates together",
+      "matchManagers": ["gomod", "dockerfile", "github-actions"],
+      "matchPackagePatterns": ["go", "golang"],
+      "groupName": "Go toolchain",
+      "automerge": false
+    },
+    {
+      "description": "Group all Go module dependencies",
+      "matchManagers": ["gomod"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "Go dependencies",
+      "automerge": false
+    },
+    {
+      "description": "Group GitHub Actions updates",
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions",
+      "automerge": false
+    },
+    {
+      "description": "Auto-merge patch updates for Go modules",
+      "matchManagers": ["gomod"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "automergeType": "pr",
+      "automergeStrategy": "squash"
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["security"],
+    "assignees": ["tuncay005-png"]
+  },
+  "osvVulnerabilityAlerts": true,
+  "postUpdateOptions": ["gomodTidy"],
+  "commitMessagePrefix": "chore(deps):",
+  "semanticCommits": "enabled"
+}
