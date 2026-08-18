@@ -188,7 +188,7 @@ jobs:
           echo "✅ Loaded configuration for server: $SERVER"
 
       - name: Rollback to ${{ needs.prepare.outputs.version }}
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.5
         env:
           VERSION: ${{ needs.prepare.outputs.version }}
           GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
@@ -222,7 +222,7 @@ jobs:
             bash /opt/suproxy/scripts/deploy.sh
 
       - name: Verify Rollback Health
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets[steps.config.outputs.host_secret] || secrets[steps.config.outputs.host_fallback] }}
           username: ${{ secrets[steps.config.outputs.user_secret] || secrets[steps.config.outputs.user_fallback] }}

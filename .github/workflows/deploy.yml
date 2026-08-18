@@ -144,7 +144,7 @@ jobs:
           echo "✅ Loaded configuration for server: $SERVER"
 
       - name: Deploy to ${{ matrix.server }}
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.5
         env:
           VERSION: ${{ needs.prepare.outputs.version }}
           GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
@@ -183,7 +183,7 @@ jobs:
       - name: Health Check - ${{ matrix.server }}
         id: health_check
         continue-on-error: true
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets[steps.config.outputs.host_secret] || secrets[steps.config.outputs.host_fallback] }}
           username: ${{ secrets[steps.config.outputs.user_secret] || secrets[steps.config.outputs.user_fallback] }}
@@ -229,7 +229,7 @@ jobs:
       - name: Get Previous Version for Rollback
         id: previous_version
         if: steps.health_check.outcome == 'failure'
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets[steps.config.outputs.host_secret] || secrets[steps.config.outputs.host_fallback] }}
           username: ${{ secrets[steps.config.outputs.user_secret] || secrets[steps.config.outputs.user_fallback] }}
@@ -249,7 +249,7 @@ jobs:
 
       - name: Automatic Rollback
         if: steps.health_check.outcome == 'failure'
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.5
         env:
           ROLLBACK_VERSION: ${{ steps.previous_version.outputs.PREVIOUS_VERSION || 'latest' }}
           GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
@@ -278,7 +278,7 @@ jobs:
 
       - name: Verify Rollback Health
         if: steps.health_check.outcome == 'failure'
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets[steps.config.outputs.host_secret] || secrets[steps.config.outputs.host_fallback] }}
           username: ${{ secrets[steps.config.outputs.user_secret] || secrets[steps.config.outputs.user_fallback] }}

@@ -59,7 +59,7 @@ jobs:
       - name: Health Check via SSH
         id: ssh_check
         continue-on-error: true
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets[steps.config.outputs.host_secret] || secrets[steps.config.outputs.host_fallback] }}
           username: ${{ secrets[steps.config.outputs.user_secret] || secrets.VPS_USER }}
