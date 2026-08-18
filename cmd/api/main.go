@@ -9,11 +9,15 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/suproxy/backend/internal/infrastructure/bootstrap"
 	"github.com/suproxy/backend/internal/infrastructure/server"
 )
 
 func main() {
+	// Load .env file if it exists (ignore error if not found)
+	_ = godotenv.Load()
+
 	// Initialize application
 	app, err := bootstrap.Initialize()
 	if err != nil {
