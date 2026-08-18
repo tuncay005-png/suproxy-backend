@@ -1,8 +1,6 @@
 ﻿{
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended"
-  ],
+  "extends": ["config:recommended"],
   "timezone": "Asia/Baku",
   "schedule": [
     "after 10pm every weekday",
@@ -16,27 +14,23 @@
   "enabledManagers": ["gomod", "dockerfile", "github-actions"],
   "packageRules": [
     {
-      "description": "Group all Go toolchain updates together",
       "matchManagers": ["gomod", "dockerfile", "github-actions"],
       "matchPackagePatterns": ["go", "golang"],
       "groupName": "Go toolchain",
       "automerge": false
     },
     {
-      "description": "Group all Go module dependencies",
       "matchManagers": ["gomod"],
       "matchUpdateTypes": ["minor", "patch"],
       "groupName": "Go dependencies",
       "automerge": false
     },
     {
-      "description": "Group GitHub Actions updates",
       "matchManagers": ["github-actions"],
       "groupName": "GitHub Actions",
       "automerge": false
     },
     {
-      "description": "Auto-merge patch updates for Go modules",
       "matchManagers": ["gomod"],
       "matchUpdateTypes": ["patch"],
       "automerge": true,
