@@ -283,7 +283,7 @@ jobs:
             echo "✅ Canary rollback complete"
 
       - name: Create Rollback Issue
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const version = '${{ inputs.version }}';

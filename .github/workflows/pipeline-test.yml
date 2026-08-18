@@ -10,7 +10,7 @@ jobs:
     
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       
       - name: Verify Workflow Files Exist
         run: |
@@ -103,7 +103,7 @@ jobs:
     
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       
       - name: Verify deploy.sh
         run: |
@@ -157,7 +157,7 @@ jobs:
     
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       
       - name: Verify Documentation Files
         run: |
