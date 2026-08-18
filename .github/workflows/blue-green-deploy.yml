@@ -32,7 +32,7 @@ jobs:
     
     steps:
       - name: Deploy to ${{ inputs.target_environment }}
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.5
         env:
           VERSION: ${{ inputs.version }}
           GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
@@ -85,7 +85,7 @@ jobs:
 
       - name: Health Check ${{ inputs.target_environment }}
         id: health
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.5
         env:
           TARGET_ENV: ${{ inputs.target_environment }}
         with:
@@ -129,7 +129,7 @@ jobs:
     
     steps:
       - name: Switch Nginx Traffic
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.5
         env:
           TARGET_ENV: ${{ inputs.target_environment }}
         with:
@@ -159,7 +159,7 @@ jobs:
             fi
 
       - name: Verify Traffic Switch
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
@@ -181,7 +181,7 @@ jobs:
     
     steps:
       - name: Stop Old Environment
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.5
         env:
           TARGET_ENV: ${{ inputs.target_environment }}
         with:

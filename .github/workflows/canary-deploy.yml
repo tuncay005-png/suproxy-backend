@@ -36,7 +36,7 @@ jobs:
     
     steps:
       - name: Deploy Canary
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.5
         env:
           VERSION: ${{ inputs.version }}
           GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
@@ -78,7 +78,7 @@ jobs:
             echo "✅ Canary deployed on port $CANARY_PORT"
 
       - name: Configure Traffic Split
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.5
         env:
           CANARY_PERCENTAGE: ${{ inputs.canary_percentage }}
         with:
@@ -114,7 +114,7 @@ jobs:
 
       - name: Health Check Canary
         id: health
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
@@ -149,7 +149,7 @@ jobs:
     
     steps:
       - name: Monitor Metrics
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.5
         env:
           MONITORING_DURATION: ${{ inputs.monitoring_duration }}
         with:
@@ -195,7 +195,7 @@ jobs:
     
     steps:
       - name: Promote to Production
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.5
         env:
           VERSION: ${{ inputs.version }}
           GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
@@ -224,7 +224,7 @@ jobs:
             echo "✅ Canary promoted to production"
 
       - name: Remove Canary
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
@@ -257,7 +257,7 @@ jobs:
     
     steps:
       - name: Rollback Canary
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
