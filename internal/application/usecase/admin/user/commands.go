@@ -120,3 +120,74 @@ func (c *UpdateUserRoleCommand) Execute(ctx context.Context, userID uuid.UUID, n
 
 	return nil
 }
+// CreateUserCommand handles creating a new user by admin
+type CreateUserCommand struct {
+userRepo  user.Repository
+auditRepo audit.Repository
+}
+
+func NewCreateUserCommand(userRepo user.Repository, auditRepo audit.Repository) *CreateUserCommand {
+return &CreateUserCommand{
+userRepo:  userRepo,
+auditRepo: auditRepo,
+}
+}
+
+func (c *CreateUserCommand) Execute(ctx context.Context, email, password, firstName, lastName, phone, roleStr, statusStr string, adminID uuid.UUID, ip, userAgent string) (*user.User, error) {
+// Create email value object
+userEmail, err := user.NewEmail(email)
+if err != nil {
+return nil, fmt.Errorf("invalid email: %w", err)
+}
+
+// Check if user already exists
+existingUser, err := c.userRepo.FindByEmail(ctx, userEmail)
+if err == nil && existingUser != nil {
+return nil, user.ErrUserAlreadyExists
+}
+
+// Create password value object
+userPassword, err := user.NewPassword(password)
+if err != nil {
+return nil, fmt.Errorf("invalid password: %w", err)
+}
+
+// Create profile
+profile := user.NewProfile(firstName, lastName, phone, "")
+
+// Create user
+newUser, err := user.NewUser(userEmail, userPassword, profile)
+if err != nil {
+return nil, fmt.Errorf("failed to create user: %w", err)
+}
+
+// Set role if provided
+if roleStr != "" {
+newUser.Role = user.Role(roleStr)
+}
+
+// Set status if provided
+if statusStr != "" {
+newUser.Status = user.Status(statusStr)
+}
+
+// Save user
+if err := c.userRepo.Create(ctx, newUser); err != nil {
+return nil, fmt.Errorf("failed to save user: %w", err)
+}
+
+// Create audit log
+auditLog := audit.NewLog(adminID, audit.ActionCreate, "user", newUser.ID, ip, userAgent)
+auditLog.AddMetadata("event", "user_created")
+auditLog.AddMetadata("user_email", email)
+auditLog.AddMetadata("user_role", string(newUser.Role))
+auditLog.AddMetadata("user_status", string(newUser.Status))
+
+if err := c.auditRepo.Create(ctx, auditLog); err != nil {
+// Log audit creation failure but don't fail the operation
+return newUser, fmt.Errorf("user created but audit log failed: %w", err)
+}
+
+return newUser, nil
+}
+

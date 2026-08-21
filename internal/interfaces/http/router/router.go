@@ -158,6 +158,7 @@ func (r *Router) Setup() {
 			// User Management (Phase 17.2)
 			users := admin.Group("/users")
 			{
+				users.POST("", r.adminHandler.CreateUser)                 // Create new user
 				users.GET("", r.adminHandler.ListUsers)                   // List users with filters
 				users.GET("/:id", r.adminHandler.GetUser)                 // Get user details
 				users.PUT("/:id/status", r.adminHandler.UpdateUserStatus) // Update user status

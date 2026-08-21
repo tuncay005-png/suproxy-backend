@@ -53,3 +53,13 @@ type UpdateUserStatusRequest struct {
 type UpdateUserRoleRequest struct {
 	Role string `json:"role" binding:"required,oneof=user admin"`
 }
+// Admin Create User Request
+type AdminCreateUserRequest struct {
+Email     string `json:"email" binding:"required,email"`
+Password  string `json:"password" binding:"required,min=8"`
+FirstName string `json:"first_name"`
+LastName  string `json:"last_name"`
+Phone     string `json:"phone"`
+Role      string `json:"role" binding:"omitempty,oneof=user admin"`
+Status    string `json:"status" binding:"omitempty,oneof=active inactive suspended"`
+}

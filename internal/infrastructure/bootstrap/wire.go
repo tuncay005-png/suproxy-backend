@@ -81,6 +81,10 @@ func InitializeAuthSystem(app *Application, engine *gin.Engine) {
 		container.UserRepository,
 		container.AuditLogRepository,
 	)
+	createUserCmd := adminUserUseCase.NewCreateUserCommand(
+		container.UserRepository,
+		container.AuditLogRepository,
+	)
 
 	// Initialize admin Xray instance management use cases (Phase 17.3)
 	listInstancesQuery := adminXrayUseCase.NewListInstancesQuery(container.XrayInstanceRepository)
@@ -222,6 +226,7 @@ func InitializeAuthSystem(app *Application, engine *gin.Engine) {
 		getUserQuery,
 		updateUserStatusCmd,
 		updateUserRoleCmd,
+		createUserCmd,
 		listInstancesQuery,
 		getInstanceQuery,
 		getInstanceStatsQuery,

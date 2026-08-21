@@ -30,6 +30,7 @@ type AdminHandler struct {
 	getUserQuery            *adminuser.GetUserQuery
 	updateUserStatusCommand *adminuser.UpdateUserStatusCommand
 	updateUserRoleCommand   *adminuser.UpdateUserRoleCommand
+	createUserCommand       *adminuser.CreateUserCommand
 
 	// Xray Instance Management UseCases (Phase 17.3)
 	listInstancesQuery         *adminxray.ListInstancesQuery
@@ -82,6 +83,7 @@ func NewAdminHandler(
 	getUserQuery *adminuser.GetUserQuery,
 	updateUserStatusCommand *adminuser.UpdateUserStatusCommand,
 	updateUserRoleCommand *adminuser.UpdateUserRoleCommand,
+	createUserCommand *adminuser.CreateUserCommand,
 	listInstancesQuery *adminxray.ListInstancesQuery,
 	getInstanceQuery *adminxray.GetInstanceQuery,
 	getInstanceStatsQuery *adminxray.GetInstanceStatsQuery,
@@ -120,6 +122,7 @@ func NewAdminHandler(
 		getUserQuery:                getUserQuery,
 		updateUserStatusCommand:     updateUserStatusCommand,
 		updateUserRoleCommand:       updateUserRoleCommand,
+		createUserCommand:           createUserCommand,
 		listInstancesQuery:          listInstancesQuery,
 		getInstanceQuery:            getInstanceQuery,
 		getInstanceStatsQuery:       getInstanceStatsQuery,
@@ -409,6 +412,66 @@ func (h *AdminHandler) UpdateUserRole(c *gin.Context) {
 
 	resp := mapper.ToAdminUserResponse(u)
 	response.SuccessOK(c, resp)
+}
+
+// CreateUser handles POST /api/v1/admin/users
+func (h *AdminHandler) CreateUser(c *gin.Context) {
+	// Parse request body
+	var req dto.AdminCreateUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.logger.Error("Failed to bind request", "error", err)
+		response.BadRequest(c, "invalid request body")
+		return
+	}
+
+	// Get admin context
+	adminCtx, err := middleware.GetAdminContext(c)
+	if err != nil {
+		h.logger.Error("Failed to get admin context", "error", err)
+		response.InternalError(c, "failed to get admin context")
+		return
+	}
+
+	// Set defaults if not provided
+	if req.Role == "" {
+		req.Role = "user"
+	}
+	if req.Status == "" {
+		req.Status = "active"
+	}
+
+	// Execute command
+	newUser, err := h.createUserCommand.Execute(
+		c.Request.Context(),
+		req.Email,
+		req.Password,
+		req.FirstName,
+		req.LastName,
+		req.Phone,
+		req.Role,
+		req.Status,
+		adminCtx.UserID,
+		adminCtx.IPAddress,
+		adminCtx.UserAgent,
+	)
+	if err != nil {
+		if errors.Is(err, user.ErrUserAlreadyExists) {
+			response.BadRequest(c, "email already exists")
+			return
+		}
+		h.logger.Error("Failed to create user", "error", err)
+		response.InternalError(c, "failed to create user")
+		return
+	}
+
+	h.logger.Info("Admin created user",
+		"admin_id", adminCtx.UserID,
+		"admin_email", adminCtx.Email,
+		"new_user_id", newUser.ID,
+		"new_user_email", req.Email)
+
+	resp := mapper.ToAdminUserResponse(newUser)
+	response.SuccessCreated(c, resp)
 }
 
 // ========================= XRAY INSTANCE MANAGEMENT =========================
@@ -1817,3 +1880,4 @@ func (h *AdminHandler) GetXraySystemStatus(c *gin.Context) {
 	}
 	response.SuccessOK(c, resp)
 }
+
