@@ -1,342 +1,538 @@
-# 🚀 Deployment Guide
+﻿# SuProxy Production Deployment Guide
 
-## Overview
+**Current Version:** 1.0.0  
+**Last Updated:** 2024-08-21
 
-SuProxy Backend uses a fully automated CI/CD pipeline with GitHub Actions. This document describes the deployment process and architecture.
+---
+
+## Quick Start
+
+```bash
+# 1. Clone and configure
+git clone https://github.com/tuncay005-png/suproxy-backend.git
+cd suproxy-backend
+cp .env.production.example .env.production
+
+# 2. Configure environment (see Configuration section)
+nano .env.production
+
+# 3. Set up HTTPS (see HTTPS Setup section)
+./scripts/setup-https-traefik.sh
+# or
+./scripts/setup-https-nginx.sh
+
+# 4. Deploy
+docker-compose -f docker-compose.production-https.yml up -d
+
+# 5. Verify
+curl https://api.yourdomain.com/health
+```
+
+---
+
+## Prerequisites
+
+### Required
+- ✅ Docker 20.10+ and Docker Compose V2
+- ✅ Domain name with DNS configured
+- ✅ Server with 4GB+ RAM, 2+ CPU cores
+- ✅ Ports 80, 443 open in firewall
+- ✅ Email address for SSL certificates
+
+### Domain Configuration
+```bash
+# Required DNS A records:
+api.yourdomain.com      → YOUR_SERVER_IP
+grafana.yourdomain.com  → YOUR_SERVER_IP
+prometheus.yourdomain.com → YOUR_SERVER_IP (optional)
+traefik.yourdomain.com  → YOUR_SERVER_IP (if using Traefik)
+```
+
+**Verify DNS:**
+```bash
+nslookup api.yourdomain.com
+# Should return your server IP
+```
+
+---
+
+## Configuration
+
+### 1. Environment Variables
+
+Copy and edit production environment file:
+
+```bash
+cp .env.production.example .env.production
+nano .env.production
+```
+
+### Required Configuration
+
+#### Domain & SSL
+```bash
+DOMAIN=yourdomain.com
+ACME_EMAIL=admin@yourdomain.com
+```
+
+#### Database (CRITICAL)
+```bash
+DB_USER=suproxy_prod
+DB_PASSWORD=$(openssl rand -base64 32)  # Generate secure password
+DB_NAME=suproxy_prod
+DB_SSLMODE=require
+```
+
+#### JWT Authentication (CRITICAL)
+```bash
+# Generate secure secret
+JWT_SECRET=$(openssl rand -base64 32)
+
+# Must be generated before production
+# Application will FAIL to start if default value is used
+JWT_ACCESS_EXPIRY=15    # minutes
+JWT_REFRESH_EXPIRY=168  # hours (7 days)
+```
+
+#### Monitoring
+```bash
+GRAFANA_USER=admin
+GRAFANA_PASSWORD=$(openssl rand -base64 16)
+
+# Generate basic auth hashes
+# htpasswd -nb admin yourpassword
+TRAEFIK_DASHBOARD_AUTH='admin:$apr1$...'
+MONITORING_AUTH='admin:$apr1$...'
+```
+
+### Security Validation
+
+The application includes production security checks:
+
+**JWT Secret Validation:**
+```bash
+# In production, these will FAIL startup:
+JWT_SECRET=change-me-in-production  # ❌ Rejected
+JWT_SECRET=""                       # ❌ Rejected  
+JWT_SECRET="   "                    # ❌ Rejected
+
+# Valid production secret:
+JWT_SECRET=$(openssl rand -base64 32)  # ✅ Accepted
+```
+
+**Cookie Security:**
+```bash
+COOKIE_SECURE=true
+COOKIE_SAMESITE=strict
+```
+
+---
+
+## HTTPS Setup
+
+**⚠️ HTTPS is REQUIRED for production.** Do not run production over HTTP.
+
+### Option 1: Traefik (Recommended)
+
+**Advantages:**
+- ✅ Automatic SSL certificate management
+- ✅ Auto-renewal built-in
+- ✅ Docker-native
+- ✅ Monitoring dashboard
+
+```bash
+# Run automated setup
+chmod +x scripts/setup-https-traefik.sh
+./scripts/setup-https-traefik.sh
+
+# Follow prompts for staging → production
+```
+
+**Deployment:**
+```bash
+docker-compose -f docker-compose.production-https.yml up -d
+```
+
+### Option 2: Nginx
+
+**Advantages:**
+- ✅ Traditional and widely known
+- ✅ Fine-grained control
+- ✅ High performance
+
+```bash
+# Run automated setup
+chmod +x scripts/setup-https-nginx.sh
+./scripts/setup-https-nginx.sh
+```
+
+**Deployment:**
+```bash
+docker-compose -f docker-compose.production-nginx.yml up -d
+```
+
+### Complete HTTPS Documentation
+
+For detailed HTTPS setup, troubleshooting, and security configuration:
+
+📖 **See: [docs/HTTPS_SETUP.md](./HTTPS_SETUP.md)**
+
+Covers:
+- Step-by-step setup for both Traefik and Nginx
+- SSL certificate management
+- Security headers configuration
+- HTTP → HTTPS redirect
+- Certificate renewal
+- Troubleshooting
+- Monitoring
+
+---
 
 ## Deployment Architecture
 
-### Workflow Pipeline
+### Production Stack
 
 ```
-Code Push to main
-    ↓
-test.yml (Quality Gate)
-    ↓ (must pass)
-build.yml (Build Docker Image)
-    ↓ (automatic)
-deploy.yml (Deploy to Servers)
-    ↓ (health checks)
-Production Running
+┌─────────────────────────────────────────────────────┐
+│                  Internet (HTTPS)                    │
+└──────────────────────┬──────────────────────────────┘
+                       │
+                       ▼
+┌─────────────────────────────────────────────────────┐
+│            Reverse Proxy (Traefik/Nginx)            │
+│  • SSL Termination                                  │
+│  • Security Headers                                 │
+│  • Rate Limiting                                    │
+│  • HTTP → HTTPS Redirect                            │
+└──────────────┬──────────────────────────────────────┘
+               │
+        ┌──────┴──────┬──────────┬──────────┐
+        ▼             ▼          ▼          ▼
+   ┌────────┐   ┌──────────┐ ┌──────┐ ┌─────────┐
+   │  API   │   │PostgreSQL│ │Prome-│ │ Grafana │
+   │ :8080  │   │  :5432   │ │theus │ │  :3000  │
+   └────────┘   └──────────┘ └──────┘ └─────────┘
 ```
 
-### Multi-Server Support
+### Services
 
-The deployment system supports multiple servers in different regions:
+| Service | Purpose | Exposed |
+|---------|---------|---------|
+| Traefik/Nginx | Reverse proxy, SSL | Ports 80, 443 |
+| API | Backend application | Internal :8080 |
+| PostgreSQL | Database | Internal :5432 |
+| Prometheus | Metrics collection | Via proxy (optional) |
+| Grafana | Monitoring dashboards | Via proxy |
 
-- **Finland** (Primary) - Current production server
-- **Germany** - Future
-- **Turkey** - Future
-- **USA** - Future
-- **Japan** - Future
-- **Singapore** - Future
+---
 
-## Automatic Deployment
+## Database Setup
 
-### Trigger Flow
+### Migrations
 
-1. **Push to `main` branch**
-2. **Tests run automatically** (`test.yml`)
-   - Unit tests
-   - Integration tests
-   - Linting
-   - Security scans
-3. **Docker image built** (`build.yml`)
-   - Only if tests pass
-   - Tagged with `latest`, version, and SHA
-4. **Deployment executed** (`deploy.yml`)
-   - Only if build succeeds
-   - Deploys to all configured servers
-   - Runs health checks
-
-## Manual Deployment
-
-### Deploy Specific Version
+Migrations run automatically on startup. To run manually:
 
 ```bash
-# Via GitHub UI:
-Actions → Deploy to Production → Run workflow
-- Version: v1.0.42 (or 'latest')
-- Servers: all (or finland,germany,turkey)
+# Check current version
+docker-compose -f docker-compose.production-https.yml exec api \
+  migrate -path /app/migrations -database "postgresql://..." version
+
+# Run migrations manually (if needed)
+docker-compose -f docker-compose.production-https.yml exec api \
+  migrate -path /app/migrations -database "postgresql://..." up
 ```
 
-### Deploy to Specific Servers
+### Backup
 
+**Automated backup (recommended):**
 ```bash
-# Deploy only to Finland and Germany
-Servers: finland,germany
+# Create backup script
+nano /opt/suproxy/scripts/backup-db.sh
 
-# Deploy to all servers
-Servers: all
+# Add to cron
+crontab -e
+0 2 * * * /opt/suproxy/scripts/backup-db.sh
 ```
 
-## Version Management
-
-### Version Tagging
-
-Every build produces three tags:
-
-1. **`latest`** - Always the most recent build
-2. **`v1.0.X`** - Semantic version (auto-incremented)
-3. **`sha-abc123`** - Git commit identifier
-
-### Pull Specific Version
-
+**Manual backup:**
 ```bash
-# Latest
-docker pull ghcr.io/tuncay005-png/suproxy-backend:latest
-
-# Specific version
-docker pull ghcr.io/tuncay005-png/suproxy-backend:v1.0.42
-
-# Specific commit
-docker pull ghcr.io/tuncay005-png/suproxy-backend:sha-a1b2c3d
+docker exec suproxy-postgres-prod pg_dump -U suproxy_prod suproxy_prod > backup.sql
 ```
 
-## Server Setup
-
-### VPS Requirements
-
-Each VPS must have:
-- Docker installed
-- Docker Compose installed
-- `/opt/suproxy` directory structure
-- `.env.production` configuration
-- SSH access configured
-
-### Directory Structure
-
-```
-/opt/suproxy/
-├── .env.production              # Environment configuration
-├── docker-compose.production.yml
-├── scripts/
-│   └── deploy.sh               # Deployment script
-├── backups/                    # Database backups
-├── prometheus/
-│   └── prometheus.yml
-└── grafana/
-    └── provisioning/
-```
-
-## Health Checks
-
-### Automatic Health Verification
-
-After each deployment, the system:
-
-1. Waits 5 seconds for services to start
-2. Checks if all Docker containers are running
-3. Polls the `/health` endpoint (up to 60 seconds)
-4. Verifies HTTP 200 response
-
-### Manual Health Check
-
+**Restore:**
 ```bash
-# On VPS
-curl http://localhost:8080/health
-
-# Expected response
-{"status":"ok","timestamp":"2026-07-19T..."}
+docker exec -i suproxy-postgres-prod psql -U suproxy_prod suproxy_prod < backup.sql
 ```
 
-## Rollback
-
-If a deployment fails:
-
-1. **Automatic**: Health check fails → deployment marked as failed
-2. **Manual**: Use previous version
-
-```bash
-# Via GitHub UI:
-Actions → Deploy to Production → Run workflow
-- Version: v1.0.41  # Previous working version
-- Servers: all
-```
-
-## GitHub Secrets Configuration
-
-### Current Server (Finland)
-
-Uses legacy secrets with fallback:
-
-```
-VPS_FINLAND_HOST     (or VPS_HOST)
-VPS_FINLAND_USER     (or VPS_USER)
-VPS_FINLAND_KEY      (or SSH_PRIVATE_KEY)
-VPS_FINLAND_PORT     (or VPS_PORT)
-```
-
-### Future Servers
-
-Add these secrets in GitHub repository settings:
-
-**Germany:**
-```
-VPS_GERMANY_HOST
-VPS_GERMANY_USER
-VPS_GERMANY_KEY
-VPS_GERMANY_PORT
-```
-
-**Turkey:**
-```
-VPS_TURKEY_HOST
-VPS_TURKEY_USER
-VPS_TURKEY_KEY
-VPS_TURKEY_PORT
-```
-
-**Additional servers:** Follow the same pattern with country name.
-
-## Deployment Script (`deploy.sh`)
-
-### What It Does
-
-```bash
-1. Validates environment variables
-2. Pulls Docker image from GHCR
-3. Stops existing containers
-4. Starts new containers
-5. Waits for health checks
-6. Reports status
-```
-
-### Important: No Local Building
-
-The VPS **never builds Docker images**. It only:
-- Pulls pre-built images from GHCR
-- Runs `docker-compose up -d`
-- Verifies health
+---
 
 ## Monitoring
 
-### Production Monitoring Stack
-
-Each VPS runs:
-
-- **Prometheus** - Metrics collection (port 9090)
-- **Grafana** - Visualization (port 3000)
-- **API** - Application (port 8080)
-
-### Access Monitoring
+### Health Checks
 
 ```bash
-# Prometheus
-http://<VPS_IP>:9090
+# API health
+curl https://api.yourdomain.com/health
 
-# Grafana
-http://<VPS_IP>:3000
-Username: admin
-Password: (from .env.production)
+# Database health
+docker exec suproxy-postgres-prod pg_isready -U suproxy_prod
+
+# All container health
+docker-compose -f docker-compose.production-https.yml ps
 ```
+
+### Grafana Dashboards
+
+Access: `https://grafana.yourdomain.com`
+
+Pre-configured dashboards for:
+- API performance metrics
+- Database connections
+- Request rates and latencies
+- Error rates
+- Resource usage
+
+### Prometheus Metrics
+
+Access: `https://prometheus.yourdomain.com` (if exposed)
+
+Metrics available:
+- `http_requests_total` - Total requests
+- `http_request_duration_seconds` - Request latency
+- `database_connections_open` - Active DB connections
+- `jwt_tokens_generated_total` - JWT generation count
+
+---
+
+## Security Features
+
+### Implemented Security
+
+✅ **HTTPS/TLS**
+- TLS 1.2 and 1.3 only
+- Strong cipher suites
+- Perfect Forward Secrecy
+
+✅ **Security Headers**
+- HSTS (Strict-Transport-Security)
+- X-Frame-Options: DENY
+- X-Content-Type-Options: nosniff
+- X-XSS-Protection
+- Content-Security-Policy
+
+✅ **Authentication**
+- JWT with secure secret validation
+- Production startup fails if default secret used
+- Secure cookie configuration (HttpOnly, Secure, SameSite)
+
+✅ **Rate Limiting**
+- Auth endpoints: 5 req/min per IP
+- Admin endpoints: 100 req/min per user
+- Additional reverse proxy limits
+
+✅ **CORS**
+- Configurable allowed origins
+- No wildcard (*) in production
+
+✅ **Database**
+- SSL/TLS connections required
+- Prepared statements (SQL injection protection)
+- Connection pooling with limits
+
+### Security Checklist
+
+Before production:
+- [ ] HTTPS configured and working
+- [ ] JWT secret generated (not default)
+- [ ] Database password changed
+- [ ] Grafana password changed
+- [ ] CORS origins configured
+- [ ] Firewall configured (only 80, 443 open)
+- [ ] Security headers verified
+- [ ] SSL Labs test shows A/A+
+
+---
+
+## Operations
+
+### Starting Services
+
+```bash
+# Start all services
+docker-compose -f docker-compose.production-https.yml up -d
+
+# Start specific service
+docker-compose -f docker-compose.production-https.yml up -d api
+
+# View logs
+docker-compose -f docker-compose.production-https.yml logs -f
+
+# View logs for specific service
+docker-compose -f docker-compose.production-https.yml logs -f api
+```
+
+### Stopping Services
+
+```bash
+# Stop all services
+docker-compose -f docker-compose.production-https.yml down
+
+# Stop but keep volumes
+docker-compose -f docker-compose.production-https.yml stop
+```
+
+### Updating Application
+
+```bash
+# Pull latest image
+docker-compose -f docker-compose.production-https.yml pull api
+
+# Restart with new image
+docker-compose -f docker-compose.production-https.yml up -d api
+
+# Verify
+curl https://api.yourdomain.com/health
+```
+
+### Scaling (Vertical)
+
+Edit resource limits in `docker-compose.production-https.yml`:
+
+```yaml
+api:
+  deploy:
+    resources:
+      limits:
+        cpus: '8'      # Increase CPUs
+        memory: 8G     # Increase memory
+      reservations:
+        cpus: '4'
+        memory: 4G
+```
+
+Apply changes:
+```bash
+docker-compose -f docker-compose.production-https.yml up -d
+```
+
+---
 
 ## Troubleshooting
 
-### Deployment Failed
+### Service Won't Start
 
 ```bash
-# SSH to VPS
-ssh user@vps-host
-
 # Check logs
-cd /opt/suproxy
-docker-compose -f docker-compose.production.yml logs -f api
+docker-compose -f docker-compose.production-https.yml logs api
 
-# Check container status
-docker-compose -f docker-compose.production.yml ps
-
-# Restart manually
-./scripts/deploy.sh
+# Common issues:
+# 1. JWT secret not set (SECURITY ERROR in logs)
+# 2. Database connection failed (check DB_PASSWORD)
+# 3. Port already in use
+# 4. SSL certificate not obtained
 ```
 
-### Health Check Failed
+### Database Connection Issues
 
 ```bash
-# Check API logs
-docker-compose -f docker-compose.production.yml logs api
+# Test database connection
+docker exec suproxy-postgres-prod psql -U suproxy_prod -c "SELECT 1;"
 
-# Check all services
-docker-compose -f docker-compose.production.yml ps
+# Check database logs
+docker logs suproxy-postgres-prod
 
-# Verify database connection
-docker-compose -f docker-compose.production.yml logs postgres
+# Verify database is running
+docker ps | grep postgres
 ```
 
-### Image Pull Failed
+### SSL Certificate Issues
+
+See [docs/HTTPS_SETUP.md](./HTTPS_SETUP.md) for comprehensive SSL troubleshooting.
+
+### Performance Issues
 
 ```bash
-# Verify image exists in GHCR
-docker manifest inspect ghcr.io/tuncay005-png/suproxy-backend:latest
+# Check resource usage
+docker stats
 
-# Re-authenticate if needed (on VPS)
-echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
+# Check database connections
+docker exec suproxy-postgres-prod psql -U suproxy_prod -c \
+  "SELECT count(*) FROM pg_stat_activity;"
+
+# Check slow queries
+docker exec suproxy-postgres-prod psql -U suproxy_prod -c \
+  "SELECT * FROM pg_stat_statements ORDER BY total_time DESC LIMIT 10;"
 ```
 
-## Best Practices
+---
 
-### Before Deploying
+## Production Checklist
 
-1. ✅ Ensure all tests pass locally
-2. ✅ Review code changes
-3. ✅ Check build logs in GitHub Actions
-4. ✅ Verify the version to deploy
+### Before Deployment
 
-### After Deploying
+- [ ] All prerequisites met
+- [ ] DNS configured and propagated
+- [ ] `.env.production` configured with secure values
+- [ ] SSL certificates obtained
+- [ ] Firewall configured
+- [ ] Database backup strategy in place
 
-1. ✅ Monitor health checks
-2. ✅ Check application logs
-3. ✅ Verify API endpoints
-4. ✅ Monitor Grafana dashboards
+### After Deployment
 
-### Emergency Procedures
+- [ ] Health check passes
+- [ ] HTTPS working correctly
+- [ ] Security headers present
+- [ ] Monitoring dashboards accessible
+- [ ] Load testing completed
+- [ ] Frontend can connect
+- [ ] Authentication working
+- [ ] Database backups tested
 
-1. **Quick Rollback**: Deploy previous version immediately
-2. **Stop Deployment**: Cancel workflow in GitHub Actions
-3. **Manual Intervention**: SSH to VPS and run commands directly
+### First Week
 
-## Adding New Servers
+- [ ] Monitor logs daily
+- [ ] Check certificate auto-renewal
+- [ ] Verify backup completion
+- [ ] Review metrics and alerts
+- [ ] Test disaster recovery
 
-To add a new server (e.g., "australia"):
+---
 
-1. **Set up VPS** with required software
-2. **Add secrets** to GitHub:
-   - `VPS_AUSTRALIA_HOST`
-   - `VPS_AUSTRALIA_USER`
-   - `VPS_AUSTRALIA_KEY`
-   - `VPS_AUSTRALIA_PORT`
-3. **Update deploy.yml** (add to server mapping)
-4. **Deploy**: Use `servers: australia` or `all`
+## CI/CD Integration
 
-No workflow logic changes required after initial setup!
+The project includes GitHub Actions workflows:
 
-## Security
+1. **Tests** - Run on every push
+2. **Build** - Build and push Docker image (after tests pass)
+3. **Deploy** - Deploy to production server
 
-### Secrets Management
+See [PRODUCTION_READY.md](../PRODUCTION_READY.md) for CI/CD documentation.
 
-- Never commit secrets to repository
-- Use GitHub Secrets for all credentials
-- Rotate SSH keys regularly
-- Use strong passwords for services
+---
 
-### Network Security
+## Support & Resources
 
-- Configure firewall rules on VPS
-- Use SSH key authentication only
-- Disable password authentication
-- Keep ports 8080, 9090, 3000 behind reverse proxy
+### Documentation
+- [HTTPS Setup Guide](./HTTPS_SETUP.md) - Detailed SSL/TLS configuration
+- [Load Testing Guide](./LOAD_TESTING.md) - Performance testing procedures
+- [Production Hardening Audit](../PRODUCTION_HARDENING_AUDIT.md) - Security assessment
 
-### Docker Security
+### External Resources
+- [Docker Docs](https://docs.docker.com/)
+- [Traefik Docs](https://doc.traefik.io/traefik/)
+- [Nginx Docs](https://nginx.org/en/docs/)
+- [Let's Encrypt](https://letsencrypt.org/)
 
-- Images run as non-root user
-- Read-only filesystem where possible
-- Resource limits configured
-- Security hardening enabled
+### Getting Help
 
-## Related Documentation
+1. Check logs: `docker-compose logs -f`
+2. Review documentation in `docs/` directory
+3. Check GitHub Issues
+4. Review security audit: `PRODUCTION_HARDENING_AUDIT.md`
 
-- [CI/CD Architecture](./CI_CD_ARCHITECTURE.md) - Workflow details
-- [SERVER_SETUP.md](./SERVER_SETUP.md) - VPS configuration (future)
-- [ROLLBACK.md](./ROLLBACK.md) - Rollback procedures (future)
-- [MULTISERVER.md](./MULTISERVER.md) - Multi-region setup (future)
-- [BACKUP.md](./BACKUP.md) - Backup strategies (future)
+---
+
+**Production Status:** ✅ Ready for Deployment  
+**Security:** ✅ Hardened  
+**HTTPS:** ✅ Configured  
+**Monitoring:** ✅ Enabled

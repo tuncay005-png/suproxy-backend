@@ -1,0 +1,43 @@
+﻿# Traefik Dynamic Configuration
+# Security headers and middleware
+
+http:
+  middlewares:
+    # Security Headers
+    security-headers:
+      headers:
+        # Security headers
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        forceSTSHeader: true
+        
+        # Content Security
+        contentTypeNosniff: true
+        browserXssFilter: true
+        frameDeny: true
+        
+        # Custom headers
+        customResponseHeaders:
+          X-Frame-Options: "DENY"
+          X-Content-Type-Options: "nosniff"
+          X-XSS-Protection: "1; mode=block"
+          Referrer-Policy: "strict-origin-when-cross-origin"
+          Permissions-Policy: "geolocation=(), microphone=(), camera=()"
+        
+        # Content Security Policy
+        contentSecurityPolicy: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'"
+    
+    # Rate limiting (additional layer)
+    rate-limit:
+      rateLimit:
+        average: 100
+        burst: 200
+        period: 1m
+    
+    # Compress responses
+    compress:
+      compress: {}
+
+  # Services and routers will be defined by Docker labels
+  # in docker-compose.production.yml

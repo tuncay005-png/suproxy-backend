@@ -1,4 +1,4 @@
-package system
+﻿package system
 
 import (
 	"context"
@@ -185,7 +185,7 @@ func (q *GetSystemStatsQuery) Execute(ctx context.Context) (*SystemStats, error)
 	// User statistics
 	allUsers, _, err := q.userRepo.ListWithFilters(ctx, user.UserFilters{
 		Offset: 0,
-		Limit:  100000, // Large enough to get all users
+		Limit:  1000, // Use pagination for stats (fixed from 100000)
 	})
 	if err == nil {
 		stats.Users.TotalUsers = int64(len(allUsers))
@@ -217,7 +217,7 @@ func (q *GetSystemStatsQuery) Execute(ctx context.Context) (*SystemStats, error)
 	// Xray statistics
 	instances, _, err := q.instanceRepo.ListWithFilters(ctx, xray.XrayInstanceFilters{
 		Offset: 0,
-		Limit:  10000,
+		Limit:  1000, // Fixed from 10000
 	})
 	if err == nil {
 		stats.Xray.TotalInstances = int64(len(instances))
@@ -269,7 +269,7 @@ func (q *GetSystemStatsQuery) Execute(ctx context.Context) (*SystemStats, error)
 
 	filters := audit.AuditFilters{
 		DateFrom: &today,
-		Limit:    10000, // Large enough to count
+		Limit:  1000, // Fixed from 10000 // Large enough to count
 	}
 	todayLogs, total, err := q.auditRepo.ListWithFilters(ctx, filters)
 	if err == nil {
@@ -285,7 +285,7 @@ func (q *GetSystemStatsQuery) Execute(ctx context.Context) (*SystemStats, error)
 
 	weekFilters := audit.AuditFilters{
 		DateFrom: &weekAgo,
-		Limit:    100000,
+Limit:    1000, // Fixed from 100000
 	}
 	_, weekTotal, err := q.auditRepo.ListWithFilters(ctx, weekFilters)
 	if err == nil {
@@ -409,7 +409,7 @@ type XrayInstanceStatus struct {
 func (q *GetXraySystemStatusQuery) Execute(ctx context.Context) (*XraySystemStatus, error) {
 	instances, _, err := q.instanceRepo.ListWithFilters(ctx, xray.XrayInstanceFilters{
 		Offset: 0,
-		Limit:  10000,
+		Limit:  1000, // Fixed from 10000
 	})
 	if err != nil {
 		return nil, err
