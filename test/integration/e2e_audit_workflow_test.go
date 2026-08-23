@@ -208,7 +208,7 @@ func TestE2E_AuditFlow(t *testing.T) {
 	require.True(t, auditListResult.Success)
 
 	auditListData := auditListResult.Data.(map[string]interface{})
-	
+
 	// Safe type assertion for total
 	var total int
 	if totalRaw, ok := auditListData["total"]; ok && totalRaw != nil {
@@ -299,7 +299,7 @@ func TestE2E_AuditFilteringFlow(t *testing.T) {
 	var allLogsResult response.Response
 	httpCtx.GetResponseJSON(&allLogsResult)
 	allLogsData := allLogsResult.Data.(map[string]interface{})
-	
+
 	// Safe type assertion for total
 	var totalAll int
 	if totalRaw, ok := allLogsData["total"]; ok && totalRaw != nil {
@@ -317,7 +317,7 @@ func TestE2E_AuditFilteringFlow(t *testing.T) {
 	var loginLogsResult response.Response
 	httpCtx.GetResponseJSON(&loginLogsResult)
 	loginLogsData := loginLogsResult.Data.(map[string]interface{})
-	
+
 	// Safe type assertion for total
 	var totalLogin int
 	if totalRaw, ok := loginLogsData["total"]; ok && totalRaw != nil {
@@ -335,7 +335,7 @@ func TestE2E_AuditFilteringFlow(t *testing.T) {
 	var userLogsResult response.Response
 	httpCtx.GetResponseJSON(&userLogsResult)
 	userLogsData := userLogsResult.Data.(map[string]interface{})
-	
+
 	// Safe type assertion for total
 	var totalUser int
 	if totalRaw, ok := userLogsData["total"]; ok && totalRaw != nil {
@@ -353,7 +353,7 @@ func TestE2E_AuditFilteringFlow(t *testing.T) {
 	var paginatedResult response.Response
 	httpCtx.GetResponseJSON(&paginatedResult)
 	paginatedData := paginatedResult.Data.(map[string]interface{})
-	
+
 	// Safe type assertion for logs array
 	var logs []interface{}
 	if logsRaw, ok := paginatedData["logs"]; ok && logsRaw != nil {
@@ -421,7 +421,7 @@ func TestE2E_FullAdminWorkflow(t *testing.T) {
 	var usersResult response.Response
 	httpCtx.GetResponseJSON(&usersResult)
 	usersData := usersResult.Data.(map[string]interface{})
-	
+
 	// Safe type assertion for total
 	var totalUsers int
 	if totalRaw, ok := usersData["total"]; ok && totalRaw != nil {
@@ -457,7 +457,7 @@ func TestE2E_FullAdminWorkflow(t *testing.T) {
 	var auditResult response.Response
 	httpCtx.GetResponseJSON(&auditResult)
 	auditData := auditResult.Data.(map[string]interface{})
-	
+
 	// Safe type assertion for total
 	var totalAudit int
 	if totalRaw, ok := auditData["total"]; ok && totalRaw != nil {

@@ -27,12 +27,12 @@ func AssertTimeNow(t *testing.T, actual time.Time, tolerance time.Duration, msgA
 	// Convert both to UTC for comparison
 	actualUTC := actual.UTC()
 	nowUTC := now.UTC()
-	
+
 	diff := nowUTC.Sub(actualUTC)
 	if diff < 0 {
 		diff = -diff
 	}
-	
+
 	toleranceDuration := time.Duration(tolerance) * time.Millisecond
 	return assert.True(t, diff <= toleranceDuration, msgAndArgs...)
 }

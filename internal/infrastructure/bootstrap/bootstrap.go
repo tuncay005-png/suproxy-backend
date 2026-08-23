@@ -1,74 +1,74 @@
-﻿package bootstrap
+package bootstrap
 
 import (
-"fmt"
-"time"
+	"fmt"
+	"time"
 
-"github.com/suproxy/backend/internal/infrastructure/config"
-"github.com/suproxy/backend/internal/infrastructure/database"
-"github.com/suproxy/backend/internal/infrastructure/jwt"
-"github.com/suproxy/backend/internal/infrastructure/logger"
-"github.com/suproxy/backend/internal/infrastructure/metrics"
+	"github.com/suproxy/backend/internal/infrastructure/config"
+	"github.com/suproxy/backend/internal/infrastructure/database"
+	"github.com/suproxy/backend/internal/infrastructure/jwt"
+	"github.com/suproxy/backend/internal/infrastructure/logger"
+	"github.com/suproxy/backend/internal/infrastructure/metrics"
 )
 
 type Application struct {
-Config           *config.Config
-Logger           *logger.Logger
-Database         *database.Database
-JWTManager       *jwt.Manager
-TxManager        *database.TransactionManager
-Container        *Container
-Router           interface{ Setup() }
-MetricsCollector *metrics.Collector
+	Config           *config.Config
+	Logger           *logger.Logger
+	Database         *database.Database
+	JWTManager       *jwt.Manager
+	TxManager        *database.TransactionManager
+	Container        *Container
+	Router           interface{ Setup() }
+	MetricsCollector *metrics.Collector
 }
 
 func Initialize() (*Application, error) {
-// Load configuration
-cfg, err := config.Load()
-if err != nil {
-return nil, fmt.Errorf("failed to load configuration: %w", err)
-}
+	// Load configuration
+	cfg, err := config.Load()
+	if err != nil {
+		return nil, fmt.Errorf("failed to load configuration: %w", err)
+	}
 
-// Validate JWT secret before proceeding
-if err := config.ValidateJWTSecret(cfg); err != nil {
-return nil, err
-}
+	// Validate JWT secret before proceeding
+	if err := config.ValidateJWTSecret(cfg); err != nil {
+		return nil, err
+	}
 
-// Initialize logger
-log := logger.New(cfg.Log.Level, cfg.Log.Format)
+	// Initialize logger
+	log := logger.New(cfg.Log.Level, cfg.Log.Format)
 
-log.Info("Initializing SuProxy Backend",
-"version", "1.0.0",
-"environment", cfg.Environment,
-)
+	log.Info("Initializing SuProxy Backend",
+		"version", "1.0.0",
+		"environment", cfg.Environment,
+	)
 
-// Warn about default JWT secret in development
-if config.IsDefaultJWTSecret(cfg) {
-log.Warn("Using default JWT secret - only acceptable in development",
-"environment", cfg.Environment,
-)
-}
+	// Warn about default JWT secret in development
+	if config.IsDefaultJWTSecret(cfg) {
+		log.Warn("Using default JWT secret - only acceptable in development",
+			"environment", cfg.Environment,
+		)
+	}
 
-// Initialize Prometheus metrics
-metrics.Initialize()
-log.Info("Prometheus metrics initialized")
+	// Initialize Prometheus metrics
+	metrics.Initialize()
+	log.Info("Prometheus metrics initialized")
 
-// Initialize database
-db, err := database.New(cfg, log)
-if err != nil {
-return nil, fmt.Errorf("failed to initialize database: %w", err)
-}
+	// Initialize database
+	db, err := database.New(cfg, log)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize database: %w", err)
+	}
 
-// Test database connection
-if err := db.Ping(); err != nil {
-return nil, fmt.Errorf("failed to ping database: %w", err)
-}
+	// Test database connection
+	if err := db.Ping(); err != nil {
+		return nil, fmt.Errorf("failed to ping database: %w", err)
+	}
 
-log.Info("Database connection verified")
+	log.Info("Database connection verified")
 
-// Run migrations
-migrator := database.NewMigrator(cfg, log)
-	
+	// Run migrations
+	migrator := database.NewMigrator(cfg, log)
+
 	// Auto-recover from dirty migration state
 	version, dirty, err := migrator.Version()
 	if err == nil && dirty {
@@ -80,81 +80,80 @@ migrator := database.NewMigrator(cfg, log)
 		}
 	}
 
-// Auto-recover from dirty migration state
-version, dirty, err := migrator.Version()
-if err == nil && dirty {
-log.Warn("Dirty migration detected, attempting auto-recovery", "version", version)
-if err := migrator.Force(int(version - 1)); err != nil {
-log.Warn("Auto-recovery failed, will attempt normal migration", "error", err)
-} else {
-log.Info("Auto-recovery successful, proceeding with migrations")
-}
-}
+	// Auto-recover from dirty migration state
+	version, dirty, err := migrator.Version()
+	if err == nil && dirty {
+		log.Warn("Dirty migration detected, attempting auto-recovery", "version", version)
+		if err := migrator.Force(int(version - 1)); err != nil {
+			log.Warn("Auto-recovery failed, will attempt normal migration", "error", err)
+		} else {
+			log.Info("Auto-recovery successful, proceeding with migrations")
+		}
+	}
 
-if err := migrator.Up(); err != nil {
-return nil, fmt.Errorf("failed to run migrations: %w", err)
-}
+	if err := migrator.Up(); err != nil {
+		return nil, fmt.Errorf("failed to run migrations: %w", err)
+	}
 
-// Initialize JWT manager
-jwtManager := jwt.NewManager(&cfg.JWT)
+	// Initialize JWT manager
+	jwtManager := jwt.NewManager(&cfg.JWT)
 
-// Initialize transaction manager
-txManager := database.NewTransactionManager(db.DB)
+	// Initialize transaction manager
+	txManager := database.NewTransactionManager(db.DB)
 
-// Build dependency container
-container, err := BuildContainer(cfg, db.DB, log)
-if err != nil {
-return nil, fmt.Errorf("failed to build dependency container: %w", err)
-}
+	// Build dependency container
+	container, err := BuildContainer(cfg, db.DB, log)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build dependency container: %w", err)
+	}
 
-// Initialize metrics collector
-collectionInterval := 30 * time.Second // Default 30 seconds
-if cfg.Metrics.CollectionInterval > 0 {
-collectionInterval = time.Duration(cfg.Metrics.CollectionInterval) * time.Second
-}
+	// Initialize metrics collector
+	collectionInterval := 30 * time.Second // Default 30 seconds
+	if cfg.Metrics.CollectionInterval > 0 {
+		collectionInterval = time.Duration(cfg.Metrics.CollectionInterval) * time.Second
+	}
 
-metricsCollector := metrics.NewCollector(
-container.UserRepository,
-container.XrayInstanceRepository,
-container.InboundRepository,
-container.ClientRepository,
-db,
-log,
-collectionInterval,
-)
+	metricsCollector := metrics.NewCollector(
+		container.UserRepository,
+		container.XrayInstanceRepository,
+		container.InboundRepository,
+		container.ClientRepository,
+		db,
+		log,
+		collectionInterval,
+	)
 
-// Start metrics collector in background
-go metricsCollector.Start()
-log.Info("Metrics collector started", "interval", collectionInterval)
+	// Start metrics collector in background
+	go metricsCollector.Start()
+	log.Info("Metrics collector started", "interval", collectionInterval)
 
-log.Info("Application bootstrap completed successfully")
+	log.Info("Application bootstrap completed successfully")
 
-return &Application{
-Config:           cfg,
-Logger:           log,
-Database:         db,
-JWTManager:       jwtManager,
-TxManager:        txManager,
-Container:        container,
-MetricsCollector: metricsCollector,
-}, nil
+	return &Application{
+		Config:           cfg,
+		Logger:           log,
+		Database:         db,
+		JWTManager:       jwtManager,
+		TxManager:        txManager,
+		Container:        container,
+		MetricsCollector: metricsCollector,
+	}, nil
 }
 
 func (app *Application) Shutdown() {
-app.Logger.Info("Shutting down application...")
+	app.Logger.Info("Shutting down application...")
 
-// Stop metrics collector
-if app.MetricsCollector != nil {
-app.MetricsCollector.Stop()
+	// Stop metrics collector
+	if app.MetricsCollector != nil {
+		app.MetricsCollector.Stop()
+	}
+
+	if err := app.Database.Close(); err != nil {
+		app.Logger.Error("Failed to close database connection", "error", err)
+	}
+
+	// Ignore sync errors on shutdown - logger may already be closed or stdout/stderr may be unavailable
+	_ = app.Logger.Sync()
+
+	app.Logger.Info("Application shutdown complete")
 }
-
-if err := app.Database.Close(); err != nil {
-app.Logger.Error("Failed to close database connection", "error", err)
-}
-
-// Ignore sync errors on shutdown - logger may already be closed or stdout/stderr may be unavailable
-_ = app.Logger.Sync()
-
-app.Logger.Info("Application shutdown complete")
-}
-

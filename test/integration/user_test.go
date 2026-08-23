@@ -149,7 +149,7 @@ func TestUserAuthentication_Integration(t *testing.T) {
 		claims, err := authHelper.ValidateToken(accessToken)
 		require.NoError(t, err)
 		assert.Equal(t, testUser.ID.String(), claims.UserID) // JWT stores UserID as string
-		assert.Equal(t, string(user.RoleUser), claims.Role)   // JWT stores Role as string
+		assert.Equal(t, string(user.RoleUser), claims.Role)  // JWT stores Role as string
 	})
 
 	t.Run("Generate Admin Token", func(t *testing.T) {
@@ -168,7 +168,7 @@ func TestUserAuthentication_Integration(t *testing.T) {
 		claims, err := authHelper.ValidateToken(adminToken)
 		require.NoError(t, err)
 		assert.Equal(t, adminUser.ID.String(), claims.UserID) // JWT stores UserID as string
-		assert.Equal(t, string(user.RoleAdmin), claims.Role)   // JWT stores Role as string
+		assert.Equal(t, string(user.RoleAdmin), claims.Role)  // JWT stores Role as string
 	})
 
 	t.Run("Generate Token Pair", func(t *testing.T) {

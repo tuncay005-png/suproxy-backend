@@ -413,12 +413,12 @@ func CreateTestRefreshToken(ctx context.Context, t *testing.T, repo session.Refr
 // This is needed when tests create inbounds or clients that trigger health checks
 func StartMockXrayInstance(ctx context.Context, t *testing.T, processManager interface{}, instanceID uuid.UUID) {
 	t.Helper()
-	
+
 	// Type assert to access Start method
 	type processStarter interface {
 		Start(ctx context.Context, instanceID uuid.UUID) error
 	}
-	
+
 	if starter, ok := processManager.(processStarter); ok {
 		err := starter.Start(ctx, instanceID)
 		require.NoError(t, err, "Failed to start mock Xray instance")

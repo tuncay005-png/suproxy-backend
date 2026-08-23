@@ -88,11 +88,11 @@ func (r *refreshTokenRepository) RevokeByFamilyID(ctx context.Context, familyID 
 			"is_revoked": true,
 			"revoked_at": now,
 		})
-	
+
 	if result.Error != nil {
 		return result.Error
 	}
-	
+
 	return nil
 }
 
@@ -103,6 +103,6 @@ func (r *refreshTokenRepository) CountRevokedInFamily(ctx context.Context, famil
 		Model(&RefreshTokenModel{}).
 		Where("family_id = ? AND is_revoked = ?", familyID, true).
 		Count(&count).Error
-	
+
 	return int(count), err
 }

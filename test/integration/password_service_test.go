@@ -227,9 +227,9 @@ func TestPasswordService_LongPasswords(t *testing.T) {
 		expectError bool
 	}{
 		{"Length_50", 50, false},
-		{"Length_72", 72, false},      // bcrypt limit
-		{"Length_100", 100, true},     // exceeds bcrypt limit
-		{"Length_200", 200, true},     // exceeds bcrypt limit
+		{"Length_72", 72, false},  // bcrypt limit
+		{"Length_100", 100, true}, // exceeds bcrypt limit
+		{"Length_200", 200, true}, // exceeds bcrypt limit
 	}
 
 	for _, tt := range tests {

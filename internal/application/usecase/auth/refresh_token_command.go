@@ -56,7 +56,7 @@ func (c *RefreshTokenCommand) Execute(ctx context.Context, req *dto.RefreshToken
 		if storedToken.RevokedAt != nil {
 			timeSinceRevoked = time.Since(*storedToken.RevokedAt)
 		}
-		
+
 		c.logger.Error("SECURITY ALERT: Revoked token reuse detected - possible token theft",
 			"token_id", storedToken.ID,
 			"family_id", storedToken.FamilyID,
@@ -85,11 +85,11 @@ func (c *RefreshTokenCommand) Execute(ctx context.Context, req *dto.RefreshToken
 		securityLog.AddMetadata("family_id", storedToken.FamilyID.String())
 		securityLog.AddMetadata("time_since_revoked_seconds", int(timeSinceRevoked.Seconds()))
 		securityLog.AddMetadata("severity", "high")
-		
+
 		if err := c.auditRepo.Create(ctx, securityLog); err != nil {
 			c.logger.Warn("Failed to create security incident audit log", "error", err)
 		}
-		
+
 		// Always return invalid token (don't reveal reason)
 		return nil, jwt.ErrInvalidToken
 	}

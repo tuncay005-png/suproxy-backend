@@ -538,7 +538,7 @@ func TestAuditRepository_GetOldestAndNewestLogDate(t *testing.T) {
 	t.Run("GetLogDates_Success", func(t *testing.T) {
 		// Clean up first to ensure empty state
 		app.CleanupTables()
-		
+
 		userID := uuid.New()
 
 		// Create logs

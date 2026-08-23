@@ -1,172 +1,172 @@
-﻿package repository
+package repository
 
 import (
-"context"
-"errors"
+	"context"
+	"errors"
 
-"github.com/google/uuid"
-"github.com/suproxy/backend/internal/domain/node"
-"gorm.io/gorm"
+	"github.com/google/uuid"
+	"github.com/suproxy/backend/internal/domain/node"
+	"gorm.io/gorm"
 )
 
 type nodeRepository struct {
-db *gorm.DB
+	db *gorm.DB
 }
 
 func NewNodeRepository(db *gorm.DB) node.Repository {
-return &nodeRepository{db: db}
+	return &nodeRepository{db: db}
 }
 
 func (r *nodeRepository) Create(ctx context.Context, n *node.Node) error {
-if n == nil {
-return errors.New("node cannot be nil")
-}
+	if n == nil {
+		return errors.New("node cannot be nil")
+	}
 
-model := toNodeModel(n)
-if err := r.db.WithContext(ctx).Create(model).Error; err != nil {
-if errors.Is(err, gorm.ErrRecordNotFound) {
-return errors.New("server not found")
-}
-return err
-}
-return nil
+	model := toNodeModel(n)
+	if err := r.db.WithContext(ctx).Create(model).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("server not found")
+		}
+		return err
+	}
+	return nil
 }
 
 func (r *nodeRepository) FindByID(ctx context.Context, id uuid.UUID) (*node.Node, error) {
-var model NodeModel
-if err := r.db.WithContext(ctx).Where("id = ?", id).First(&model).Error; err != nil {
-if errors.Is(err, gorm.ErrRecordNotFound) {
-return nil, node.ErrNodeNotFound
-}
-return nil, err
-}
-return toDomainNode(&model), nil
+	var model NodeModel
+	if err := r.db.WithContext(ctx).Where("id = ?", id).First(&model).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, node.ErrNodeNotFound
+		}
+		return nil, err
+	}
+	return toDomainNode(&model), nil
 }
 
 func (r *nodeRepository) FindByServerID(ctx context.Context, serverID uuid.UUID) ([]*node.Node, error) {
-var models []NodeModel
-if err := r.db.WithContext(ctx).Where("server_id = ?", serverID).Order("port ASC").Find(&models).Error; err != nil {
-return nil, err
-}
+	var models []NodeModel
+	if err := r.db.WithContext(ctx).Where("server_id = ?", serverID).Order("port ASC").Find(&models).Error; err != nil {
+		return nil, err
+	}
 
-nodes := make([]*node.Node, 0, len(models))
-for _, model := range models {
-nodes = append(nodes, toDomainNode(&model))
-}
-return nodes, nil
+	nodes := make([]*node.Node, 0, len(models))
+	for _, model := range models {
+		nodes = append(nodes, toDomainNode(&model))
+	}
+	return nodes, nil
 }
 
 func (r *nodeRepository) FindHealthyByServerID(ctx context.Context, serverID uuid.UUID) ([]*node.Node, error) {
-var models []NodeModel
-if err := r.db.WithContext(ctx).
-Where("server_id = ? AND health_status = ?", serverID, "healthy").
-Order("current_users ASC").
-Find(&models).Error; err != nil {
-return nil, err
-}
+	var models []NodeModel
+	if err := r.db.WithContext(ctx).
+		Where("server_id = ? AND health_status = ?", serverID, "healthy").
+		Order("current_users ASC").
+		Find(&models).Error; err != nil {
+		return nil, err
+	}
 
-nodes := make([]*node.Node, 0, len(models))
-for _, model := range models {
-nodes = append(nodes, toDomainNode(&model))
-}
-return nodes, nil
+	nodes := make([]*node.Node, 0, len(models))
+	for _, model := range models {
+		nodes = append(nodes, toDomainNode(&model))
+	}
+	return nodes, nil
 }
 
 func (r *nodeRepository) FindAvailableNodes(ctx context.Context) ([]*node.Node, error) {
-var models []NodeModel
-if err := r.db.WithContext(ctx).
-Where("health_status = ? AND current_users < max_users", "healthy").
-Order("current_users ASC, latency_ms ASC").
-Find(&models).Error; err != nil {
-return nil, err
-}
+	var models []NodeModel
+	if err := r.db.WithContext(ctx).
+		Where("health_status = ? AND current_users < max_users", "healthy").
+		Order("current_users ASC, latency_ms ASC").
+		Find(&models).Error; err != nil {
+		return nil, err
+	}
 
-nodes := make([]*node.Node, 0, len(models))
-for _, model := range models {
-n := toDomainNode(&model)
-if n.CanAcceptUser() {
-nodes = append(nodes, n)
-}
-}
-return nodes, nil
+	nodes := make([]*node.Node, 0, len(models))
+	for _, model := range models {
+		n := toDomainNode(&model)
+		if n.CanAcceptUser() {
+			nodes = append(nodes, n)
+		}
+	}
+	return nodes, nil
 }
 
 func (r *nodeRepository) Update(ctx context.Context, n *node.Node) error {
-model := toNodeModel(n)
-if err := r.db.WithContext(ctx).Save(model).Error; err != nil {
-return err
-}
-return nil
+	model := toNodeModel(n)
+	if err := r.db.WithContext(ctx).Save(model).Error; err != nil {
+		return err
+	}
+	return nil
 }
 
 func (r *nodeRepository) Delete(ctx context.Context, id uuid.UUID) error {
-result := r.db.WithContext(ctx).Delete(&NodeModel{}, id)
-if result.Error != nil {
-return result.Error
-}
-if result.RowsAffected == 0 {
-return node.ErrNodeNotFound
-}
-return nil
+	result := r.db.WithContext(ctx).Delete(&NodeModel{}, id)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return node.ErrNodeNotFound
+	}
+	return nil
 }
 
 func (r *nodeRepository) List(ctx context.Context, offset, limit int) ([]*node.Node, error) {
-var models []NodeModel
-if err := r.db.WithContext(ctx).
-Order("created_at DESC").
-Offset(offset).
-Limit(limit).
-Find(&models).Error; err != nil {
-return nil, err
-}
+	var models []NodeModel
+	if err := r.db.WithContext(ctx).
+		Order("created_at DESC").
+		Offset(offset).
+		Limit(limit).
+		Find(&models).Error; err != nil {
+		return nil, err
+	}
 
-nodes := make([]*node.Node, 0, len(models))
-for _, model := range models {
-nodes = append(nodes, toDomainNode(&model))
-}
-return nodes, nil
+	nodes := make([]*node.Node, 0, len(models))
+	for _, model := range models {
+		nodes = append(nodes, toDomainNode(&model))
+	}
+	return nodes, nil
 }
 
 func (r *nodeRepository) Count(ctx context.Context) (int64, error) {
-var count int64
-if err := r.db.WithContext(ctx).Model(&NodeModel{}).Count(&count).Error; err != nil {
-return 0, err
-}
-return count, nil
+	var count int64
+	if err := r.db.WithContext(ctx).Model(&NodeModel{}).Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 func (r *nodeRepository) CountByServerID(ctx context.Context, serverID uuid.UUID) (int64, error) {
-var count int64
-if err := r.db.WithContext(ctx).Model(&NodeModel{}).Where("server_id = ?", serverID).Count(&count).Error; err != nil {
-return 0, err
-}
-return count, nil
+	var count int64
+	if err := r.db.WithContext(ctx).Model(&NodeModel{}).Where("server_id = ?", serverID).Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 func (r *nodeRepository) CountByServerIDs(ctx context.Context, serverIDs []uuid.UUID) (map[uuid.UUID]int64, error) {
-if len(serverIDs) == 0 {
-return make(map[uuid.UUID]int64), nil
-}
+	if len(serverIDs) == 0 {
+		return make(map[uuid.UUID]int64), nil
+	}
 
-type result struct {
-ServerID uuid.UUID
-Count    int64
-}
+	type result struct {
+		ServerID uuid.UUID
+		Count    int64
+	}
 
-var results []result
-if err := r.db.WithContext(ctx).
-Model(&NodeModel{}).
-Select("server_id, COUNT(*) as count").
-Where("server_id IN ?", serverIDs).
-Group("server_id").
-Scan(&results).Error; err != nil {
-return nil, err
-}
+	var results []result
+	if err := r.db.WithContext(ctx).
+		Model(&NodeModel{}).
+		Select("server_id, COUNT(*) as count").
+		Where("server_id IN ?", serverIDs).
+		Group("server_id").
+		Scan(&results).Error; err != nil {
+		return nil, err
+	}
 
-countMap := make(map[uuid.UUID]int64)
-for _, res := range results {
-countMap[res.ServerID] = res.Count
-}
+	countMap := make(map[uuid.UUID]int64)
+	for _, res := range results {
+		countMap[res.ServerID] = res.Count
+	}
 
-return countMap, nil
+	return countMap, nil
 }

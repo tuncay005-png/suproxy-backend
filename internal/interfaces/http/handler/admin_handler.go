@@ -1880,4 +1880,3 @@ func (h *AdminHandler) GetXraySystemStatus(c *gin.Context) {
 	}
 	response.SuccessOK(c, resp)
 }
-

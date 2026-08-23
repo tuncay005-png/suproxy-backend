@@ -26,12 +26,12 @@ func (s *StringArray) Scan(value interface{}) error {
 		*s = nil
 		return nil
 	}
-	
+
 	b, ok := value.([]byte)
 	if !ok {
 		return nil
 	}
-	
+
 	return json.Unmarshal(b, s)
 }
 
