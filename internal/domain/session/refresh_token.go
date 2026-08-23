@@ -19,9 +19,28 @@ type RefreshToken struct {
 	IsRevoked  bool
 	RevokedAt  *time.Time
 	CreatedAt  time.Time
+	FamilyID   uuid.UUID // Token family for reuse detection
 }
 
 func NewRefreshToken(userID uuid.UUID, tokenHash, deviceName, platform, ipAddress, userAgent string, expiresAt time.Time) *RefreshToken {
+	id := uuid.New()
+	return &RefreshToken{
+		ID:         id,
+		UserID:     userID,
+		TokenHash:  tokenHash,
+		DeviceName: deviceName,
+		Platform:   platform,
+		IPAddress:  ipAddress,
+		UserAgent:  userAgent,
+		ExpiresAt:  expiresAt,
+		IsRevoked:  false,
+		CreatedAt:  time.Now().UTC(),
+		FamilyID:   id, // Initially token is its own family root
+	}
+}
+
+// NewRefreshTokenInFamily creates a token in an existing family (for rotation)
+func NewRefreshTokenInFamily(userID, familyID uuid.UUID, tokenHash, deviceName, platform, ipAddress, userAgent string, expiresAt time.Time) *RefreshToken {
 	return &RefreshToken{
 		ID:         uuid.New(),
 		UserID:     userID,
@@ -33,6 +52,7 @@ func NewRefreshToken(userID uuid.UUID, tokenHash, deviceName, platform, ipAddres
 		ExpiresAt:  expiresAt,
 		IsRevoked:  false,
 		CreatedAt:  time.Now().UTC(),
+		FamilyID:   familyID, // Inherits family from parent
 	}
 }
 

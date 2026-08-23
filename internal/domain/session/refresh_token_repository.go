@@ -13,4 +13,8 @@ type RefreshTokenRepository interface {
 	RevokeByID(ctx context.Context, id uuid.UUID) error
 	RevokeAllByUserID(ctx context.Context, userID uuid.UUID) error
 	DeleteExpired(ctx context.Context) error
+	
+	// Family-based operations for reuse detection
+	RevokeByFamilyID(ctx context.Context, familyID uuid.UUID) error
+	CountRevokedInFamily(ctx context.Context, familyID uuid.UUID) (int, error)
 }

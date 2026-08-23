@@ -49,6 +49,51 @@ func (c *RefreshTokenCommand) Execute(ctx context.Context, req *dto.RefreshToken
 		return nil, jwt.ErrInvalidToken
 	}
 
+	// SECURITY: Token Reuse Detection
+	// ANY revoked token reuse is a security incident
+	if storedToken.IsRevoked {
+		var timeSinceRevoked time.Duration
+		if storedToken.RevokedAt != nil {
+			timeSinceRevoked = time.Since(*storedToken.RevokedAt)
+		}
+		
+		c.logger.Error("SECURITY ALERT: Revoked token reuse detected - possible token theft",
+			"token_id", storedToken.ID,
+			"family_id", storedToken.FamilyID,
+			"user_id", storedToken.UserID,
+			"revoked_at", storedToken.RevokedAt,
+			"time_since_revoked_seconds", int(timeSinceRevoked.Seconds()))
+
+		// ALWAYS revoke entire token family on ANY revoked token reuse
+		if err := c.refreshTokenRepo.RevokeByFamilyID(ctx, storedToken.FamilyID); err != nil {
+			c.logger.Error("Failed to revoke token family", "error", err, "family_id", storedToken.FamilyID)
+		} else {
+			c.logger.Warn("Token family revoked due to reuse detection",
+				"family_id", storedToken.FamilyID,
+				"user_id", storedToken.UserID)
+		}
+
+		// Create security incident audit log (for ANY reuse, not just recent)
+		securityLog := audit.NewLog(
+			storedToken.UserID,
+			"security.incident",
+			"token_reuse_detected",
+			storedToken.ID,
+			storedToken.IPAddress,
+			storedToken.UserAgent,
+		)
+		securityLog.AddMetadata("family_id", storedToken.FamilyID.String())
+		securityLog.AddMetadata("time_since_revoked_seconds", int(timeSinceRevoked.Seconds()))
+		securityLog.AddMetadata("severity", "high")
+		
+		if err := c.auditRepo.Create(ctx, securityLog); err != nil {
+			c.logger.Warn("Failed to create security incident audit log", "error", err)
+		}
+		
+		// Always return invalid token (don't reveal reason)
+		return nil, jwt.ErrInvalidToken
+	}
+
 	// Validate token
 	if !storedToken.IsValid() {
 		c.logger.Warn("Invalid or revoked refresh token", "token_id", storedToken.ID)
@@ -84,10 +129,11 @@ func (c *RefreshTokenCommand) Execute(ctx context.Context, req *dto.RefreshToken
 		return nil, err
 	}
 
-	// Store new refresh token
+	// Store new refresh token IN SAME FAMILY (for chain tracking)
 	newTokenHash := hashToken(newRefreshToken)
-	newTokenEntity := session.NewRefreshToken(
+	newTokenEntity := session.NewRefreshTokenInFamily(
 		foundUser.ID,
+		storedToken.FamilyID, // Inherit family ID
 		newTokenHash,
 		storedToken.DeviceName,
 		storedToken.Platform,

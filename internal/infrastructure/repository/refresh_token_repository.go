@@ -77,3 +77,32 @@ func (r *refreshTokenRepository) DeleteExpired(ctx context.Context) error {
 		Where("expires_at < ?", time.Now().UTC()).
 		Delete(&RefreshTokenModel{}).Error
 }
+
+// RevokeByFamilyID revokes all active tokens in a family
+func (r *refreshTokenRepository) RevokeByFamilyID(ctx context.Context, familyID uuid.UUID) error {
+	now := time.Now().UTC()
+	result := r.db.WithContext(ctx).
+		Model(&RefreshTokenModel{}).
+		Where("family_id = ? AND is_revoked = ?", familyID, false).
+		Updates(map[string]interface{}{
+			"is_revoked": true,
+			"revoked_at": now,
+		})
+	
+	if result.Error != nil {
+		return result.Error
+	}
+	
+	return nil
+}
+
+// CountRevokedInFamily counts revoked tokens in a family (for detection)
+func (r *refreshTokenRepository) CountRevokedInFamily(ctx context.Context, familyID uuid.UUID) (int, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Model(&RefreshTokenModel{}).
+		Where("family_id = ? AND is_revoked = ?", familyID, true).
+		Count(&count).Error
+	
+	return int(count), err
+}

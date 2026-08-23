@@ -1,4 +1,4 @@
-package bootstrap
+﻿package bootstrap
 
 import (
 	"github.com/gin-gonic/gin"
@@ -260,6 +260,9 @@ func InitializeAuthSystem(app *Application, engine *gin.Engine) {
 		getXraySystemStatusQuery,
 	)
 
+	// Initialize test handler (E2E testing only)
+	testHandler := handler.NewTestHandler()
+
 	// Initialize router
 	appRouter := router.NewRouter(
 		engine,
@@ -275,6 +278,7 @@ func InitializeAuthSystem(app *Application, engine *gin.Engine) {
 		nodeHandler,
 		xrayHandler,
 		adminHandler,
+		testHandler,
 	)
 	app.Router = appRouter
 }

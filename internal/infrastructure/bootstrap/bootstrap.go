@@ -68,6 +68,29 @@ log.Info("Database connection verified")
 
 // Run migrations
 migrator := database.NewMigrator(cfg, log)
+	
+	// Auto-recover from dirty migration state
+	version, dirty, err := migrator.Version()
+	if err == nil && dirty {
+		log.Warn("Dirty migration detected, attempting auto-recovery", "version", version)
+		if err := migrator.Force(int(version - 1)); err != nil {
+			log.Warn("Auto-recovery failed", "error", err)
+		} else {
+			log.Info("Auto-recovery successful, continuing with migrations")
+		}
+	}
+
+// Auto-recover from dirty migration state
+version, dirty, err := migrator.Version()
+if err == nil && dirty {
+log.Warn("Dirty migration detected, attempting auto-recovery", "version", version)
+if err := migrator.Force(int(version - 1)); err != nil {
+log.Warn("Auto-recovery failed, will attempt normal migration", "error", err)
+} else {
+log.Info("Auto-recovery successful, proceeding with migrations")
+}
+}
+
 if err := migrator.Up(); err != nil {
 return nil, fmt.Errorf("failed to run migrations: %w", err)
 }
@@ -134,3 +157,4 @@ _ = app.Logger.Sync()
 
 app.Logger.Info("Application shutdown complete")
 }
+

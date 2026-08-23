@@ -22,6 +22,7 @@ serverHandler       *handler.ServerHandler
 nodeHandler         *handler.NodeHandler
 xrayHandler         *handler.XrayHandler
 adminHandler        *handler.AdminHandler
+	testHandler         *handler.TestHandler
 }
 
 func NewRouter(
@@ -81,7 +82,7 @@ auth := v1.Group("/auth")
 // Rate limit: 5 requests/minute per IP for login/register
 auth.POST("/register", middleware.IPRateLimiter(5.0/60.0, 5), r.authHandler.Register)
 auth.POST("/login", middleware.IPRateLimiter(5.0/60.0, 5), r.authHandler.Login)
-auth.POST("/refresh", r.authHandler.RefreshToken)
+auth.POST("/refresh", middleware.RefreshTokenRateLimiter(), r.authHandler.RefreshToken)
 auth.POST("/logout", r.authHandler.Logout)
 
 // Protected auth routes

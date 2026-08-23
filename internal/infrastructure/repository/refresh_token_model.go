@@ -20,6 +20,7 @@ type RefreshTokenModel struct {
 	IsRevoked  bool       `gorm:"not null;default:false;index"`
 	RevokedAt  *time.Time `gorm:"type:timestamp"`
 	CreatedAt  time.Time  `gorm:"not null;default:CURRENT_TIMESTAMP"`
+	FamilyID   uuid.UUID  `gorm:"type:uuid;not null;index"`
 }
 
 func (RefreshTokenModel) TableName() string {
@@ -40,6 +41,7 @@ func toRefreshTokenModel(rt *session.RefreshToken) *RefreshTokenModel {
 		IsRevoked:  rt.IsRevoked,
 		RevokedAt:  rt.RevokedAt,
 		CreatedAt:  rt.CreatedAt,
+		FamilyID:   rt.FamilyID,
 	}
 }
 
@@ -57,5 +59,6 @@ func toDomainRefreshToken(m *RefreshTokenModel) *session.RefreshToken {
 		IsRevoked:  m.IsRevoked,
 		RevokedAt:  m.RevokedAt,
 		CreatedAt:  m.CreatedAt,
+		FamilyID:   m.FamilyID,
 	}
 }

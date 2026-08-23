@@ -136,3 +136,65 @@ return
 c.Next()
 }
 }
+
+// RefreshTokenRateLimiter limits refresh endpoint to 10 requests per 5 minutes per IP
+// This uses a simple counter-based approach for longer time windows
+func RefreshTokenRateLimiter() gin.HandlerFunc {
+	type requestCounter struct {
+		count     int
+		resetTime time.Time
+	}
+	
+	requests := make(map[string]*requestCounter)
+	mu := sync.RWMutex{}
+	limit := 10
+	window := 5 * time.Minute
+	
+	// Start cleanup goroutine
+	go func() {
+		ticker := time.NewTicker(1 * time.Minute)
+		defer ticker.Stop()
+		
+		for range ticker.C {
+			mu.Lock()
+			now := time.Now()
+			for key, counter := range requests {
+				if now.After(counter.resetTime) {
+					delete(requests, key)
+				}
+			}
+			mu.Unlock()
+		}
+	}()
+	
+	return func(c *gin.Context) {
+		clientIP := c.ClientIP()
+		
+		mu.Lock()
+		defer mu.Unlock()
+		
+		now := time.Now()
+		counter, exists := requests[clientIP]
+		
+		if !exists || now.After(counter.resetTime) {
+			requests[clientIP] = &requestCounter{
+				count:     1,
+				resetTime: now.Add(window),
+			}
+			c.Next()
+			return
+		}
+		
+		if counter.count >= limit {
+			c.JSON(http.StatusTooManyRequests, gin.H{
+				"error": "Too many refresh requests. Please try again in a few minutes.",
+				"code":  "RATE_LIMIT_EXCEEDED",
+			})
+			c.Abort()
+			return
+		}
+		
+		counter.count++
+		c.Next()
+	}
+}
