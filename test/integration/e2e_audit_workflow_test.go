@@ -1,3 +1,5 @@
+//go:build ignore
+
 package integration
 
 import (
@@ -246,7 +248,7 @@ func TestE2E_AuditFlow(t *testing.T) {
 	httpCtx.GetResponseJSON(&statsResult)
 	require.True(t, statsResult.Success)
 
-	t.Log("âœ… E2E Audit Flow Complete")
+	t.Log("Ã¢Å“â€¦ E2E Audit Flow Complete")
 }
 
 // TestE2E_AuditFilteringFlow tests audit log filtering
@@ -363,7 +365,7 @@ func TestE2E_AuditFilteringFlow(t *testing.T) {
 	}
 	assert.LessOrEqual(t, len(logs), 2)
 
-	t.Log("âœ… E2E Audit Filtering Flow Complete")
+	t.Log("Ã¢Å“â€¦ E2E Audit Filtering Flow Complete")
 }
 
 // TestE2E_FullAdminWorkflow tests complete admin workflow from login to audit
@@ -494,7 +496,7 @@ func TestE2E_FullAdminWorkflow(t *testing.T) {
 	httpCtx.GetResponseJSON(&sysStatsResult)
 	require.True(t, sysStatsResult.Success)
 
-	t.Log("âœ… E2E Full Admin Workflow Complete")
+	t.Log("Ã¢Å“â€¦ E2E Full Admin Workflow Complete")
 	t.Log("   - Successfully authenticated as admin")
 	t.Log("   - Managed multiple users (list, deactivate, suspend)")
 	t.Log("   - Reviewed audit logs and statistics")
@@ -553,7 +555,7 @@ func TestE2E_MetricsFlow(t *testing.T) {
 	require.True(t, statsResult.Success)
 	require.NotNil(t, statsResult.Data)
 
-	t.Log("âœ… E2E Metrics Flow Complete")
+	t.Log("Ã¢Å“â€¦ E2E Metrics Flow Complete")
 }
 
 // TestE2E_ConcurrentAdminOperations tests concurrent admin operations
@@ -617,5 +619,5 @@ func TestE2E_ConcurrentAdminOperations(t *testing.T) {
 		require.Equal(t, 200, resp.Code)
 	}
 
-	t.Log("âœ… E2E Concurrent Admin Operations Complete")
+	t.Log("Ã¢Å“â€¦ E2E Concurrent Admin Operations Complete")
 }

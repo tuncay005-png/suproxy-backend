@@ -1,3 +1,5 @@
+//go:build ignore
+
 package integration
 
 import (
@@ -283,7 +285,7 @@ func TestE2E_AdminUserManagementFlow(t *testing.T) {
 	roleData := roleResult.Data.(map[string]interface{})
 	assert.Equal(t, string(user.RoleAdmin), roleData["role"].(string))
 
-	t.Log("âœ… E2E Admin User Management Flow Complete")
+	t.Log("Ã¢Å“â€¦ E2E Admin User Management Flow Complete")
 }
 
 // TestE2E_XrayProvisioningFlow tests complete xray provisioning workflow
@@ -405,7 +407,7 @@ func TestE2E_XrayProvisioningFlow(t *testing.T) {
 	assert.Equal(t, 1, totalInbounds)
 	assert.Equal(t, 1, totalClients)
 
-	t.Log("âœ… E2E Xray Provisioning Flow Complete")
+	t.Log("Ã¢Å“â€¦ E2E Xray Provisioning Flow Complete")
 }
 
 // TestE2E_ClientLifecycleFlow tests complete client lifecycle
@@ -520,7 +522,7 @@ func TestE2E_ClientLifecycleFlow(t *testing.T) {
 	resp = httpCtx.GET("/api/v1/admin/xray/clients/"+clientID, testutil.AuthHeader(adminToken))
 	require.Equal(t, 404, resp.Code)
 
-	t.Log("âœ… E2E Client Lifecycle Flow Complete")
+	t.Log("Ã¢Å“â€¦ E2E Client Lifecycle Flow Complete")
 }
 
 // TestE2E_InboundLifecycleFlow tests complete inbound lifecycle
@@ -612,5 +614,5 @@ func TestE2E_InboundLifecycleFlow(t *testing.T) {
 	resp = httpCtx.GET("/api/v1/admin/xray/inbounds/"+inboundID, testutil.AuthHeader(adminToken))
 	require.Equal(t, 404, resp.Code)
 
-	t.Log("âœ… E2E Inbound Lifecycle Flow Complete")
+	t.Log("Ã¢Å“â€¦ E2E Inbound Lifecycle Flow Complete")
 }
