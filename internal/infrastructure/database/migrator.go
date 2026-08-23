@@ -1,4 +1,4 @@
-﻿package database
+package database
 
 import (
 	"database/sql"
@@ -122,24 +122,23 @@ func (m *Migrator) CheckMigrationState() error {
 	return nil
 }
 
-
 // Force sets the migration version without running migrations
 // Used to recover from dirty migration state
 func (m *Migrator) Force(version int) error {
-mig, err := m.getInstance()
-if err != nil {
-return err
-}
-defer func() { _, _ = mig.Close() }()
+	mig, err := m.getInstance()
+	if err != nil {
+		return err
+	}
+	defer func() { _, _ = mig.Close() }()
 
-m.logger.Info("Forcing migration version", "version", version)
+	m.logger.Info("Forcing migration version", "version", version)
 
-if err := mig.Force(version); err != nil {
-return fmt.Errorf("failed to force migration version: %w", err)
-}
+	if err := mig.Force(version); err != nil {
+		return fmt.Errorf("failed to force migration version: %w", err)
+	}
 
-m.logger.Info("Migration version forced successfully", "version", version)
-return nil
+	m.logger.Info("Migration version forced successfully", "version", version)
+	return nil
 }
 
 func (m *Migrator) getInstance() (*migrate.Migrate, error) {
@@ -182,7 +181,7 @@ func (m *Migrator) getInstance() (*migrate.Migrate, error) {
 		m.logger.Warn("Migrations directory not found at working directory, searching alternatives",
 			"attempted_path", migrationsPath,
 		)
-		
+
 		// Strategy 2: Try relative to executable location
 		execPath, err := os.Executable()
 		if err == nil {
@@ -245,4 +244,3 @@ func (m *Migrator) getInstance() (*migrate.Migrate, error) {
 
 	return mig, nil
 }
-
