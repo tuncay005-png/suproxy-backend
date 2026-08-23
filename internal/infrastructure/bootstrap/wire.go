@@ -260,8 +260,6 @@ func InitializeAuthSystem(app *Application, engine *gin.Engine) {
 		getXraySystemStatusQuery,
 	)
 
-	// Initialize test handler (E2E testing only)
-	testHandler := handler.NewTestHandler()
 
 	// Initialize router
 	appRouter := router.NewRouter(
