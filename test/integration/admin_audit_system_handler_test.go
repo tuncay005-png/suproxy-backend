@@ -69,7 +69,7 @@ func setupAdminAuditSystemHandler(t *testing.T, app *testutil.TestApp) *gin.Engi
 		getUserQuery,
 		updateUserStatusCommand,
 		updateUserRoleCommand,
-		listInstancesQuery,
+	createUserCommand,	listInstancesQuery,
 		getInstanceQuery,
 		getInstanceStatsQuery,
 		startInstanceCommand,

@@ -70,7 +70,7 @@ func setupAdminUserHandler(t *testing.T, app *testutil.TestApp) (*gin.Engine, *h
 		getUserQuery,
 		updateUserStatusCommand,
 		updateUserRoleCommand,
-		listInstancesQuery,
+	createUserCommand,	listInstancesQuery,
 		getInstanceQuery,
 		getInstanceStatsQuery,
 		startInstanceCommand,

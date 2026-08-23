@@ -66,6 +66,7 @@ func setupAdminXrayHandler(t *testing.T, app *testutil.TestApp) *gin.Engine {
 		getUserQuery,
 		updateUserStatusCommand,
 		updateUserRoleCommand,
+	createUserCommand,
 		listInstancesQuery,
 		getInstanceQuery,
 		getInstanceStatsQuery,

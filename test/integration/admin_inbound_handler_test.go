@@ -69,7 +69,7 @@ func setupAdminInboundHandler(t *testing.T, app *testutil.TestApp) *gin.Engine {
 		getUserQuery,
 		updateUserStatusCommand,
 		updateUserRoleCommand,
-		listInstancesQuery,
+	createUserCommand,	listInstancesQuery,
 		getInstanceQuery,
 		getInstanceStatsQuery,
 		startInstanceCommand,
