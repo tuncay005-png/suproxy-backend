@@ -1,4 +1,4 @@
-﻿package system
+package system
 
 import (
 	"context"
@@ -269,7 +269,7 @@ func (q *GetSystemStatsQuery) Execute(ctx context.Context) (*SystemStats, error)
 
 	filters := audit.AuditFilters{
 		DateFrom: &today,
-		Limit:  1000, // Fixed from 10000 // Large enough to count
+		Limit:    1000, // Fixed from 10000 // Large enough to count
 	}
 	todayLogs, total, err := q.auditRepo.ListWithFilters(ctx, filters)
 	if err == nil {
@@ -285,7 +285,7 @@ func (q *GetSystemStatsQuery) Execute(ctx context.Context) (*SystemStats, error)
 
 	weekFilters := audit.AuditFilters{
 		DateFrom: &weekAgo,
-Limit:    1000, // Fixed from 100000
+		Limit:    1000, // Fixed from 100000
 	}
 	_, weekTotal, err := q.auditRepo.ListWithFilters(ctx, weekFilters)
 	if err == nil {
