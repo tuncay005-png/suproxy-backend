@@ -80,17 +80,6 @@ func Initialize() (*Application, error) {
 		}
 	}
 
-	// Auto-recover from dirty migration state
-	version, dirty, err := migrator.Version()
-	if err == nil && dirty {
-		log.Warn("Dirty migration detected, attempting auto-recovery", "version", version)
-		if err := migrator.Force(int(version - 1)); err != nil {
-			log.Warn("Auto-recovery failed, will attempt normal migration", "error", err)
-		} else {
-			log.Info("Auto-recovery successful, proceeding with migrations")
-		}
-	}
-
 	if err := migrator.Up(); err != nil {
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}

@@ -278,7 +278,6 @@ func InitializeAuthSystem(app *Application, engine *gin.Engine) {
 		nodeHandler,
 		xrayHandler,
 		adminHandler,
-		testHandler,
 	)
 	app.Router = appRouter
 }
