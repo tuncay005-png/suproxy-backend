@@ -22,7 +22,6 @@ type Router struct {
 	nodeHandler         *handler.NodeHandler
 	xrayHandler         *handler.XrayHandler
 	adminHandler        *handler.AdminHandler
-	testHandler         *handler.TestHandler
 }
 
 func NewRouter(

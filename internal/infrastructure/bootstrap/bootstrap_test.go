@@ -11,8 +11,8 @@ func TestInitialize_ProductionJWTSecretValidation(t *testing.T) {
 	origEnv := os.Getenv("SUPROXY_ENVIRONMENT")
 	origSecret := os.Getenv("SUPROXY_JWT_SECRET_KEY")
 	defer func() {
-		os.Setenv("SUPROXY_ENVIRONMENT", origEnv)
-		os.Setenv("SUPROXY_JWT_SECRET_KEY", origSecret)
+		_ = os.Setenv("SUPROXY_ENVIRONMENT", origEnv)
+		_ = os.Setenv("SUPROXY_JWT_SECRET_KEY", origSecret)
 	}()
 
 	tests := []struct {
@@ -46,8 +46,8 @@ func TestInitialize_ProductionJWTSecretValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			os.Setenv("SUPROXY_ENVIRONMENT", tt.environment)
-			os.Setenv("SUPROXY_JWT_SECRET_KEY", tt.secretKey)
+			_ = os.Setenv("SUPROXY_ENVIRONMENT", tt.environment)
+			_ = os.Setenv("SUPROXY_JWT_SECRET_KEY", tt.secretKey)
 
 			// Attempt to initialize
 			app, err := Initialize()

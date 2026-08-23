@@ -53,8 +53,8 @@ func TestSecurityHeaders(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set environment
-			os.Setenv("SUPROXY_ENVIRONMENT", tt.environment)
-			defer os.Unsetenv("SUPROXY_ENVIRONMENT")
+			_ = os.Setenv("SUPROXY_ENVIRONMENT", tt.environment)
+			defer _ = os.Unsetenv("SUPROXY_ENVIRONMENT")
 
 			// Create test router
 			router := gin.New()
@@ -103,8 +103,8 @@ func TestSecurityHeaders(t *testing.T) {
 func TestSecurityHeaders_AllHeadersPresent(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	os.Setenv("SUPROXY_ENVIRONMENT", "production")
-	defer os.Unsetenv("SUPROXY_ENVIRONMENT")
+	_ = os.Setenv("SUPROXY_ENVIRONMENT", "production")
+	defer _ = os.Unsetenv("SUPROXY_ENVIRONMENT")
 
 	router := gin.New()
 	router.Use(SecurityHeaders())
